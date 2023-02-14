@@ -1,0 +1,148 @@
+#!/usr/bin/env -vS podman build -t intensity/linux-image:devuan-kicksecure-4 . -f
+
+FROM docker://devuan/devuan:stable
+
+ENV SHELL /bin/bash
+
+LABEL vendor=intensity
+LABEL image=linux-image
+LABEL version=devuan-kicksecure-4
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 02 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '"0";' | tee -a /etc/apt/apt.conf.d/42disable; done && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  packages_idempotent=" adduser apt base-files base-passwd bash bsdutils coreutils dash debconf debian-archive-keyring debianutils devuan-keyring diffutils dpkg e2fsprogs findutils gcc-10-base gcc-9-base gpgv grep gzip hostname init-system-helpers libacl1 libapt-pkg6.0 libattr1 libaudit-common libaudit1 libblkid1 libbz2-1.0 libc-bin libc6 libcap-ng0 libcom-err2 libcrypt1 libdb5.3 libdebconfclient0 libeudev1 libext2fs2 libffi7 libgcc-s1 libgcrypt20 libgmp10 libgnutls30 libgpg-error0 libgssapi-krb5-2 libhogweed6 libidn2-0 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 liblz4-1 liblzma5 libmount1 libnettle8 libnsl2 libp11-kit0 libpam-modules libpam-modules-bin libpam-runtime libpam0g libpcre2-8-0 libpcre3 libseccomp2 libselinux1 libsemanage-common libsemanage1 libsepol1 libsmartcols1 libss2 libssl1.1 libstdc++6 libtasn1-6 libtinfo6 libtirpc-common libtirpc3 libunistring2 libuuid1 libxxhash0 libzstd1 login logsave lsb-base mawk mount ncurses-base ncurses-bin passwd perl-base sed sysvinit-utils tar tzdata util-linux zlib1g " && \
+  packages_kicksecure_dep=" 9base 9mount acct acl acpi-support acpi-support-base acpid aeson-pretty afflib-tools afio age alien apparmor apparmor-profiles apparmor-profiles-extra apparmor-utils apt-transport-https apt-transport-tor apt-utils aptitude arptables atool attr autopoint away bar bash-completion bash-static bc bind9-dnsutils bind9-host bind9-libs bindfs binutils bison bmake bridge-utils bsdextrautils bsdiff bubblewrap buffer build-essential busybox-static byobu bzip2 ca-certificates calc care catatonit ccrypt cdebootstrap-static cgroup-tools cgroupfs-mount checksecurity chromium-sandbox chrootuid chrpath codecrypt console-common console-data console-setup console-setup-linux cowdancer cpio crun cryptcat cryptmount cryptsetup cryptsetup-bin cu curl cython3 dact daemon daemonize daemontools dar-static datefudge dateutils dc dctrl-tools ddpt debian-goodies debian-keyring debootstrap debsums detachtty dh-exec dh-python dialog diceware diffstat dirmngr distro-info-data dkms dmeventd dmidecode dmraid dmsetup dnscrypt-proxy dnsutils doas dosfstools dropbear dtach e2fsck-static e2tools easy-rsa ebtables ecdsautils ecryptfs-utils ed ekeyd-egd-linux elfutils elogind encfs equivs ethtool eudev exa exfat-utils ext3grep ext4magic extlinux extrace extract extrepo f2fs-tools fake-hwclock fakechroot fakeroot fakeroot-ng faketime fastd fasttrack-archive-keyring fd-find fdflush fdisk fido2-tools file firehol firehol-tools firejail firejail-profiles fireqos fizsh fl-cow flatpak flex fling fontconfig fontconfig-config fonts-dejavu-core fscrypt fuse-overlayfs gawk gdb-minimal gdisk genisoimage geoip-database gettext gettext-base gfsecret git-crypt git-extras git-lfs git-secret git-secrets gnupg gnupg-l10n gnupg-utils gnupg1 gocryptfs gosu gpart gpg gpg-agent gpg-wks-client gpg-wks-server gpgconf gpgsm gpgv-static gpgv1 groff-base gvpe haveged hdparm hdup hwinfo ifenslave ifupdown-extra imvirt inetutils-tools inetutils-traceroute init initramfs-tools initramfs-tools-core initscripts inotify-tools insserv intel-microcode intltool-debian iotop iproute2 iptables iputils-ping isc-dhcp-client isc-dhcp-common isolinux istgt iw jid jitterentropy-rngd jparse jq kbd kcptun keyboard-configuration klibc-utils kmod kpartx lbzip2 lcab less libaio1 libapparmor1 libappstream-glib8 libarchive-tools libarchive-zip-perl libarchive13 libargon2-1 libasan6 libassuan0 libatasmart4 libatomic1 libblockdev-crypto2 libblockdev-fs2 libblockdev-loop2 libblockdev-part-err2 libblockdev-part2 libblockdev-swap2 libblockdev-utils2 libblockdev2 libbpf0 libbrotli1 libbsd0 libbytes-random-secure-perl libc-l10n libcap2 libcap2-bin libcc1-0 libcrypt-passwdmd5-perl libcrypt-random-seed-perl libcrypto++8 libcryptsetup12 libcryptx-perl libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libdconf1 libdeflate0 libdevmapper-event1.02.1 libdevmapper1.02.1 libdouble-conversion3 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit2 libegl-mesa0 libegl1 libelf1 libelogind0 libencode-locale-perl libevdev2 libevent-2.1-7 libexpat1 libfdisk1 libfftw3-double3 libfile-fnmatch-perl libfile-listing-perl libfile-stripnondeterminism-perl libfontconfig1 libfreetype6 libfstrm0 libfuse2 libgbm1 libgdbm-compat4 libgdbm6 libgeoip1 libgl1 libgl1-mesa-dri libglapi-mesa libglib2.0-bin libglib2.0-data libglvnd0 libglx-mesa0 libglx0 libgomp1 libgpgme11 libgraphite2-3 libgudev-1.0-0 libharfbuzz0b libhavege2 libhtml-parser-perl libhtml-tagset-perl libhtml-tree-perl libhttp-cookies-perl libhttp-date-perl libhttp-message-perl libhttp-negotiate-perl libice6 libicu67 libinotifytools0 libinput-bin libinput10 libio-html-perl libio-socket-ssl-perl libisl23 libitm1 libjansson4 libjbig0 libjpeg62-turbo libjs-jquery libjs-sphinxdoc libjs-underscore libjson-c5 libjson-glib-1.0-0 libjson-glib-1.0-common libklibc libkmod2 libksba8 libldap-2.4-2 libllvm11 liblmdb0 liblocale-gettext-perl liblsan0 liblvm2cmd2.03 liblwp-mediatypes-perl liblwp-protocol-https-perl liblzo2-2 libmagic-mgc libmagic1 libmalcontent-0-0 libmath-random-isaac-perl libmaxminddb0 libmd0 libmd4c0 libmm-glib0 libmnl0 libmpc3 libmpdec3 libmpfr6 libmtdev1 libncurses6 libncursesw6 libndp0 libnet-http-perl libnet-ssleay-perl libnewt0.52 libnghttp2-14 libnl-3-200 libnl-genl-3-200 libnl-route-3-200 libnm0 libnpth0 libnspr4 libnss3 libntfs-3g883 libostree-1-1 libpam-elogind libparted-fs-resize0 libparted2 libpci3 libpciaccess0 libpcre2-16-0 libpcsclite1 libperl5.32 libpipeline1 libpkcs11-helper1 libpolkit-agent-1-0 libpolkit-gobject-1-0 libpolkit-gobject-elogind-1-0 libpopt0 libprocps8 libprotobuf-c1 libproxy1v5 libpsl5 libpython3-stdlib libpython3.9-minimal libpython3.9-stdlib libqt5core5a libqt5dbus5 libqt5gui5 libqt5network5 libqt5widgets5 libquadmath0 libreadline8 librtmp1 libsasl2-2 libsasl2-modules-db libsecret-1-0 libsecret-common libsensors-config libsensors5 libsigsegv2 libslang2 libsm6 libsnappy1v5 libsodium23 libsoup2.4-1 libsqlite3-0 libssh2-1 libstemmer0d libsub-override-perl libsysfs2 libteamdctl0 libtiff5 libtimedate-perl libtool libtry-tiny-perl libtsan0 libubsan1 libuchardet0 libudisks2-0 libunwind8 liburi-perl libuv1 libvolume-key1 libvterm-bin libvulkan1 libwacom-common libwacom2 libwayland-client0 libwayland-server0 libwebp6 libwww-perl libwww-robotrules-perl libx11-xcb1 libxaw7 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-present0 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxkbcommon-x11-0 libxkbcommon0 libxml2 libxmu6 libxmuu1 libxpm4 libxrandr2 libxrender1 libxshmfence1 libxt6 libxtables12 libxxf86vm1 libyaml-0-2 libyaml-libyaml-perl libz3-4 libzulucrypt-exe1.2.0 libzulucrypt-plugins libzulucrypt1.2.0 libzulucryptpluginmanager1.0.0 links linux-base linux-compiler-gcc-10-x86 linux-headers-amd64 linux-kbuild-5.10 live-boot live-boot-initramfs-tools live-tools locales lockfile-progs lrzip lsb-release lsh-client lsh-utils lshw lsof ltrace luksmeta lunzip lvm2 lynx lz4 lzip lziprecover lzop magic-wormhole makepasswd man-db mandoc manpages manpages-dev mbuffer mdadm menu mergerfs metastore mg minilzip mk-configure mksh mmdebstrap moreutils most mtr-tiny mtree-netbsd musl-tools n2n nano nasm nat-traverse ncat net-tools netbase netcat netcat-openbsd network-manager nftables nilfs-tools ntfs-3g ntpdate ntpstat nvme-cli obfs4proxy only open-iscsi openssl openvpn orpie p7zip p7zip-full par2 parchive partclone parted patch patchelf patchutils pax pax-utils paxctl paxtest pbuilder pbzip2 pcc pci.ids pciutils perl perl-modules-5.32 perl-openssl-defaults pigz pinentry-curses pinentry-tty pixz plzip po-debconf policykit-1 policyrcd-script-zg2 ppp privoxy procps progress proot proxychains4 proxytunnel pseudo psmisc psutils pv pwgen python3 python3-apparmor python3-attr python3-autobahn python3-automat python3-bcrypt python3-cbor python3-certifi python3-cffi-backend python3-chardet python3-click python3-colorama python3-constantly python3-cryptography python3-dateutil python3-geoip python3-hamcrest python3-hkdf python3-humanize python3-hyperlink python3-idna python3-incremental python3-libapparmor python3-lz4 python3-minimal python3-nacl python3-openssl python3-pkg-resources python3-pyasn1 python3-pyasn1-modules python3-pyqrcode python3-requests python3-scapy python3-sdnotify python3-service-identity python3-six python3-snappy python3-socks python3-spake2 python3-stem python3-tqdm python3-trie python3-twisted python3-twisted-bin python3-txaio python3-txtorcon python3-u-msgpack python3-ubjson python3-urllib3 python3-wsaccel python3-yaml python3-zope.interface python3.9 python3.9-minimal qalc qemu-utils quicktun quota randomsound rclone rdiff readline-common redir restricted-ssh-commands rfkill rinse ripgrep rng-tools rng-tools-debian rpm2cpio rsync rsyncrypto runc runit-helper rush rzip s6 s6-doc seccomp seccure secrecy secure-delete securefs selinux-utils sensible-utils shared-mime-info sharutils signify-openbsd signify-openbsd-keys silversearcher-ag slirp slirp4netns socat spectre-meltdown-checker squashfs-tools squashfs-tools-ng ssdeep ssss startpar strace sudo super supermin sysfsutils syslinux syslinux-common syslinux-efi syslinux-utils sysv-rc sysvinit-core tar-scripts tar-split tarlz tcc tcpdump tcpflow-nox tcplay tcptraceroute tgt time tini tinysshd tmux-plugin-manager tpm2-tools traceroute tsocks tup uanytun ucf ucspi-proxy ucspi-tcp-ipv6 ucspi-unix udev udhcpc udisks2 udptunnel uidmap unionfs-fuse unison unzip uuid-dev vde2 vde2-cryptcab vdens vim-tiny vlan vlock vrms vtun wget x11-common x11-xserver-utils xdelta xdelta3 xdg-dbus-proxy xdg-utils xe xfsprogs xlunzip xorriso xtermset xtitle xtrace xxd xxhash xz-utils yasm zip zlib1g-dev zpaq zsh zsh-autosuggestions zsh-common zsh-static zsh-syntax-highlighting zstd zulucrypt-cli zulumount-cli zulusafe-cli " && \
+  apt-get -y --verbose-versions install ${packages_idempotent} && \
+  apt-get -y --verbose-versions install ${packages_kicksecure_dep} && \
+  rm -vf /etc/dropbear/dropbear_ecdsa_host_key /etc/dropbear/dropbear_ed25519_host_key /etc/dropbear/dropbear_rsa_host_key && \
+  sed -i -e '/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin,' -e '/^UMASK/s,022,077,' -e '/^LOG_OK_LOGINS/s,no,yes,' /etc/login.defs && \
+  sed -i -e '/PATH="/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin",' /etc/profile && \
+  sed -i -e '/Defaults.*secure_path/s,secure_path="[^"]*",secure_path="/sbin:/bin:/usr/sbin:/usr/bin",' /etc/sudoers && \
+  sed -i -e '/export PATH=/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin",' /etc/zsh/zshenv && \
+  sed -i -e 's,^DSHELL=.*,DSHELL=/bin/bash-static,' -e 's,^DIR_MODE=.*,DIR_MODE=0700,' /etc/adduser.conf && \
+  sed -i -e '/^if.*usr.lib.command-not-found.*usr.share.command-not-found.command-not-found/s,; then, \&\& false; then,' /etc/bash.bashrc && \
+  mkdir -p /usr/local/src/attic && \
+  chmod 700 /usr/local/src/attic && \
+  mkdir /usr/local/src/attic/bin && \
+  mkdir -p /usr/local/src/attic/usr/bin && \
+  rm -vf /bin/rbash && \
+  ln -sv bash-static /bin/rbash && \
+  ln -svf bash-static /bin/sh && \
+  mv -vf /bin/bash /usr/local/src/attic/bin/bash.orig && \
+  ln -sv bash-static /bin/bash && \
+  for shell in zsh zsh5 zsh5-static; do mv -vf /bin/"${shell}" /usr/local/src/attic/bin/"${shell}".orig && ln -s zsh-static /bin/"${shell}"; done && \
+  rm -rv /bin/rzsh && \
+  ln -sv zsh-static /bin/rzsh && \
+  mv -vf /usr/bin/tini /usr/local/src/attic//usr/bin/tini.orig && \
+  ln -sv tini-static /usr/bin/tini && \
+  mv -vf /usr/bin/gpgv /usr/local/src/attic//usr/bin/gpgv.orig && \
+  ln -sv gpgv-static /usr/bin/gpgv && \
+  rm -vf /bin/mksh && \
+  ln -sv mksh-static /bin/mksh && \
+  rm -vf /bin/rksh && \
+  ln -sv mksh-static /bin/rksh && \
+  rm -vf /bin/rmksh && \
+  ln -sv mksh-static /bin/rmksh && \
+  mv -vf /usr/bin/gpg /usr/bin/gpg2 && \
+  ln -sv gpg1 /usr/bin/gpg && \
+  for conf in /etc/bash.bashrc /etc/profile /etc/skel/.bashrc /etc/skel/.profile /root/.bashrc /root/.profile; do (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin) | tee -a "${conf}"; done && \
+  (echo en_US ISO-8859-1; echo "en_US.ISO-8859-15 ISO-8859-15") >> /etc/locale.gen  && \
+  locale-gen && \
+  (rm -vf /etc/localtime || true) && \
+  /usr/bin/env --chdir=/etc ln -svf ../usr/share/zoneinfo/Universal ./localtime && \
+  echo Universal > /etc/timezone && \
+  (for shell in /bin/bash-static /bin/zsh-static /usr/lib/klibc/bin/mksh /bin/sh /bin/dash /bin/rbash /bin/rzsh /bin/rksh /bin/rmksh /bin/rlksh /bin/lksh; do echo "${shell}"; done) >/etc/shells && \
+  curl --tlsv1.3 --proto =https --max-time 180 --output /usr/share/keyrings/derivative.asc https://www.kicksecure.com/keys/derivative.asc && \
+  adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Administrator && \
+  adduser --disabled-password --gecos "" --shell /bin/bash-static user && \
+  adduser Administrator sudo && \
+  addgroup --system console && \
+  adduser Administrator console && \
+  echo "deb [signed-by=/usr/share/keyrings/derivative.asc] https://deb.kicksecure.com bullseye main contrib non-free" | tee -a /etc/apt/sources.list.d/derivative.list && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  apt-get --verbose-versions -y install debug-misc security-misc kicksecure-network-conf non-qubes-vm-enhancements-cli && \
+  apt-get --verbose-versions -y install kicksecure-dependencies-cli kicksecure-default-applications-cli kicksecure-base-files && \
+  apt-get --verbose-versions -y install jitterentropy-rngd man-db bzip2 net-tools dnsutils iputils-ping iotop file lsof pciutils strace sysfsutils procps e2fsprogs less most apparmor-utils bash-completion nano udisks2 libblockdev-crypto2 sensible-utils secure-delete openvpn curl usability-misc open-link-confirmation hardened-malloc apparmor-profiles-kicksecure && \
+  apt-get download systemcheck && \
+  aptfile=$(ls -1d systemcheck_*_all.deb) && \
+  mkdir staging && \
+  cd staging && \
+  ar x ../"${aptfile}" && \
+  mkdir staging && \
+  cd staging && \
+  cat ../control.tar.xz |xz -dvv | tar xpkvvf - && \
+  sed -i -e "s/, systemd, /, /" control && \
+  : > postinst && \
+  : > postrm && \
+  : > prerm && \
+  tar -cvvf - . |xz -1vv > ../control.tar.xz && \
+  cd .. && \
+  rm -r staging && \
+  rm -vf ../"${aptfile}" && \
+  ar r ../"${aptfile}" debian-binary control.tar.xz data.tar.xz && \
+  cd .. && \
+  rm -r staging && \
+  dpkg -i --force-all "${aptfile}" && \
+  rm -vf "${aptfile}" && \
+  unset aptfile && \
+  apt-get install -y --verbose-versions kicksecure-cli-vm && \
+  mkdir -p /usr/local/src/attic/etc/apt/sources.list.d && \
+  mv -v /etc/apt/sources.list.d/debian.list /usr/local/src/attic/etc/apt/sources.list.d/debian.list && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  update-alternatives --set editor /usr/bin/vim.tiny && \
+  rm -rv /root/.rpmdb && \
+  find /usr/lib /usr/share -maxdepth 24 -name "*.pyc" -delete && (find /usr/lib /usr/share -maxdepth 24 -name __pycache__ -type d -exec rmdir -- \{\} \; >/dev/null 2>/dev/null || true) && \
+  apt-get -y clean && \
+  apt-get -y autoclean && \
+  apt-get -y autoremove && \
+  rm -vf /var/cache/apt/archives/*.deb /root/dead.letter && \
+  (rm -vf /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- /etc/subgid- /etc/subuid- || true) && \
+  rm -vf /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old /var/lib/dpkg/statoverride-old && \
+  unset PYTHONDONTWRITEBYTECODE && \
+  rm -vf /etc/.pwd.lock && \
+  : > /etc/issue && \
+  : > /etc/issue.net && \
+  : > /etc/motd && \
+  : > /var/log/alternatives.log && \
+  : > /var/log/dpkg.log && \
+  : > /var/log/apt/term.log && \
+  : > /var/log/apt/history.log && \
+  : > /var/log/fontconfig.log && \
+  : > /var/log/alternatives.log && \
+  : |xz > /var/log/apt/eipp.log.xz && \
+  chmod --verbose -R go-rwx /home/* /etc/skel && \
+  (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin) | tee -a /etc/skel/.bashrc.kicksecure && \
+  find /tmp /var/tmp -type f -delete && \
+  ( echo "# Example aliases" && \
+    echo 'alias ered="env -i -- TMP=/run/shm TEMP=/run/shm TMPDIR=/run/shm TERM=vt220 /bin/ed -E -r --"' && \
+    echo 'alias eed="env -i -- TMP=/run/shm TEMP=/run/shm TMPDIR=/run/shm TERM=vt220 /bin/ed -E --"' && \
+    echo 'alias eex="env -i -- TMP=/run/shm TEMP=/run/shm TMPDIR=/run/shm TERM=vt220 /usr/bin/vim.tiny -b -n -T vt220 -u /dev/null --noplugin -i /dev/null --clean -E -Z --not-a-term --"' && \
+    echo 'alias evi="env -i -- TMP=/run/shm TEMP=/run/shm TMPDIR=/run/shm TERM=vt220 /usr/bin/vim.tiny -b -n -T vt220 -u /dev/null --noplugin -i /dev/null --clean --ttyfail --"') | tee -a /root/.bashrc /root/.profile && \
+  chmod go-rwx /root /root/.[A-Za-z]* && \
+  chmod --verbose a-s /bin/fusermount /bin/mount /bin/ntfs-3g /bin/ping /bin/ping6 /bin/su /bin/umount /sbin/mount.ecryptfs_private /sbin/unix_chkpwd /usr/bin/9bind /usr/bin/9mount /usr/bin/9umount /usr/bin/chage /usr/bin/chfn /usr/bin/chsh /usr/bin/crontab /usr/bin/cryptmount /usr/bin/doas /usr/bin/dotlockfile /usr/bin/expiry /usr/bin/firejail /usr/bin/gpasswd /usr/bin/inetutils-traceroute /usr/bin/mail-lock /usr/bin/mail-touchlock /usr/bin/mail-unlock /usr/bin/newgidmap /usr/bin/newgrp /usr/bin/newuidmap /usr/bin/passwd /usr/bin/pkexec /usr/bin/sudo /usr/bin/super /usr/bin/tcptraceroute.mt /usr/bin/wall /usr/bin/write.ul /usr/lib/chromium/chrome-sandbox /usr/lib/dbus-1.0/dbus-daemon-launch-helper /usr/lib/x86_64-linux-gnu/utempter/utempter /usr/libexec/polkit-agent-helper-1 /usr/sbin/pppd /usr/sbin/rush /usr/sbin/vlock-main 2>&1 | tee -a /usr/local/etc/permissions && \
+  chmod go-rwx /usr/local/etc/permissions && \
+  (echo "#!/bin/bash"; echo 'for bin do perm=$(fgrep "mode of "\'\''"${bin}"\'\''" changed from " /usr/local/etc/permissions | head -n 1 | sed '\''s,^[^(]* changed from ,,'\'' |awk '\''{print $1}'\''|tr -cd 0-9 | head -c 4); if echo "${perm}" |grep -q "^[0-9][0-9][0-9][0-9]$"; then chmod --verbose "${perm}" "${bin}"; else echo Could not change permissions for "${bin}" 1>&2; exit 1; fi; done') > /usr/local/sbin/restore-permissions && \
+  chmod 700 /usr/local/sbin/restore-permissions && \
+  echo /usr/lib/libhardened_malloc.so/libhardened_malloc.so |tee -a /etc/ld.so.preload && \
+  find / -xdev -name '*.pyc' -ls && \
+  find / -xdev -name '__pycache__' -ls && \
+  find / -xdev -type f -perm -2000 -ls && \
+  find / -xdev -type f -perm -4000 -ls && \
+  true
