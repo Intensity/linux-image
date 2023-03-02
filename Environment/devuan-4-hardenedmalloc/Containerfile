@@ -127,6 +127,7 @@ RUN \
     imvirt-helper \
     inetutils-tools \
     inetutils-traceroute \
+    initscripts \
     intel-microcode \
     iproute2 \
     ipset \
@@ -198,6 +199,7 @@ RUN \
     psmisc \
     psutils \
     pv \
+    qemu-utils \
     quota \
     quotatool \
     randomsound \
@@ -268,6 +270,7 @@ RUN \
     wireguard-tools \
     xdelta \
     xdelta3 \
+    xen-hypervisor-4.14-amd64 \
     xorriso \
     xxhash \
     xz-utils \
@@ -400,6 +403,9 @@ RUN \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
   apt-get -y --verbose-versions install ${packages_idempotent} && \
+  (set +e; apt-get -y --verbose-versions install makedev || true; : > /var/lib/dpkg/info/makedev.postinst; apt-get -y -f install || true; true) && \
+  (set +e; mkdir -v -p /run/initctl || true; apt-get -y --verbose-versions install sysvinit-core || true; sed -i -e "/^restart=yes/s,restart=yes,restart=no," /var/lib/dpkg/info/sysvinit-core.postinst || true; apt-get -y -f install || true; rmdir /run/initctl || true; true) && \
+  apt-get -y --verbose-versions install makedev sysvinit-core && \
   apt-get -y --verbose-versions install ${packages_devuan_base} && \
   mkdir -v ephemeral && \
   cd ephemeral && \
@@ -913,8 +919,6 @@ RUN \
   exec </dev/null && \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  (set +e; apt-get -y --verbose-versions install makedev || true; : > /var/lib/dpkg/info/makedev.postinst; apt-get -y -f install || true; true) && \
-  (set +e; mkdir -v -p /run/initctl || true; apt-get -y --verbose-versions install sysvinit-core || true; sed -i -e "/^restart=yes/s,restart=yes,restart=no," /var/lib/dpkg/info/sysvinit-core.postinst || true; apt-get -y -f install || true; rmdir /run/initctl || true; true) && \
   (set +e; mkdir -v -p /var/lock/schroot || true; apt-get -y --verbose-versions install schroot schroot-common || true; : > /var/lib/dpkg/info/schroot.postinst; apt-get -y -f install || true; true) && \
   apt-get -y --verbose-versions install makedev sysvinit-core memtest86 memtest86+ schroot schroot-common && \
   apt-get -y --verbose-versions install ${packages_kicksecure_dep} && \
@@ -955,7 +959,6 @@ RUN \
   tar -C ./usr/lib/ -c -v -f - x86_64-linux-gnu/ | tar -C /usr/lib/ -x -p -v -f - && \
   cd /root && \
   rm -r -v ephemeral && \
-  rm -r -v /usr/share/man/[^m]*/ && \
   apt-get install -y --verbose-versions kicksecure-cli-vm && \
   mkdir -p -v /usr/local/src/attic/etc/apt/sources.list.d /usr/local/src/attic/etc/profile.d && \
   mv -v /etc/apt/sources.list.d/debian.list /usr/local/src/attic/etc/apt/sources.list.d/debian.list && \
@@ -967,6 +970,7 @@ RUN \
   apt-get -y clean && \
   apt-get -y autoclean && \
   apt-get -y autoremove && \
+  rm -r -v /usr/share/man/[^m]*/ && \
   (rm -v /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- /etc/subgid- /etc/subuid- || true) && \
   rm -v /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old /var/lib/dpkg/statoverride-old && \
   unset PYTHONDONTWRITEBYTECODE && \
@@ -998,16 +1002,176 @@ RUN \
 FROM devuan-4 AS devuan-4-hardenedmalloc
 
 COPY --from=devuan-4-kicksecure /usr/lib/libhardened_malloc.so/ /usr/lib/libhardened_malloc.so/
+COPY --from=devuan-4 / /root/initrd/
 
 ENV SHELL /bin/bash-static
 
 RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 022 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export TMP=/tmp && \
+  export TEMP="${TMP}" && \
+  export TMPDIR="${TMP}" && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  exec </dev/null && \
   echo /usr/lib/libhardened_malloc.so/libhardened_malloc.so |tee -a /etc/ld.so.preload && \
   chmod --verbose go+r /etc/ld.so.preload && \
   apt-mark hold libgpgme11 && \
   echo libgpgme11 hold | dpkg --set-selections && \
+  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr qemu-system-x86 && \
+  cd /root/initrd && \
+  mkdir -p dev proc sys && \
+  chmod go+rx sys proc dev . && \
+  tar -C /lib/ -cf - modules |tar -C ./lib -xpf - && \
+  : > etc/modules && \
+  for i in 8021q ac async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm bridge button ccp cdrom cec crc32c_generic crc_t10dif crct10dif_common crct10dif_generic cryptd crypto_simd dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_ttm_helper drm_vram_helper e1000 ecryptfs efi_pstore evdev fat floppy garp glue_helper i2c_piix4 irqbypass joydev kvm kvm_amd libaes libata libcrc32c linear llc loop md_mod mrp multipath nls_ascii nls_cp437 parport parport_pc pcspkr pktcdvd ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod sd_mod serio_raw sg sr_mod stp t10_pi ttm tun vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 xor; do echo $i >> etc/modules; done && \
+  cd /root && \
+  mkdir -v ephemeral && \
+  cd ephemeral && \
+  cat $(ls -1trd /boot/initrd* | tail -n 1) | cpio -imd && \
+  (set +x; cp -pv kernel/x86/microcode/GenuineIntel.bin /root/initrd/boot/ || true; true) && \
+  cd /root && \
+  rm -rv ephemeral && \
+  cp -pv /boot/vmlinuz* /boot/System.map* /boot/config* /root/initrd/boot/ && \
+  cd initrd && \
+  echo localhost > etc/hostname && \
+  echo nameserver 1.1.1.1 > etc/resolv.conf && \
+  ln -s sbin/init init && \
+  sed -i -e "/^root/s/:[^:]*:/::/" etc/shadow && \
+  initrd_file=$(ls -1dtr /boot/initrd* | tail -n 1) && \
+  find . -print0 | cpio -0 -H newc -o |gzip -9v > "${initrd_file}" && \
+  cp -pv "${initrd_file}" /root/initrd/boot/ && \
+  unset initrd_file && \
+  mv -v sbin/init sbin/init.orig && \
+  rm -v init && \
+  rm -rf usr/share/locale usr/share/doc usr/share/man usr/lib/cni usr/lib/git-core var/lib/apt/lists usr/share/zsh/functions usr/bin/podman usr/bin/git-lfs usr/bin/containers-storage && \
+  echo '#!/bin/bash-static' > init && \
+  echo 'set -x' >> init && \
+  echo 'set -e' >> init && \
+  echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand' >> init && \
+  echo 'umask 02' >> init && \
+  echo 'cd /root' >> init && \
+  echo 'mount -v -t proc proc /proc' >> init && \
+  echo 'mount -v -t sysfs sysfs /sys' >> init && \
+  echo 'mount -v -t devtmpfs devtmpfs /dev' >> init && \
+  echo '(set +x; grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | xargs -n 1 /sbin/modprobe || true; true) || true' >> init && \
+  echo '(set +x; grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | xargs -n 1 /sbin/modprobe || true; true) || true' >> init && \
+  echo '/etc/init.d/eudev start' >> init && \
+  echo 'udevadm settle' >> init && \
+  echo 'udevadm trigger' >> init && \
+  echo 'lsblk' >> init && \
+  echo 'sync' >> init && \
+  echo 'ls /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
+  echo '(for i in \
+      n 1 "" +768m EF00 \
+      n 2 "" +32m EF02 \
+      n 3 "" +32m 8301 \
+      n 4 "" +32m 8301 \
+      n 5 "" +32m 8301 \
+      n 6 "" +2g 8301 \
+      n 7 "" +4g 8301 \
+      n 8 "" +32g 8309 \
+      c 1 EFI \
+      c 2 BIOSGRUB \
+      c 3 IDEN \
+      c 4 CONF \
+      c 5 ENTROPY \
+      c 6 CACHE \
+      c 7 VOLATILE \
+      c 8 DATA \
+      x a 1 2 "" \
+      p w y; \
+    do echo "$i"; done) | gdisk /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
+  echo 'sync' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'udevadm settle' >> init && \
+  echo 'udevadm trigger' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'sync' >> init && \
+  echo '/etc/init.d/eudev stop' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'sync' >> init && \
+  echo '/etc/init.d/eudev start' >> init && \
+  echo 'sync' >> init && \
+  echo 'udevadm settle' >> init && \
+  echo 'udevadm trigger' >> init && \
+  echo 'sync' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'find /dev/disk -ls' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'ls /dev/disk/by-partlabel/EFI' >> init && \
+  echo 'mkfs.fat -F 32 -n EFI --invariant -v /dev/disk/by-partlabel/EFI' >> init && \
+  echo 'mkdir -v /mnt/EFI' >> init && \
+  echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
+  echo 'mkdir -v /mnt/EFI/syslinux' >> init && \
+  echo 'umount -v /mnt/EFI' >> init && \
+  echo 'syslinux --install --stupid --raid --directory /syslinux /dev/disk/by-partlabel/EFI' >> init && \
+  echo 'sync' >> init && \
+  echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
+  echo 'ls -la /mnt/EFI/syslinux' >> init && \
+  echo 'umount -v /mnt/EFI' >> init && \
+  echo 'find /dev/disk -ls' >> init && \
+  echo 'sync' >> init && \
+  echo 'dd if=/usr/lib/syslinux/mbr/gptmbr.bin of=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00001 bs=440 count=1 conv=notrunc' >> init && \
+  echo 'sync' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'sync' >> init && \
+  echo 'udevadm settle' >> init && \
+  echo 'udevadm trigger' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'sync' >> init && \
+  echo '/etc/init.d/eudev stop' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'sync' >> init && \
+  echo '/etc/init.d/eudev start' >> init && \
+  echo 'sync' >> init && \
+  echo 'udevadm settle' >> init && \
+  echo 'udevadm trigger' >> init && \
+  echo 'sync' >> init && \
+  echo 'sleep 2' >> init && \
+  echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
+  echo 'cp -nav /usr/lib/syslinux/modules/bios/* /mnt/EFI/syslinux/' >> init && \
+  echo 'ls -la /mnt/EFI/syslinux/ldlinux.c32' >> init && \
+  echo 'blkid -s PTTYPE -o value /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
+  echo 'ls -la /boot' >> init && \
+  echo 'cp -p /boot/xen* /boot/vmlinuz* /boot/initrd* /boot/System.map* /boot/config* /boot/GenuineIntel.bin /mnt/EFI/' >> init && \
+  echo 'sync' >> init && \
+  echo 'cd /mnt/EFI/syslinux' >> init && \
+  echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Linux boot menu" "MENU AUTOBOOT Xen/Linux boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
+  echo 'echo "  MENU LABEL Xen/Linux" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen-4.14-amd64.gz dom0_mem=3172M ucode=scan --- /vmlinuz-5.10.0-21-amd64 init=/init root=tmpfs nomodeset console=hvc0 console=tty0 console=ttyS0 biosdevname=0 earlyprintk=vga,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none --- /initrd.img-5.10.0-21-amd64" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
+  echo 'cat syslinux.cfg' >> init && \
+  echo 'sync' >> init && \
+  echo 'cd /root' >> init && \
+  echo 'umount -v /mnt/EFI' >> init && \
+  echo 'sync' >> init && \
+  echo 'udevadm settle' >> init && \
+  echo 'udevadm trigger' >> init && \
+  echo 'sync' >> init && \
+  echo '/etc/init.d/eudev stop' >> init && \
+  echo 'sync' >> init && \
+  echo 'umount /sys' >> init && \
+  echo 'umount /dev' >> init && \
+  echo 'for i in s s u s o o; do echo $i > /proc/sysrq-trigger; sleep 4; sync; done' >> init && \
+  chmod 755 init && \
+    (set +x; mv -v sbin/init sbin/init.orig2 || true; ls -lad init sbin/init*; true) && \
+  ln init sbin/init && \
+  find . -print0 | cpio -0 -H newc -o |gzip -9v > ../initrd.gz && \
+  cd /root && \
+  rm -r initrd && \
+  qemu-img create -f qcow2 /root/disk.qcow2 48G && \
+  qemu-system-x86_64 -m 4g -kernel /boot/vmlinuz-5.10.0-*-amd64 -initrd initrd.gz -drive file=disk.qcow2,format=qcow2 -append "console=ttyS0 init=/init" -nographic && \
+  rm -v initrd.gz && \
   true
-
-LABEL vendor=intensity
-LABEL image=linux-image
-LABEL version=devuan-4-hardenedmalloc
