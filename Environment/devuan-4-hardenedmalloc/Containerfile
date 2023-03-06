@@ -472,11 +472,13 @@ RUN \
   chsh --shell /bin/bash-static root && \
   sed -i -e "/^[2-6]:23:respawn:.sbin.getty [0-9][0-9]* tty[2-6]$/s/^/#/" -e "/^#T0:23:respawn:.sbin.getty -L ttyS0/s/^#//" /etc/inittab && \
   mkdir /etc/boot.d && \
-  (echo '#!/bin/bash-static'; echo "if test -d /usr/local/etc/boot.d; then run-parts /usr/local/etc/boot.d; fi") >> /etc/boot.d/00local && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "if test -d /usr/local/etc/boot.d; then run-parts /usr/local/etc/boot.d; fi") >> /etc/boot.d/00local && \
   chmod u+rx /etc/boot.d/00local && \
   mkdir /usr/local/etc/boot.d && \
-  (echo '#!/bin/bash-static'; echo "touch /root/local-done; sleep 3") >> /usr/local/etc/boot.d/00local && \
-  (echo '#!/bin/bash-static'; echo "rm -v /init; sleep 3") >> /usr/local/etc/boot.d/04rminit && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "rm -v /init") >> /usr/local/etc/boot.d/00rminit && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "mount -o remount,nodev,nosuid,sync,noatime,nodiratime,dirsync,loud,nouser /") >> /usr/local/etc/boot.d/01remountroot && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "apt-mark hold libgpgme11 && echo libgpgme11 hold | dpkg --set-selections") >> /usr/local/etc/boot.d/02holdgpg1 && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; sleep 6; exec </dev/null; exec >/dev/null; exec 2>/dev/null; ((if ping -c4 google.com; then killall -9 dhclient; fi) &)') >> /usr/local/etc/boot.d/03basicdhcpnet && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
@@ -489,7 +491,8 @@ RUN \
   mkdir /stand && \
   chmod -v ugo+rx /stand && \
   /bin/busybox --list | while read fn; do ln /bin/busybox /stand/"${fn}"; done && \
-  ln /usr/bin/dar_static /sbin/e2fsck.static /usr/bin/gpgv-static /bin/zsh-static /stand && \
+  ln -v /usr/bin/dar_static /sbin/e2fsck.static /usr/bin/gpgv-static /bin/zsh-static /bin/bash-static /bin/lksh /usr/lib/klibc/bin/fstype /usr/lib/klibc/bin/ipconfig /usr/lib/klibc/bin/minips /usr/lib/klibc/bin/mksh /usr/lib/klibc/bin/nfsmount /usr/bin/catatonit /usr/bin/cdebootstrap-static /usr/bin/saveme /usr/bin/statfs /usr/bin/statvsfstat /usr/bin/tini-static /stand && \
+  ln -v /stand/gpgv-static /stand/gpgv && ln -v /stand/dar_static /stand/dar && ln -v /stand/e2fsck.static /stand/e2fsck && ln -v /stand/zsh-static /stand/zsh && ln -v /stand/bash-static /stand/bash && ln -v /stand/cdebootstrap-static /stand/cdebootstrap && \
   passwd --delete root && \
   rm -v /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- && \
   rm -v /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old && \
@@ -986,6 +989,7 @@ RUN \
   mv -v /etc/apt/sources.list.d/debian.list /usr/local/src/attic/etc/apt/sources.list.d/debian.list && \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
+  sed -i -e '/Defaults.*secure_path/s,secure_path="[^"]*",secure_path="/sbin:/bin:/usr/sbin:/usr/bin",' /etc/sudoers && \
   mv -v /etc/profile.d/30_setup.sh /usr/local/src/attic/etc/profile.d/ && \
   find /usr/lib /usr/share -maxdepth 24 -name "*.pyc" -ls -delete && \
   find /usr/lib /usr/share -maxdepth 24 -name __pycache__ -type d -print | xargs rmdir -v -- && \
@@ -1029,6 +1033,7 @@ COPY --from=devuan-4 / /root/initrd/
 ENV SHELL /bin/bash-static
 
 RUN \
+  module_list=" 8021q ac aesni_intel async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm bridge button ccp cdrom cec crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecryptfs efi_pstore encrypted_keys evdev ext2 ext3 ext4 fat floppy garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper i2c_piix4 ide_cd_mod ide_core ide_gd_mod ide_pci_generic intel_rapl_common intel_rapl_msr ipv6 irqbypass jbd2 joydev kvm kvm_amd libaes libata libcrc32c linear llc loop mbcache md_mod mrp multipath nls_ascii nls_cp437 parport parport_pc pata_acpi pcspkr piix pktcdvd ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod sd_mod serio_raw sg sr_mod stp t10_pi tpm trusted ttm tun vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 xor " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
   set -x && \
   set -e && \
@@ -1051,13 +1056,12 @@ RUN \
   echo libgpgme11 hold | dpkg --set-selections && \
   apt-get -y install --verbose-versions linux-image-amd64 efibootmgr qemu-system-x86 && \
   cd /root/initrd && \
-  tar -C /usr/lib/ -cf - libhardened_malloc.so/ | tar -C ./usr/lib/ -xpkvvf - && \
-  echo /usr/lib/libhardened_malloc.so/libhardened_malloc.so |tee -a etc/ld.so.preload && \
+  tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
   mkdir -p -v dev proc sys run && \
   chmod --verbose go+rx sys proc dev run . && \
-  tar -C /lib/ -cf - modules |tar -C ./lib -xpf - && \
+  tar -C /lib/ -c -f - modules |tar -C ./lib -x -p --warning=no-timestamp -f - && \
   : > etc/modules && \
-  echo 8021q ac aesni_intel async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm bridge button ccp cdrom cec crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecryptfs efi_pstore encrypted_keys evdev fat floppy garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper i2c_piix4 ide_cd_mod ide_core ide_gd_mod ide_pci_generic intel_rapl_common intel_rapl_msr ipv6 irqbypass joydev kvm kvm_amd libaes libata libcrc32c linear llc loop md_mod mrp multipath nls_ascii nls_cp437 parport parport_pc pata_acpi pcspkr piix pktcdvd ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod sd_mod serio_raw sg sr_mod stp t10_pi tpm trusted ttm tun vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 xor |tr " " '\n'|sort |uniq >> etc/modules && \
+  echo ${module_list} |tr " " '\n'|sort |uniq >> etc/modules && \
   cd /root && \
   mkdir -v ephemeral && \
   cd ephemeral && \
@@ -1070,33 +1074,111 @@ RUN \
   echo localhost > etc/hostname && \
   echo nameserver 1.1.1.1 > etc/resolv.conf && \
   ( echo '#!/bin/bash-static' && \
+    echo "set -x" && \
     echo "umask 022" && \
     echo "export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand" && \
+    echo "export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/opt/bootstrap/lib/x86_64-linux-gnu" && \
     echo "mount -v -t proc proc /proc" && \
     echo "mount -v -t sysfs sysfs /sys" && \
     echo "mount -v -t devtmpfs devtmpfs /dev" && \
     echo "mount -v -t tmpfs tmpfs /run" && \
-    echo 'grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | xargs -n 1 /sbin/modprobe \{\} \;' && \
-    echo 'grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | while read module; do modprobe "${module}" || true; done' && \
+    echo "chmod --verbose go-w /run/. /dev/. /." && \
+    echo 'hostname $(cat /etc/hostname)' && \
+    echo "rmdir -v /usr" && \
+    echo "rmdir -v /var" && \
+    echo "mkdir -v /usr" && \
+    echo "mv -v /opt/bootstrap/bin /usr/bin" && \
+    echo "mv -v /opt/bootstrap/sbin /usr/sbin" && \
+    echo "hash -r" && \
+    echo '/sbin/modprobe loop max_loop=256' && \
+    echo 'grep "^[^#]" /etc/modules | gawk '\''{print $1}'\'' | xargs -n 1 /sbin/modprobe' && \
+    echo 'grep "^[^#]" /etc/modules | gawk '\''{print $1}'\'' | while read module; do modprobe "${module}" || true; done' && \
+    echo "/etc/init.d/kmod start" && \
+    echo "sleep 2" && \
+    echo "sync" && \
+    echo "/etc/init.d/eudev start" && \
+    echo "sleep 2" && \
+    echo "sync" && \
+    echo "udevadm settle" && \
+    echo "sleep 2" && \
+    echo "udevadm trigger" && \
+    echo "sync" && \
+    echo "sleep 2" && \
+    echo "/etc/init.d/eudev stop" && \
+    echo "sync" && \
+    echo "sleep 2" && \
     echo "mkdir /new" && \
-    echo "mount -v -t tmpfs -o nosuid,sync,noatime,nodiratime,dirsync,loud,nouser tmpfs /new" && \
-    echo "tar -c --one-file-system -f - / | tar -C /new/ -xpkf -" && \
+    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser tmpfs /new" && \
+    echo "chmod --verbose go-w /new/." && \
+    echo "mkdir -v -p /mnt/CACHE" && \
+    echo "mount -v -t ext4 -o debug,ro /dev/disk/by-partlabel/CACHE /mnt/CACHE" && \
+    echo "zstd -d -v -v --long=29 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
+    echo "mv -v /usr/bin /opt/bootstrap/bin" && \
+    echo "mv -v /usr/sbin /opt/bootstrap/sbin" && \
+    echo "tar -C /opt/bootstrap/ -c -v -f - bin sbin lib | tar -C /usr/ -x -p -k -v -v --warning=no-timestamp -f -" && \
+    echo "umount -v /mnt/CACHE" && \
+    echo "rmdir -v /mnt/CACHE" && \
+    echo "rm -r -v /opt/bootstrap/bin /opt/bootstrap/sbin /opt/bootstrap/lib" && \
+    echo "rmdir -v /opt/bootstrap" && \
+    echo "unset LD_LIBRARY_PATH" && \
+    echo "tar -c --one-file-system -f - / | tar -C /new/ -x -p -k --warning=no-timestamp -f -" && \
+    echo "echo /usr/lib/libhardened_malloc.so/libhardened_malloc.so |tee -a /new/etc/ld.so.preload" && \
     echo "rmdir -v /new/new" && \
     echo "rm -rf /usr/share/locale /usr/share/doc /usr/share/man /usr/lib/cni /usr/lib/git-core /var/lib/apt/lists /usr/share/zsh/functions /usr/bin/podman /usr/bin/git-lfs /usr/bin/containers-storage" && \
     echo "rm -v /new/init" && \
     echo "echo "\''#!/bin/bash-static'\'" > /new/init" && \
     echo "chmod --verbose u+rx /new/init" && \
     echo "chmod --verbose go-rwx /new/init" && \
+    echo "echo set -x >>/new/init" && \
     echo "echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand >>/new/init" && \
-    echo "echo touch /root/init-pivot >>/new/init" && \
-    echo "echo exec /sbin/init >>/new/init" && \
+    echo "echo exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand SHELL=/bin/bash-static /sbin/init >>/new/init" && \
     echo "chmod --verbose go-rwx /sbin/init" && \
-    echo "exec /sbin/switch_root /new /init" \
+    echo "cd /" && \
+    echo "umask 077" && \
+    echo "exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand SHELL=/bin/bash-static /sbin/switch_root /new /init" \
   ) > init && \
   chmod --verbose u+rx init && \
   chmod --verbose go-rwx init && \
+  mkdir -p -v opt/bootstrap/lib/x86_64-linux-gnu/ && \
+  cd /root/initrd/usr/lib/x86_64-linux-gnu && \
+  tar -c --remove-files -v -f - $(ls -1d libpcre* libcrypto* libsigsegv* libmpfr* libgmp* libmount* libblkid* libacl* libkmod* libattr* libacl* liblz4*) | tar -C /root/initrd/opt/bootstrap/lib/x86_64-linux-gnu/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  cd /root/initrd/usr && \
+  tar -c --remove-files -v -f - bin/xargs bin/gawk sbin/pktsetup bin/zstd | tar -C /root/initrd/opt/bootstrap/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  cd /root/initrd && \
+  kver=$(cd /lib/modules/ && ls -1d 5* | tail -n 1) && \
+  mkdir -v -p /root/overlay/lib/modules/"${kver}"/kernel && \
+  cd lib/modules/"${kver}"/kernel && \
+  tar -c --remove-files -v -f - $(cat /root/initrd/etc/modules | awk '{print $1}' | sort | uniq | tr _- .. | while read mod; do find . -type f -name "*.ko" -print|grep "/${mod}\.ko\$"; done) | tar -C /root/overlay/lib/modules/"${kver}"/kernel/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  cd .. && \
+  mv -v ./kernel/ ./kernel.overlay/ && \
+  mv -v /root/overlay/lib/modules/"${kver}"/kernel/ ./kernel/ && \
+  mv -v ./kernel.overlay /root/overlay/lib/modules/"${kver}"/kernel/ && \
+  unset kver && \
+  cd /root/initrd && \
+  mv -v usr /root/overlay/usr && \
+  mv -v var /root/overlay/var && \
+  mkdir -p -v usr var && \
+  chmod --verbose 755 usr var && \
+  rm -vf /root/initrd/etc/.pwd.lock && \
   initrd_file=$(ls -1dtr /boot/initrd* | tail -n 1) && \
+  chmod --verbose go-w /root/initrd/etc/resolv.conf && \
+  ls -lasi --full-time /root/initrd/dev/ && \
+  mount && \
+  chmod --verbose go-w /root/initrd/dev/. && \
+  mv -v /root/initrd/boot/ /root/boot/ && \
+  mkdir -p -v /root/initrd/boot/ && \
+  chmod --verbose 755 /root/initrd/boot/ && \
   find . -print0 | cpio -0 -H newc -o |gzip -9v > "${initrd_file}" && \
+  rmdir -v /root/initrd/boot/ && \
+  mv -v /root/boot/ /root/initrd/boot/ && \
+  tar -C /root/overlay -cf - usr var lib | zstd --long=29 -v -v -16 > /root/initrd/boot/overlay.gtar.zst && \
+  rmdir -v usr var && \
+  mv -v /root/overlay/usr /root/overlay/var . && \
+  tar -C /root/overlay/lib/ -c -v -f - modules/ | tar -C /root/initrd/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  rm -v -r /root/overlay/lib && \
+  rmdir -v /root/overlay && \
+  tar -C /root/initrd/opt/bootstrap/ -c --remove-files -v -f - bin sbin lib | tar -C usr/ -x -p -v -v --warning=no-timestamp -f - && \
+  rmdir -v /root/initrd/opt/bootstrap && \
   cp -pv "${initrd_file}" /root/initrd/boot/ && \
   unset initrd_file && \
   mv -v sbin/init sbin/init.orig && \
@@ -1111,8 +1193,10 @@ RUN \
   echo 'mount -v -t proc proc /proc' >> init && \
   echo 'mount -v -t sysfs sysfs /sys' >> init && \
   echo 'mount -v -t devtmpfs devtmpfs /dev' >> init && \
+  echo '/sbin/modprobe loop max_loop=256' >> init && \
   echo '(set +e; grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | xargs -n 1 /sbin/modprobe || true; true) || true' >> init && \
   echo '(set +e; grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | while read module; do modprobe "${module}" || true; done; true) || true' >> init && \
+  echo '/etc/init.d/kmod start' >> init && \
   echo '/etc/init.d/eudev start' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
@@ -1141,6 +1225,7 @@ RUN \
     do echo "$i"; done) | gdisk /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
   echo 'sync' >> init && \
   echo 'sleep 2' >> init && \
+  echo 'for i in "-s" "-d" ""; do partprobe ${i}; sleep 2; sync; done' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
   echo 'sleep 2' >> init && \
@@ -1156,6 +1241,13 @@ RUN \
   echo 'sleep 2' >> init && \
   echo 'find /dev/disk -ls' >> init && \
   echo 'sleep 2' >> init && \
+  echo 'ls /dev/disk/by-partlabel/CACHE' >> init && \
+  echo 'mkfs.ext4 -e continue -j -L CACHE -m 8 -M /mnt/CACHE -v /dev/disk/by-partlabel/CACHE' >> init && \
+  echo 'mkdir -v /mnt/CACHE' >> init && \
+  echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/CACHE /mnt/CACHE' >> init && \
+  echo 'mkdir -v /mnt/CACHE/overlay' >> init && \
+  echo 'cp -p -v /boot/overlay*tar.zst /mnt/CACHE/overlay/' >> init && \
+  echo 'umount -v /mnt/CACHE' >> init && \
   echo 'ls /dev/disk/by-partlabel/EFI' >> init && \
   echo 'mkfs.fat -F 32 -n EFI --invariant -v /dev/disk/by-partlabel/EFI' >> init && \
   echo 'mkdir -v /mnt/EFI' >> init && \
@@ -1191,13 +1283,16 @@ RUN \
   echo 'ls -la /mnt/EFI/syslinux/ldlinux.c32' >> init && \
   echo 'blkid -s PTTYPE -o value /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
   echo 'ls -la /boot' >> init && \
-  echo 'cp -p -v /boot/xen* /boot/vmlinuz* /boot/initrd* /boot/System.map* /boot/config* /boot/GenuineIntel.bin /mnt/EFI/' >> init && \
+  echo 'mkdir -v -p /mnt/EFI/xen /mnt/EFI/linux /mnt/EFI/kernel/x86/microcode/' >> init && \
+  echo 'cp -p -v /boot/xen* /mnt/EFI/xen/' >> init && \
+  echo 'cp -p -v /boot/vmlinuz* /boot/initrd* /boot/System.map* /boot/config* /mnt/EFI/linux/' >> init && \
+  echo 'cp -p -v /boot/GenuineIntel.bin /mnt/EFI/kernel/x86/microcode/' >> init && \
   echo 'sync' >> init && \
   echo 'cd /mnt/EFI/syslinux' >> init && \
-  echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Linux boot menu" "MENU AUTOBOOT Xen/Linux boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
+  echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen-4.14-amd64.gz dom0_mem=4096M ucode=scan --- /vmlinuz-5.10.0-21-amd64 init=/init root=tmpfs nomodeset console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=vga,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none --- /initrd.img-5.10.0-21-amd64" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=4G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 --- /linux/vmlinuz-5.10.0-21-amd64 init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=vga,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug --- /linux/initrd.img-5.10.0-21-amd64" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
   echo 'cat syslinux.cfg' >> init && \
