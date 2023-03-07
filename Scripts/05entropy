@@ -1,0 +1,150 @@
+#!/bin/bash
+
+umask 077
+swapoff -a
+echo Begin entropy evolution >/dev/console
+/etc/init.d/haveged start
+/etc/init.d/rng-tools-debian start
+/etc/init.d/randomsound start
+if ps axuwww |grep -q "/[s]bin/[j]itterentropy" >/dev/null 2>/dev/null
+then
+  true
+else
+  /etc/init.d/jitterentropy-rngd start
+fi
+
+mv /etc/ld.so.preload /usr/local/src/attic/etc/
+
+umount /dev/shm/tmp >/dev/null 2>/dev/null || true
+mkdir -p -v /dev/shm/tmp
+chmod go-rwx /dev/shm/tmp/.
+mount -t tmpfs tmpfs /dev/shm/tmp
+chmod go-rwx /dev/shm/tmp/.
+export TMP=/dev/shm/tmp
+export TEMP="${TMP}"
+export TMPDIR="${TMP}"
+export TERM=dumb
+export TTY=/dev/null
+ulimit -d unlimited
+ulimit -v unlimited
+export LANG=C
+export HOME="${TMP}"
+export GNUPGHOME="${TMP}"
+
+gpg1 </dev/null >/dev/null 2>/dev/null
+
+function transform () {
+  age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null | gpg1 -c --passphrase-file=/dev/urandom 2>/dev/null | openssl enc -camellia-256-cfb8 -kfile /dev/urandom -base64 -e 2>/dev/null | openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null |
+  /usr/bin/time -v -- pee sha512sum b2sum cksum md5sum md5sum.textutils sha1sum sha256sum tigerdeep whirlpooldeep gost12sum gostsum xxh128sum "nettle-hash --algorithm=streebog512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=sha3_512" "openssl shake256" "rhash -a --verbose -" "edonr512-hash -" "gost12-512-hash -" "has160-hash -" "whirlpool-hash -" "openssl shake256" 2>&1 |
+  /usr/bin/time -v -- pee sha512sum b2sum cksum md5sum md5sum.textutils sha1sum sha256sum tigerdeep whirlpooldeep gost12sum gostsum xxh128sum "nettle-hash --algorithm=streebog512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=sha3_512" "openssl shake256" "rhash -a --verbose -" "edonr512-hash -" "gost12-512-hash -" "has160-hash -" "whirlpool-hash -" "openssl shake256" 2>&1 |
+  /usr/bin/time -v -- pee cat gzip bzip2 xz zstd lzip brotli od lz4 "od -x |cut -d' ' -f2- |sort" lzop 2>&1 | cat -v |
+  /usr/bin/time -v -- pee "openssl enc -aes-256-ctr -kfile /dev/urandom -base64 -v -debug -e" "openssl enc -aria-256-ofb -kfile /dev/urandom -base64 -v -debug -e" "openssl enc -camellia-256-cfb8 -kfile /dev/urandom -base64 -v -debug -e" "openssl enc -cast5-ofb -kfile /dev/urandom -v -debug -e" 2>&1 | gpg1 -c --passphrase-file=/dev/urandom 2>/dev/null | age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null | openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null | ccrypt -k /dev/urandom 2>/dev/null | openssl enc -camellia-256-cfb8 -kfile /dev/urandom -base64 -e 2>/dev/null
+}
+
+function ingest_sys () {
+  (vmstat -d -t -w; time sync; vmstat -D -t -w; vmstat -s -t -w; vmstat -a -t -w; env; ipcs -a; dd if=/dev/urandom bs=8192 count=1; sysctl -a; tar -c --one-file-system -f - /dev /sys 2>&1 | gzip -1qf | head -c 1048476; tar -c --one-file-system -f - /etc /var | head -c 16777216 | gzip -1qf | openssl enc -aes-256-ctr -kfile /dev/urandom -e -base64 2>/dev/null; netstat -vWn --numeric-hosts --numeric-ports --numeric-users --extend --timers --program --all; time sync; lsblk -O; hostname; ifconfig -a; ip a; dpkg -l; date +%s.%N; mpstat -A; iostat  -x -t; arp -a -n; netstat -rn; time ps axufwwwwwwwwe; /usr/bin/time -v curl -v https://etherscan.io; lsusb -vv; lspci -vv; lscpu; lshw; lsdev; lsmod; lsscsi; dmesg; vmstat -s; iostat; mpstat; vmstat -f; uptime; vmstat; lsof; lsof -n -i; /usr/bin/time -v curl -v 'https://www.random.org/cgi-bin/randbyte?nbytes=4096&format=h'; find /dev /sys /proc -ls; find /bin /etc /var -xdev -ls; ps axfuwwwwwe) 2>&1 | openssl enc -aes-256-ctr -kfile /dev/urandom -e -base64 2>/dev/null | head -c 4194304 | transform | base64 | transform
+}
+
+function io_blockdev () {
+  ent_parts=$(ls -1d /dev/disk/by-partlabel/ENTROPY*)
+  ingest_sys | transform >> "${TMP}"/pool
+  cat "${TMP}"/pool | transform | dd of="${TMP}"/pool. bs=104876 conv=notrunc 2>/dev/null
+  mv "${TMP}"/pool "${TMP}"/pool..
+  mv "${TMP}"/pool. "${TMP}"/pool
+  mv "${TMP}"/pool.. "${TMP}"/pool.
+
+  for part in ${ent_parts}
+  do
+    dd if=/dev/zero of="${TMP}"/luks.header bs=1048576 count=0 seek=4 2>/dev/null
+    (dd if=/dev/urandom bs=8192 count=1 2>/dev/null; head -c 16384 < "${TMP}"/pool) | sha512sum | awk '{print $1}' > "${TMP}"/luks.pass
+    cryptsetup luksFormat --type=luks1 --batch-mode=yes --verbose --cipher=aes-xts-plain64 --hash=sha256 --key-size=512 --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass "${part}"
+    cryptsetup luksOpen --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass --readonly "${part}" ephemeral
+    (dd if=/dev/urandom bs=3172 count=1 2>/dev/null; cat "${TMP}"/pool; dd if=/dev/mapper/ephemeral bs=1048576 2>/dev/null) | openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null | transform | dd of="${TMP}"/pool. bs=1048576 conv=notrunc 2>/dev/null
+    mv "${TMP}"/pool "${TMP}"/pool..
+    mv "${TMP}"/pool. "${TMP}"/pool
+    mv "${TMP}"/pool.. "${TMP}"/pool.
+    cryptsetup luksClose ephemeral
+    dd if=/dev/urandom bs=6144 count=1 2>/dev/null >> "${TMP}"/pool
+    cat "${TMP}"/pool | base64 | sha512sum | awk '{print $1}' >> "${TMP}"/input
+    openssl rand -rand "${TMP}"/input -writerand "${TMP}"/output -base64 6144 > "${TMP}"/output2
+    cat "${TMP}"/output "${TMP}"/output2 "${TMP}"/input | transform | dd of=/dev/random bs=4096 2>/dev/null
+    cat "${TMP}"/pool "${TMP}"/output2 "${TMP}"/output "${TMP}"/input | transform | transform | dd of="${TMP}"/pool. bs=1048576 conv=notrunc 2>/dev/null
+    mv "${TMP}"/pool "${TMP}"/pool..
+    mv "${TMP}"/pool. "${TMP}"/pool
+    mv "${TMP}"/pool.. "${TMP}"/pool.
+    dd if=/dev/zero of="${TMP}"/luks.pass bs=4096 conv=notrunc count=1 2>/dev/null
+    dd if=/dev/zero of="${TMP}"/luks.header bs=1048576 conv=notrunc count=4 2>/dev/null
+    dd if=/dev/zero of="${TMP}"/input bs=4096 conv=notrunc count=1 2>/dev/null
+    dd if=/dev/zero of="${TMP}"/output bs=65536 conv=notrunc count=1 2>/dev/null
+    dd if=/dev/zero of="${TMP}"/output2 bs=65536 conv=notrunc count=1 2>/dev/null
+    rm "${TMP}"/luks.pass "${TMP}"/luks.header "${TMP}"/input "${TMP}"/output "${TMP}"/output2
+  done
+
+  cat "${TMP}"/pool | transform | dd of="${TMP}"/pool. bs=1048576 conv=notrunc 2>/dev/null
+  mv "${TMP}"/pool "${TMP}"/pool..
+  mv "${TMP}"/pool. "${TMP}"/pool
+  mv "${TMP}"/pool.. "${TMP}"/pool.
+
+  sync
+
+  for part in ${ent_parts}
+  do
+    dd if=/dev/zero of="${TMP}"/luks.header bs=1048576 count=0 seek=4 2>/dev/null
+    (dd if=/dev/urandom bs=8192 count=1 2>/dev/null; head -c 10240 < "${TMP}"/pool ) | sha512sum | awk '{print $1}' > "${TMP}"/luks.pass
+    cryptsetup luksFormat --type=luks1 --batch-mode=yes --verbose --cipher=aes-xts-plain64 --hash=sha256 --key-size=512 --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass "${part}"
+    cryptsetup luksOpen --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass "${part}" ephemeral
+
+    cat "${TMP}"/pool | base32 | transform | sha512sum | awk '{print $1}' >> "${TMP}"/input
+    cat "${TMP}"/pool | base64 | transform | transform | head -c 8192 >> "${TMP}"/input
+    outsize=$(echo $(lsblk -p -r -b -o SIZE "${part}" | tail -n 1) 4096 / 4096 '*' p | dc)
+    openssl rand -rand "${TMP}"/input "${outsize}" | dd of=/dev/mapper/ephemeral bs=4096 2>/dev/null
+    unset outsize
+
+    cat "${TMP}"/input "${TMP}"/pool | transform | base64 | transform | openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null | head -c 65536 | dd of=/dev/random bs=4096 2>/dev/null
+    cat "${TMP}"/input "${TMP}"/pool "${TMP}"/input | transform | base32 | transform | openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null | dd of="${TMP}"/pool. bs=1048576 conv=notrunc 2>/dev/null
+    mv "${TMP}"/pool "${TMP}"/pool..
+    mv "${TMP}"/pool. "${TMP}"/pool
+    mv "${TMP}"/pool.. "${TMP}"/pool.
+
+    cryptsetup luksClose ephemeral
+    dd if=/dev/urandom bs=5280 count=1 2>/dev/null >> "${TMP}"/pool
+    cat "${TMP}"/pool | transform | dd of="${TMP}"/pool. bs=1048576 conv=notrunc 2>/dev/null
+    mv "${TMP}"/pool "${TMP}"/pool..
+    mv "${TMP}"/pool. "${TMP}"/pool
+    mv "${TMP}"/pool.. "${TMP}"/pool.
+
+    dd if=/dev/zero of="${TMP}"/luks.pass bs=4096 conv=notrunc count=1 2>/dev/null
+    dd if=/dev/zero of="${TMP}"/luks.header bs=1048576 conv=notrunc count=4 2>/dev/null
+    dd if=/dev/zero of="${TMP}"/input bs=4096 conv=notrunc count=1 2>/dev/null
+    rm "${TMP}"/luks.pass "${TMP}"/luks.header "${TMP}"/input
+  done
+  sync
+}
+
+function cleanup () {
+  cd /
+  dd if=/dev/zero of="${TMP}"/pool bs=1048576 conv=notrunc count=4 2>/dev/null
+  dd if=/dev/zero of="${TMP}"/pool. bs=1048576 conv=notrunc count=4 2>/dev/null
+  rm -f "${TMP}"/pool "${TMP}"/pool. "${TMP}"/input "${TMP}"/output "${TMP}"/output2 "${TMP}"/luks.pass "${TMP}"/luks.header
+  unset TMPDIR
+  unset TEMP
+  umount "${TMP}"
+  TMP=/tmp rmdir "${TMP}"
+  unset TMP
+
+  /etc/init.d/jitterentropy-rngd stop
+  /etc/init.d/haveged stop
+  /etc/init.d/rng-tools-debian stop
+  /etc/init.d/randomsound stop
+
+  mv /usr/local/src/attic/etc/ld.so.preload /etc/
+}
+
+ingest_sys | transform >> "${TMP}"/pool
+echo Entropy device pass 1/2 >/dev/console
+io_blockdev
+ingest_sys | base64 | transform >> "${TMP}"/pool
+echo Entropy device pass 2/2 >/dev/console
+io_blockdev
+cleanup
+echo End entropy evolution >/dev/console
