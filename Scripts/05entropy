@@ -42,7 +42,7 @@ function transform () {
 }
 
 function ingest_sys () {
-  (vmstat -d -t -w; time sync; vmstat -D -t -w; vmstat -s -t -w; vmstat -a -t -w; env; ipcs -a; dd if=/dev/urandom bs=8192 count=1; sysctl -a; tar -c --one-file-system -f - /dev /sys 2>&1 | gzip -1qf | head -c 1048476; tar -c --one-file-system -f - /etc /var | head -c 16777216 | gzip -1qf | openssl enc -aes-256-ctr -kfile /dev/urandom -e -base64 2>/dev/null; netstat -vWn --numeric-hosts --numeric-ports --numeric-users --extend --timers --program --all; time sync; lsblk -O; hostname; ifconfig -a; ip a; dpkg -l; date +%s.%N; mpstat -A; iostat  -x -t; arp -a -n; netstat -rn; time ps axufwwwwwwwwe; /usr/bin/time -v curl -v https://etherscan.io; lsusb -vv; lspci -vv; lscpu; lshw; lsdev; lsmod; lsscsi; dmesg; vmstat -s; iostat; mpstat; vmstat -f; uptime; vmstat; lsof; lsof -n -i; /usr/bin/time -v curl -v 'https://www.random.org/cgi-bin/randbyte?nbytes=4096&format=h'; find /dev /sys /proc -ls; find /bin /etc /var -xdev -ls; ps axfuwwwwwe) 2>&1 | openssl enc -aes-256-ctr -kfile /dev/urandom -e -base64 2>/dev/null | head -c 4194304 | transform | base64 | transform
+  (vmstat -d -t -w; time sync; vmstat -D -t -w; vmstat -s -t -w; vmstat -a -t -w; env; ipcs -a; dd if=/dev/urandom bs=8192 count=1; sysctl -a; tar -c --one-file-system -f - /dev /sys 2>&1 | gzip -1qf | head -c 1048476; tar -c --one-file-system -f - /etc /var | head -c 16777216 | gzip -1qf | openssl enc -aes-256-ctr -kfile /dev/urandom -e -base64 2>/dev/null; netstat -vWn --numeric-hosts --numeric-ports --numeric-users --extend --timers --program --all; time sync; lsblk -O; hostname; ifconfig -a; ip a; dpkg -l; date +%s.%N; mpstat -A; iostat  -x -t; arp -a -n; netstat -rn; time ps axufwwwwwwwwe; /usr/bin/time -v curl -v https://etherscan.io; lsusb -vv; lspci -vv; lscpu; lshw; lsdev; lsmod; lsscsi; dmesg; vmstat -s; iostat; mpstat; vmstat -f; uptime; vmstat; lsof; lsof -n -i; /usr/bin/time -v curl -v 'https://www.random.org/cgi-bin/randbyte?nbytes=4096&format=h'; find /dev /sys /proc -ls; find /bin /etc /var -xdev -ls; ps axfuwwwwwe) 2>&1 | transform | openssl enc -aes-256-ctr -kfile /dev/urandom -e -base64 2>/dev/null | head -c 8388608 | transform | base64 | transform
 }
 
 function io_blockdev () {
@@ -140,11 +140,11 @@ function cleanup () {
   mv /usr/local/src/attic/etc/ld.so.preload /etc/
 }
 
-ingest_sys | transform >> "${TMP}"/pool
-echo Entropy device pass 1/2 >/dev/console
-io_blockdev
-ingest_sys | base64 | transform >> "${TMP}"/pool
-echo Entropy device pass 2/2 >/dev/console
-io_blockdev
+for iter in 1 2
+do
+  echo Entropy device pass "${iter}"/2 >/dev/console
+  io_blockdev
+done
+
 cleanup
 echo End entropy evolution >/dev/console
