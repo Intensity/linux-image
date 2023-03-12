@@ -243,6 +243,7 @@ RUN \
     rootlesskit \
     rsync \
     rsyncrypto \
+    rsyslog \
     runc \
     rush \
     sdparm \
@@ -461,7 +462,7 @@ RUN \
   rm -v /etc/lsh_host_key.pub /etc/lsh_host_key && \
   apt-get install -y --verbose-versions podman && \
   rm -v /etc/dropbear/dropbear_ecdsa_host_key /etc/dropbear/dropbear_ed25519_host_key /etc/dropbear/dropbear_rsa_host_key && \
-  for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm rsync sysstat uanytun uuidd lsh-server; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
+  for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm rsync sysstat uanytun uuidd lsh-server rsyslog; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get -y --verbose-versions install ${packages_devuan_xen} python3-dotenv python-is-python3 gdb xfsprogs xfsdump && \
   for i in xendomains xen; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   sed -i -e "/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand," -e "/^UMASK/s,022,077," -e "/^LOG_OK_LOGINS/s,no,yes," /etc/login.defs && \
@@ -1531,7 +1532,7 @@ COPY Scripts/05entropy /root/
 ENV SHELL /bin/bash-static
 
 RUN \
-  module_list=" 8021q ac aes_generic aesni_intel async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm bridge button ccp cdrom cec crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore encrypted_keys evdev ext2 ext3 ext4 fat floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper i2c_piix4 ide_cd_mod ide_core ide_gd_mod ide_pci_generic intel_rapl_common intel_rapl_msr ip6_tables ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass jbd2 joydev kvm kvm_amd libaes libata libcrc32c linear llc loop mbcache md_mod mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nls_ascii nls_cp437 parport parport_pc pata_acpi pcspkr piix pktcdvd ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg sr_mod stp t10_pi tap tpm trusted ttm tun vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 x_tables xen-blkback xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xor xt_LOG xt_connmark xt_conntrack xt_helper xt_limit xt_tcpudp xts " && \
+  module_list=" 8021q ac aes_generic aesni_intel af_alg algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm bridge button ccp cdrom cec chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_piix4 ide_cd_mod ide_core ide_gd_mod ide_pci_generic intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg sr_mod stp t10_pi tap tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usbcore usbhid veth vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_tcpudp xts " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin && \
   set -x && \
   set -e && \
