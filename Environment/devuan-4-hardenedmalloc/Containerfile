@@ -514,9 +514,9 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "ldconfig") >> /usr/local/etc/boot.d/02ldconfig && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; sleep 6; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; exec </dev/null; exec >/dev/null; exec 2>/dev/null; ((if ping -c4 google.com || curl https://www.google.com >/dev/null 2>/dev/null; then killall -9 dhclient; fi) &)') >> /usr/local/etc/boot.d/03basicdhcpnet && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo 'for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug') >> /usr/local/etc/boot.d/07umountsomedirs && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo '#for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug') >> /usr/local/etc/boot.d/07umountsomedirs && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/conf && for dev in /dev/disk/by-partlabel/CONF*; do fsck.ext4 -v -p "${dev}"; mount -v -t ext4 -o debug,ro "${dev}" /mnt/conf && tar -C /mnt/conf/conf -c -v -f - . | tar -C /run/conf.d/ -x -p -v -f - && umount -v /mnt/conf; done; rmdir -v /mnt/conf; run-parts /run/conf.d') >> /usr/local/etc/boot.d/19confrun && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/conf && for dev in /dev/disk/by-partlabel/CONF*; do fsck.ext4 -v -p "${dev}"; mount -v -t ext4 -o debug,ro "${dev}" /mnt/conf && tar -C /mnt/conf/conf -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/conf; done; rmdir -v /mnt/conf; run-parts /run/conf.d') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
@@ -1002,8 +1002,8 @@ RUN \
   exec </dev/null && \
   cat /root/artifact/local/etc/permissions >> /usr/local/etc/permissions && \
   rm -v /root/artifact/local/etc/permissions && \
-  tar -C /root/artifact -c -v -f - local |tar -C /usr -x -p -v -f - && \
-  tar -C /root/ -c -v -f - local|tar -C /usr -x -p -v -f - && \
+  tar -C /root/artifact -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
+  tar -C /root/ -c -v -f - local|tar -C /usr -x -p -v --warning=no-timestamp -f - && \
   dpkg -i /root/artifact/deb/podman-compose*.deb /root/artifact/deb/vdmfec*.deb && \
   mv -v /root/artifact/stand/* /stand/ && \
   rm -r /root/artifact/ /root/local/ && \
@@ -1532,7 +1532,7 @@ COPY Scripts/05entropy /root/
 ENV SHELL /bin/bash-static
 
 RUN \
-  module_list=" 8021q ac aes_generic aesni_intel af_alg algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm bridge button ccp cdrom cec chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_piix4 ide_cd_mod ide_core ide_gd_mod ide_pci_generic intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg sr_mod stp t10_pi tap tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usbcore usbhid veth vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_tcpudp xts " && \
+  module_list=" 8021q ac aes_generic aesni_intel af_alg af_packet agpgart algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix bochs_drm br_netfilter bridge button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat fb_sys_fops floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_core i2c_piix4 ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mousedev mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 nls_utf8 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid veth vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_physdev xt_tcpudp xts " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin && \
   set -x && \
   set -e && \
@@ -1909,7 +1909,7 @@ RUN \
   echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/CACHE /mnt/CACHE' >> init && \
   echo 'mkdir -v /mnt/CACHE/overlay' >> init && \
   echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/STAGING /mnt/STAGING' >> init && \
-  echo 'gunzip -v < /dev/disk/by-id/ata-QEMU_HARDDISK_QM00002 | tar -C /mnt/STAGING/ -x -p -v -f -' >> init && \
+  echo 'gunzip -v < /dev/disk/by-id/ata-QEMU_HARDDISK_QM00002 | tar -C /mnt/STAGING/ -x -p -v --warning=no-timestamp -f -' >> init && \
   echo 'cd /mnt/STAGING/mnt/EFI/linux' >> init && \
   echo 'mkdir dir' >> init && \
   echo 'cd dir' >> init && \
@@ -1923,7 +1923,7 @@ RUN \
   echo 'cd ..' >> init && \
   echo 'rm -r dir' >> init && \
   echo 'cd /root' >> init && \
-  echo 'tar -C /mnt/STAGING/ -c -f - . | tar -C / -x -p -v -f -' >> init && \
+  echo 'tar -C /mnt/STAGING/ -c -f - . | tar -C / -x -p -v --warning=no-timestamp -f -' >> init && \
   echo 'umount -v /mnt/STAGING' >> init && \
   echo 'ls -ladsi --full-time /mnt/EFI/linux/initrd* /mnt/CACHE/overlay/overlay*tar*' >> init && \
   echo 'umount -v /mnt/CACHE' >> init && \
