@@ -1,0 +1,175 @@
+--- a/Makefile	2023-02-12 22:16:02.612288645 +0000
++++ b/Makefile	2023-02-13 20:28:22.456100473 +0000
+@@ -472,13 +472,13 @@
+ NOSTDINC_FLAGS :=
+ CFLAGS_MODULE   =
+ AFLAGS_MODULE   =
+ LDFLAGS_MODULE  =
+ CFLAGS_KERNEL	=
+ AFLAGS_KERNEL	=
+-LDFLAGS_vmlinux =
++LDFLAGS_vmlinux = -Wl,--start-group  -ldbus-1 -lutil -lrt -lpthread -Wl,--end-group
+ 
+ # Use USERINCLUDE when you must reference the UAPI directories only.
+ USERINCLUDE    := \
+ 		-I$(srctree)/arch/$(SRCARCH)/include/uapi \
+ 		-I$(objtree)/arch/$(SRCARCH)/include/generated/uapi \
+ 		-I$(srctree)/include/uapi \
+@@ -985,13 +985,13 @@
+ KBUILD_AFLAGS   += $(KAFLAGS)
+ KBUILD_CFLAGS   += $(KCFLAGS)
+ 
+ KBUILD_LDFLAGS_MODULE += --build-id=sha1
+ LDFLAGS_vmlinux += --build-id=sha1
+ 
+-KBUILD_LDFLAGS	+= -z noexecstack
++KBUILD_LDFLAGS	+= -z noexecstack -z muldefs
+ KBUILD_LDFLAGS	+= $(call ld-option,--no-warn-rwx-segments)
+ 
+ ifeq ($(CONFIG_STRIP_ASM_SYMS),y)
+ LDFLAGS_vmlinux	+= $(call ld-option, -X,)
+ endif
+ 
+--- a/arch/um/Makefile	2023-02-12 22:16:03.196288673 +0000
++++ b/arch/um/Makefile	2023-02-13 20:30:38.652106968 +0000
+@@ -114,14 +114,14 @@
+ archheaders:
+ 	$(Q)$(MAKE) -f $(srctree)/Makefile ARCH=$(HEADER_ARCH) asm-generic archheaders
+ 
+ archprepare:
+ 	$(Q)$(MAKE) $(build)=$(HOST_DIR)/um include/generated/user_constants.h
+ 
+-LINK-$(CONFIG_LD_SCRIPT_STATIC) += -static
+-LINK-$(CONFIG_LD_SCRIPT_DYN) += -Wl,-rpath,/lib $(call cc-option, -no-pie)
++LINK-$(CONFIG_LD_SCRIPT_STATIC) += -static -Wl,--start-group  -ldbus-1 -lutil -lrt -lpthread -Wl,--end-group 
++LINK-$(CONFIG_LD_SCRIPT_DYN) += -Wl,-rpath,/lib $(call cc-option, -no-pie)  -Wl,--start-group  -ldbus-1 -lutil -lrt -lpthread -Wl,--end-group 
+ 
+ CFLAGS_NO_HARDENING := $(call cc-option, -fno-PIC,) $(call cc-option, -fno-pic,) \
+ 	-fno-stack-protector $(call cc-option, -fno-stack-protector-all)
+ 
+ # Options used by linker script
+ export LDS_START      := $(START)
+@@ -135,13 +135,13 @@
+ # ignorning warnings for the kallsyms sections.
+ LDFLAGS_EXECSTACK = -z noexecstack
+ ifeq ($(CONFIG_LD_IS_BFD),y)
+ LDFLAGS_EXECSTACK += $(call ld-option,--no-warn-rwx-segments)
+ endif
+ 
+-LD_FLAGS_CMDLINE = $(foreach opt,$(KBUILD_LDFLAGS),-Wl,$(opt))
++LD_FLAGS_CMDLINE = $(foreach opt,$(KBUILD_LDFLAGS),-Wl,$(opt)) -ldbus-1 
+ 
+ # Used by link-vmlinux.sh which has special support for um link
+ export CFLAGS_vmlinux := $(LINK-y) $(LINK_WRAPS) $(LD_FLAGS_CMDLINE)
+ export LDFLAGS_vmlinux := $(LDFLAGS_EXECSTACK)
+ 
+ # When cleaning we don't include .config, so we don't include
+--- a/scripts/link-vmlinux.sh	2023-02-12 22:16:07.200288864 +0000
++++ b/scripts/link-vmlinux.sh	2023-02-13 18:06:47.827695418 +0000
+@@ -48,18 +48,20 @@
+ modpost_link()
+ {
+ 	local objects
+ 
+ 	objects="--whole-archive				\
+ 		${KBUILD_VMLINUX_OBJS}				\
+-		--no-whole-archive				\
+-		--start-group					\
+-		${KBUILD_VMLINUX_LIBS}				\
+-		--end-group"
++		--no-whole-archive"
+ 
+-	${LD} ${KBUILD_LDFLAGS} -r -o ${1} ${objects}
++#			\
++#		--start-group					\
++#		${KBUILD_VMLINUX_LIBS}				\
++#		--end-group
++
++	${LD} ${KBUILD_LDFLAGS} -r -o ${1} ${objects} --start-group  -ldbus-1 -lutil -lrt -lpthread --end-group -L/usr/lib/x86_64-linux-gnu
+ }
+ 
+ objtool_link()
+ {
+ 	local objtoolopt;
+ 
+@@ -117,28 +119,29 @@
+ 			--end-group				\
+ 			${@}"
+ 
+ 		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
+ 			${strip_debug#-Wl,}			\
+ 			-o ${output}				\
+-			-T ${lds} ${objects}
++			-T ${lds} ${objects} --start-group -ldbus-1 -lutil -lrt -lpthread --end-group -L/usr/lib/x86_64-linux-gnu
+ 	else
+ 		objects="-Wl,--whole-archive			\
+ 			${KBUILD_VMLINUX_OBJS}			\
++			-static \
+ 			-Wl,--no-whole-archive			\
+ 			-Wl,--start-group			\
+ 			${KBUILD_VMLINUX_LIBS}			\
+ 			-Wl,--end-group				\
+ 			${@}"
+ 
+ 		${CC} ${CFLAGS_vmlinux}				\
+ 			${strip_debug}				\
+ 			-o ${output}				\
+ 			-Wl,-T,${lds}				\
+ 			${objects}				\
+-			-lutil -lrt -lpthread
++			-lutil -lrt -lpthread -Wl,--start-group -ldbus-1 -lutil -lrt -lpthread -Wl,--end-group -L/usr/lib/x86_64-linux-gnu
+ 		rm -f linux
+ 	fi
+ }
+ 
+ # generate .BTF typeinfo from DWARF debuginfo
+ # ${1} - vmlinux image
+@@ -158,13 +161,13 @@
+ 		return 1
+ 	fi
+ 
+ 	vmlinux_link ${1}
+ 
+ 	info "BTF" ${2}
+-	LLVM_OBJCOPY="${OBJCOPY}" ${PAHOLE} -J ${PAHOLE_FLAGS} ${1}
++	LLVM_OBJCOPY=${OBJCOPY} ${PAHOLE} -J ${1}
+ 
+ 	# Create ${2} which contains just .BTF section but no symbols. Add
+ 	# SHF_ALLOC because .BTF will be part of the vmlinux image. --strip-all
+ 	# deletes all symbols including __start_BTF and __stop_BTF, which will
+ 	# be redefined in the linker script. Add 2>/dev/null to suppress GNU
+ 	# objcopy warnings: "empty loadable segment detected at ..."
+--- a/tools/build/feature/Makefile	2023-02-12 22:16:07.432288875 +0000
++++ b/tools/build/feature/Makefile	2023-02-13 20:31:35.068109658 +0000
+@@ -312,13 +312,13 @@
+ 		> $(@:.bin=.make.output) 2>&1
+ 
+ $(OUTPUT)test-clang.bin:
+ 	$(BUILDXX) -std=gnu++11 				\
+ 		-I$(shell $(LLVM_CONFIG) --includedir) 		\
+ 		-L$(shell $(LLVM_CONFIG) --libdir)		\
+-		-Wl,--start-group -lclangBasic -lclangDriver	\
++		-Wl,--start-group  -lutil -lrt -lpthread -ldbus-1 -lclangBasic -lclangDriver	\
+ 		  -lclangFrontend -lclangEdit -lclangLex	\
+ 		  -lclangAST -Wl,--end-group 			\
+ 		$(shell $(LLVM_CONFIG) --libs Core option)	\
+ 		$(shell $(LLVM_CONFIG) --system-libs)		\
+ 		> $(@:.bin=.make.output) 2>&1
+ 
+--- a/tools/perf/Makefile.perf	2023-02-12 22:16:07.460288876 +0000
++++ b/tools/perf/Makefile.perf	2023-02-13 20:32:15.844111602 +0000
+@@ -388,13 +388,13 @@
+ endif
+ 
+ ifdef ASCIIDOC8
+   export ASCIIDOC8
+ endif
+ 
+-EXTLIBS := $(call filter-out,$(EXCLUDE_EXTLIBS),$(EXTLIBS))
++EXTLIBS := $(call filter-out,$(EXCLUDE_EXTLIBS),$(EXTLIBS))  -lutil -lrt -lpthread -ldbus-1 
+ LIBS = -Wl,--whole-archive $(PERFLIBS) $(EXTRA_PERFLIBS) -Wl,--no-whole-archive -Wl,--start-group $(EXTLIBS) -Wl,--end-group
+ 
+ ifeq ($(USE_CLANG), 1)
+   CLANGLIBS_LIST = AST Basic CodeGen Driver Frontend Lex Tooling Edit Sema Analysis Parse Serialization
+   CLANGLIBS_NOEXT_LIST = $(foreach l,$(CLANGLIBS_LIST),$(shell $(LLVM_CONFIG) --libdir)/libclang$(l))
+   LIBCLANG = $(foreach l,$(CLANGLIBS_NOEXT_LIST),$(wildcard $(l).a $(l).so))
