@@ -512,7 +512,8 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "apt-mark hold libgpgme11 && echo libgpgme11 hold | dpkg --set-selections") >> /usr/local/etc/boot.d/02holdgpg1 && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in cdebootstrap dar fstype ipconfig minips nfsmount; do ln /stand/"${i}" /usr/local/bin/"${i}"; done; ln /stand/ul_* /usr/local/bin/') >> /usr/local/etc/boot.d/02standlink && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "ldconfig") >> /usr/local/etc/boot.d/02ldconfig && \
-  (echo '#!/bin/bash-static'; echo "set +x"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; sleep 6; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; exec </dev/null; exec >/dev/null; exec 2>/dev/null; ((if ping -c4 google.com || curl https://www.google.com >/dev/null 2>/dev/null; then killall -9 dhclient; fi) &); true; exit 0') >> /usr/local/etc/boot.d/03basicdhcpnet && \
+  (echo '#!/bin/bash-static'; echo "set +x"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; exit 0') >> /usr/local/sbin/init-naive-networking && \
+  chmod --verbose 0755 /usr/local/sbin/init-naive-networking && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
@@ -843,10 +844,12 @@ RUN \
   cd /usr/local/src && \
   git clone --recursive https://github.com/openzfs/zfs && \
   cd zfs && \
-  mkdir -p /usr/local/src/lib/udev/rules.d && \
-  git checkout zfs-2.1.9-staging && \
+  mkdir -p /usr/local/lib/udev/rules.d && \
+  MAJMIN="$(git branch -a |grep staging|grep remotes/origin/zfs-2|sed 's,^ *remotes/origin/zfs-,,'|cut -d. -f1-2|sort -n | uniq  | tail -n 1 | sed 's,\.,\\.,')" && \
+  git checkout zfs-$(eval echo $MAJMIN).$(git branch -a |grep staging|grep remotes/origin/zfs-2|sed 's,^ *remotes/origin/zfs-,,'|grep '^'"${MAJMIN}"'\.' | sed s,"${MAJMIN}\.",, | sort -n |uniq | tail -n 1) && \
+  unset MAJMIN && \
   ./autogen.sh  && \
-  ./configure --disable-nls --enable-sysvinit --disable-systemd --enable-debuginfo --with-config=user --with-mounthelperdir=/usr/local/sbin --with-udevdir=/usr/local/src/lib/udev && \
+  ./configure --disable-nls --enable-sysvinit --disable-systemd --enable-debuginfo --with-config=user --with-mounthelperdir=/usr/local/sbin --with-udevdir=/usr/local/lib/udev && \
   make && \
   make check && \
   make install && \
@@ -1792,6 +1795,7 @@ RUN \
   apt-get -y install --verbose-versions linux-image-amd64 efibootmgr qemu-system-x86 tar cpio zstd findutils qemu-utils xz-utils initramfs-tools-core && \
   rm -r -f /lib/modules/5.10.0-[0-9][0-9]-amd64/ /root/initrd/lib/modules/5.10.0-[0-9][0-9]-amd64/ && \
   rm -v /boot/vmlinuz* /boot/initr* && \
+  rm -v -f /boot/System.map-5.10.0-??-amd64 /boot/config-5.10.0-??-amd64 && \
   cp -p -v /root/initrd/boot/vmlinu* /boot/ && \
   mkdir -v -p /opt/artifact/meta && \
   mv -v -f /root/initrd/root/dpkg-l /opt/artifact/meta/dpkg-l-base && \
@@ -1892,7 +1896,7 @@ RUN \
     echo "export TMP=/mnt/VOLATILE/tmp" && \
     echo 'export TEMP="${TMP}"' && \
     echo 'export TMPDIR="${TMP}"' && \
-    echo "zstd -dvv --long=31 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
+    echo "zstd -dvv -T1 -single-thread --long=30 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
     echo "umask 022" && \
     echo "export TMP=/run/tmp" && \
     echo 'export TEMP="${TMP}"' && \
@@ -1942,6 +1946,7 @@ RUN \
     echo "mv /usr/local /new/usr/local" && \
     echo "mv /usr/share /new/usr/share" && \
     echo "mv /stand/env /stand/env-static" && \
+    echo "tar -C /lib -c --remove-files -f - modules | tar -C /new/lib -x -p -f -" && \
     echo "cp -p /usr/bin/env /tmp/env" && \
     echo "mv /usr/bin /new/usr/bin" && \
     echo "mv /usr/sbin /new/usr/sbin" && \
@@ -2013,7 +2018,7 @@ RUN \
   mv -v /root/boot/ /root/initrd/boot/ && \
   ulimit -d unlimited && ulimit -v unlimited && \
   mkdir -p /root/drive/mnt/CACHE/overlay /root/drive/mnt/EFI/linux && \
-  tar -C /root/overlay -cf - usr var lib | zstd --long=31 --ultra -vv -22 > /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
+  tar -C /root/overlay -cf - usr var lib | zstd -v -v -v -T1 --single-thread --long=30 --ultra -22 > /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   ls -ldsi --full-time /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   rm -r -v /root/overlay/usr/local/etc/boot.d/ && \
   rmdir -v usr var && \
@@ -2164,6 +2169,7 @@ RUN \
   echo 'tar -C /mnt/STAGING/ -c -f - . | tar -C / -x -p -v --warning=no-timestamp -f -' >> init && \
   echo 'umount -v /mnt/STAGING' >> init && \
   echo 'ls -ladsi --full-time /mnt/EFI/linux/initrd* /mnt/CACHE/overlay/overlay*tar*' >> init && \
+  echo '(cd /mnt/EFI/linux/; for i in initrd*; do stat -L -c%s "$i" > "$i".isize; done)' >> init && \
   echo 'umount -v /mnt/CACHE' >> init && \
   echo 'cp -p -v /boot/xen* /mnt/EFI/xen/' >> init && \
   echo 'cp -p -v /boot/System.map* /boot/config* /mnt/EFI/linux/' >> init && \
@@ -2174,7 +2180,7 @@ RUN \
   echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=4352M,max:4608M guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=vga,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
   echo 'cat syslinux.cfg' >> init && \
@@ -2198,7 +2204,7 @@ RUN \
   rm -r initrd && \
   qemu-img create -f qcow2 /root/disk.qcow2 60G && \
   qemu-img create -f qcow2 /root/scratch.qcow2 8G && \
-  qemu-system-x86_64 -m 5g -kernel /boot/vmlinuz*    -initrd /boot/initrd.img -drive file=disk.qcow2,format=qcow2,index=0 -drive file=/root/drive.tar.gz,format=raw,index=1 -drive file=scratch.qcow2,format=qcow2,index=2 -append "console=ttyS0 init=/init" -nographic && \
+  qemu-system-x86_64 -m 5g -kernel /boot/vmlinuz* -initrd /boot/initrd.img -drive file=disk.qcow2,format=qcow2,index=0 -drive file=/root/drive.tar.gz,format=raw,index=1 -drive file=scratch.qcow2,format=qcow2,index=2 -append "console=ttyS0 init=/init" -nographic && \
   rm -v /boot/initrd.img && \
   rm -v /root/drive.tar.gz && \
   rm -r -f /usr/local && \
