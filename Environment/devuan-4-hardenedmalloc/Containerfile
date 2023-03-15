@@ -1,5 +1,288 @@
 #!/usr/bin/env -vS podman --runtime crun --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build -t intensity/linux-image:devuan-4-hardenedmalloc . -f
 
+FROM docker://devuan/devuan:stable AS devuan-archive-pool
+RUN \
+  fetch_pool=" \
+    2ping 6tunnel 9base 9mount a2ps aac-enc acct ack acpi-support-base acpi-support acpi acpica-tools acpid acr adb adequate adjtimex advancecomp aeskeyfind aeson-pretty aespipe afflib-tools afio agedu aglfn alien alsa-oss alsa-tools alsaplayer-text \
+    altermime an anacron ancient android-libadb android-libbacktrace android-libbase android-libboringssl android-libcrypto-utils android-libcutils android-liblog android-libunwind android-libutils android-libziparchive android-sdk-platform-tools-common \
+    antiword anytun aoetools aom-tools apg apkverifier apparmor-easyprof apparmor-notify apparmor-profiles-extra apparmor-profiles apparmor-utils apparmor apt-file apt-rdepends apt-show-source apt-src apt-transport-tor apt-utils aptitude-common aptitude \
+    apulse arc arch-test archivemount aria2 arj arp-scan arpon arpwatch ascii2binary aspell-en aspell astyle at atfs atmel-firmware atool atop audacious-plugins-data audiofile-tools aumix-common aumix autoconf-archive autoconf automake autopkgtest \
+    autopoint autotools-dev avfs away awscli bar battery-stats bbdb3 bbe bcal beep bfs bilibop-common bilibop-lockfs bilibop-rules bilibop bind9-dnsutils binfmt-support bip bison bitlbee-common bitlbee-plugin-facebook bitlbee-plugin-mastodon \
+    bitlbee-plugin-otr bitlbee bluez-obexd bluez bmake bochsbios bonnie++ bosh bpfcc-introspection bpfcc-lua bpfcc-tools bpfmon bpftool bpftrace bplay bpm-tools bruteforce-luks bsd-mailx bsdgames btop btrbk btrfs-compsize build-essential buildah \
+    bvi bwm-ng bximage byacc byobu cabextract calc-common calc calendar capnproto cargo catdoc ccache ccal ccdiff cd-paranoia cdck cdebootstrap cdecl cdparanoia cdpr cgmanager cgpt checkpolicy checksec checksecurity chezscheme chiark-really \
+    chiark-scripts chntpw cifs-utils ckermit cksfv cl-swank clevis-luks clevis-tpm2 clevis clisp cloc clzip cmake-data cmake cmospwd codecrypt colord-data colordiff colorize colormake colortail comprez conman conmux connect-proxy console-common \
+    console-data console-setup-linux console-setup conspy consul containerd coolkey corkscrew corosync-notifyd corosync-qdevice corosync-qnetd corosync cowbuilder cowdancer cpipe cpp-10 cpp cpu-checker cpufrequtils cpuid cpuidtool cpuinfo \
+    cpulimit cpustat cputool crack-common crack cracklib-runtime cronutils cruft-common cruft crunch cryptcat cryptol cryptsetup-initramfs cryptsetup-run cstream csvtool cups-bsd cups-client cups-common curry-frontend cutils cvs cvsps cython3 \
+    dact darcs dares dav1d dbus-x11 dbus dconf-gsettings-backend dconf-service dcraw dctrl-tools ddir ddpt debarchiver debconf-i18n debhelper debian-goodies debian-keyring debian-ports-archive-keyring debootstick debsig-verify debsigs debsums \
+    debtree debugedit dejagnu depqbf desktop-file-utils desproxy devscripts devuan-baseconf dextractor dh-autoreconf dh-elpa-helper dh-exec dh-make dh-package-notes dh-python dh-runit dh-strip-nondeterminism dhcpdump dhcping di dialog diceware \
+    dictionaries-common dictzip difference diffstat diod direvent dirmngr dirvish discover-data discover disorderfs distcc dkms dlocate dmg2img dns-root-data dns2tcp dnss dnstracer dnsutils doas doc-base docbook-xml docbook-xsl docker-compose \
+    docker.io docutils-common docx2txt donkey dos2unix dpkg-dev dput-ng dq drbd-utils drbl dselect duc-nox duff duperemove dvd+rw-tools dvtm dwarfdump dwdiff dwz dynamite earlyoom easy-rsa ebook2epub ebook2odt ecasound ecryptfs-utils edac-utils \
+    edbrowse edid-decode efibootmgr efitools efivar eject ekeyd-egd-linux electric-fence elfutils elinks-data elinks elogind emacsen-common enscript entr enum eot-utils eot2ttf equivs espeak-data espeak etherwake execline exif exifprobe exiftags \
+    exiftran exiv2 expect extrace extract extrepo f-irc faac faad fair fake fam fancontrol fastd fasttrack-archive-keyring fatattr fatcat fatrace fatresize fatsort fcrackzip fdkaac fdm fdupes fdutils festival fetchmail fetchyahoo ffcvt fgetty \
+    fhist fido2-tools filetraq filter finch finger firewalld firmware-amd-graphics firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-intelwimax firmware-iwlwifi firmware-linux-free firmware-linux-nonfree firmware-linux \
+    firmware-misc-nonfree firmware-realtek fizsh fl-cow flac flake flatpak flex fling fondu fontconfig-config fontconfig fonts-dejavu-core fonts-font-awesome fonts-lato fonts-unifont fonts-urw-base35 foremost forkstat fprobe freeipmi-common \
+    freeipmi-tools fsarchiver fspy fstransform fsverity fsvs fswatch fuse-posixovl fuse-zip fuseiso9660 fxload g++-10-multilib g++-10 g++-multilib g++ gambc gauche-gdbm gauche gcab gcal-common gcal gcc-10-doc gcc-10-locales gcc-10-multilib gcc-10 \
+    gcc-doc-base gcc-multilib gcc gdal-data gdb-minimal gddrescue gdu gems genparse genromfs geoip-bin geoip-database gettext ghostscript giflib-tools gifti-bin gir1.2-glib-2.0 gir1.2-nm-1.0 gir1.2-packagekitglib-1.0 git-annex-remote-rclone git-annex \
+    git-cvs git-doc git-extras git-flow git-remote-gcrypt git-repair git-secret git-svn glib-networking-common glib-networking-services glib-networking glusterfs-client glusterfs-common glusterfs-server gmime-bin gnu-standards gnunet-fuse gnunet \
+    gnupg-l10n gnupg-utils gnupg gnuplot-data gnupod-tools gnustep-base-common gnustep-base-runtime gnustep-common gnutls-bin gocr golang-github-containernetworking-plugin-dnsname gom gopass gosu gotail gperf gpg-agent gpg-wks-client gpg-wks-server \
+    gpg gpgconf gpgsm gpm gpp grepcidr grepmail groff grok gron growisofs grub-common grub-efi-amd64-bin grub-efi-amd64-signed grub-efi-amd64 grub-efi-ia32-bin grub-efi grub-emu grub-xen-bin grub-xen-host grub2-common gsasl-common gsettings-desktop-schemas \
+    gsfonts gstreamer1.0-plugins-base gstreamer1.0-plugins-good gtk-update-icon-cache guile-2.2-libs guile-2.2 guile-3.0-libs guile-bytestructures guile-gcrypt guile-git guile-gnutls guile-json guile-lzlib guile-sqlite3 guile-ssh guile-zlib \
+    guile-zstd guix gvpe gztool hadori haproxy hardlink harvest-tools hashalot hashcash hashrat hddtemp hdup hexcompare hexec hexedit hexyl hfsplus hfsprogs hfsutils hicolor-icon-theme html2text htop httptunnel httrack hunspell-en-us hwdata \
+    hwinfo hwloc-nox hxtools i2util-tools iamerican-huge ibverbs-providers icmpinfo icmptx ideviceinstaller idevicerestore ieee-data ienglish-common iftop ifupdown-multi ifuse igmpproxy imagemagick-6-common imapcopy imapfilter imapproxy indent \
+    inetutils-ftp inetutils-ping inetutils-telnet info init inoticoming inotify-tools install-info interimap intltool-debian inxi iodine ioping iotop-c iotop iozone3 ipcalc-ng ipcalc iperf3 ipgrab ipheth-utils ipmctl ipmitool ipmiutil iptraf-ng \
+    ipv6calc ipxe-qemu ipython3 irecovery irqbalance irssi-plugin-otr irssi-scripts irssi iselect iso-codes isolinux isomd5sum isoquery ispell istgt isync itcl3 iw iwatch jam jbig2dec jdupes jhead jid jigit jo joe john-data john jose jove \
+    jparse jpeginfo jpegoptim jshon julia-common julia kbd kcptun kexec-tools keyboard-configuration keyringer keyutils kickpass kpcli lame laptop-detect lastpass-cli latexdiff lbdb lbzip2 lcab lcov ldmtool ldnsutils ledit lftp lhasa lib32asan6 \
+    lib32atomic1 lib32gcc-10-dev lib32gcc-s1 lib32gomp1 lib32itm1 lib32quadmath0 lib32stdc++-10-dev lib32stdc++6 lib32ubsan1 liba52-0.7.4 libaa1 libaec-tools libaec0 libafflib0v5 libalgorithm-diff-xs-perl libaliased-perl libao-common libao4 libaom0 \
+    libapparmor-perl libappstream-glib8 libapr1 libaprutil1 libapt-pkg-perl libarchive-zip-perl libaria2-0 libarray-intspan-perl libasan6 libasm1 libaspell15 libass9 libasyncns0 libatasmart4 libatfs1 libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data \
+    libatomic1 libatspi2.0-0 libaudio-flac-header-perl libaudiofile1 libavahi-client3 libavahi-common-data libavahi-common3 libavahi-glib1 libavc1394-0 libavcodec58 libavdevice58 libavfilter7 libavformat58 libavl1 libavresample4 libavutil56 libaxc0 \
+    libb-hooks-endofscope-perl libb-hooks-op-check-perl libb-keywords-perl libbcg729-0 libbfio1 libbit-vector-perl libblas3 libblockdev-btrfs2 libblockdev-crypto2 libblockdev-fs2 libblockdev-kbd2 libblockdev-loop2 libblockdev-lvm2 libblockdev-part-err2 \
+    libblockdev-part2 libblockdev-swap2 libblockdev-utils2 libblockdev2 libbloom1 libbluetooth3 libbluray2 libboost-chrono1.74.0 libboost-context1.74.0 libboost-locale1.74.0 libboost-serialization1.74.0 libboost-thread1.74.0 libbpfcc libbs2b0 \
+    libbtrfs0 libbytes-random-secure-perl libbytesize-common libbytesize1 libc-ares2 libc-client2007e libc-dev-bin libc-devtools libc-l10n libc6-dbg libc6-dev-i386 libc6-dev-x32 libc6-dev libc6-i386 libc6-x32 libcaca0 libcairo-gobject2 libcairo2 \
+    libcapnp-0.7.0 libcapture-tiny-perl libcarp-clan-perl libcc1-0 libccid libccrtp2v5 libcdio-cdda2 libcdio-paranoia2 libcdio19 libcdparanoia0 libcfg7 libcgmanager0 libcharon-extauth-plugins libcharon-extra-plugins libchm1 libchromaprint1 libckyapplet1 \
+    libclang-cpp11 libclang1-11 libclass-data-inheritable-perl libclass-method-modifiers-perl libclass-xsaccessor-perl libclone-choose-perl libclone-perl libcmap4 libcmark-gfm-extensions0 libcmark-gfm0 libcodec2-0.9 libcolord2 libcommon-sense-perl \
+    libconfig-auto-perl libconfig-general-perl libconfig-simple-perl libconfig-tiny-perl libconfig9 libconvert-binhex-perl libcork16 libcorkipset1 libcorosync-common4 libcpanel-json-xs-perl libcpg4 libcpufreq0 libcpuid15 libcpuinfo0 libcpupower1 \
+    libcrack2 libcrypt-dev libcrypt-passwdmd5-perl libcrypt-random-seed-perl libcrypt-rijndael-perl libcrypt-ssleay-perl libcryptx-perl libcups2 libcurses-perl libcurses-ui-perl libcwidget4 libdata-dpath-perl libdata-dumper-concise-perl \
+    libdata-messagepack-perl libdata-optlist-perl libdate-manip-perl libdatrie1 libdav1d4 libdbd-sqlite3-perl libdbi-perl libdbus-glib-1-2 libdc1394-25 libdconf1 libde265-0 libdebhelper-perl libdebian-installer-extra4 libdebian-installer4 \
+    libdeflate0 libdevel-callchecker-perl libdevel-caller-perl libdevel-lexalias-perl libdevel-size-perl libdevel-stacktrace-perl libdigest-hmac-perl libdiscover2 libdouble-conversion3 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1 \
+    libdrm-nouveau2 libdrm-radeon1 libdrm2 libdsfmt-19937-1 libduktape205 libdumbnet1 libdv4 libdvdread8 libdwarf1 libdynaloader-functions-perl libdynamite0 libe-book-0.1-1 libebml5 libecryptfs1 libedac1 libefiboot1 libefivar1 libegl-mesa0 libegl1 \
+    libelogind0 libemail-address-xs-perl libenca0 libenchant-2-2 libencode-locale-perl libeot0 libepubgen-0.1-1 libespeak1 libestools2.5 libev4 libevdev2 libevent-core-2.1-7 libevent-perl libevent-pthreads-2.1-7 libewf2 libexception-class-perl \
+    libexecline2.7 libexecs0 libexif12 libexiv2-27 libexporter-declare-perl libexporter-tiny-perl libextractor3 libfaac0 libfaad2 libfarstream-0.2-5 libfdk-aac2 libffcall1b libffms2-4 libfftw3-bin libfftw3-double3 libfftw3-long3 libfftw3-quad3 \
+    libfile-basedir-perl libfile-chdir-perl libfile-copy-recursive-perl libfile-dirlist-perl libfile-fcntllock-perl libfile-find-rule-perl libfile-fnmatch-perl libfile-homedir-perl libfile-keepass-perl libfile-lchown-perl libfile-listing-perl \
+    libfile-next-perl libfile-stripnondeterminism-perl libfile-touch-perl libfile-util-perl libfilehandle-unget-perl libfindlib-ocaml libfl2 libflac8 libflite1 libfmt7 libfont-ttf-perl libfontconfig1 libfreeimage3 libfreeipmi17 libfreetype6 \
+    libfribidi0 libfsplib0 libfsverity0 libgadu3 libgambit4-dev libgambit4 libgauche-0.97-0 libgbm1 libgcab-1.0-0 libgcc-10-dev libgccjit0 libgcrypt20-dev libgd3 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-common libgeoip1 libgetopt-long-descriptive-perl \
+    libgfapi0 libgfchangelog0 libgfortran5 libgfrpc0 libgfxdr0 libgif7 libgiftiio0 libgirepository-1.0-1 libgit-wrapper-perl libgit2-dev libgl1-mesa-dri libgl1 libglapi-mesa libglib2.0-bin libglib2.0-data libglu1-mesa libglusterd0 libglusterfs0 \
+    libglvnd0 libglx-mesa0 libglx0 libgme0 libgmime-3.0-0 libgnt0 libgnustep-base1.27 libgnutls-dane0 libgnutls-openssl27 libgpac10 libgpg-error-dev libgraphite2-3 libgs9-common libgs9 libgsasl7 libgsf-1-114 libgsf-1-common libgsl25 libgslcblas0 \
+    libgsm1 libgssdp-1.2-0 libgstreamer-gl1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer1.0-0 libgtk-3-0 libgtk-3-common libgudev-1.0-0 libguile-ssh13 libgupnp-1.2-0 libgupnp-igd-1.0-4 libharfbuzz-icu0 libharfbuzz0b libhash-diff-perl \
+    libhash-fieldhash-perl libhash-merge-perl libhash-merge-simple-perl libhd21 libhdf5-103-1 libheif1 libhfsp0 libhidapi-hidraw0 libhidapi-libusb0 libhtml-html5-entities-perl libhtml-parser-perl libhtml-tagset-perl libhtml-tree-perl \
+    libhttp-cookies-perl libhttp-date-perl libhttp-message-perl libhttp-negotiate-perl libhttp-parser-dev libhttrack2 libhunspell-1.7-0 libhwloc15 libhx32 libhyphen0 libical3 libice6 libid3tag0 libiec61883-0 libijs-0.35 libilmbase25 \
+    libimage-exiftool-perl libimobiledevice6 libimport-into-perl libiniparser1 libinotifytools0 libinput-bin libinput10 libinterimap libio-html-perl libio-multiplex-perl libio-string-perl libio-stringy-perl libipc-run3-perl libipc-signal-perl \
+    libiperf0 libipmctl4 libipmiconsole2 libipmidetect0 libirecovery-1.0-3 libirecovery-common libiscsi7 libisl23 libisns0 libiso9660-11 libiterator-perl libiterator-util-perl libitm1 libiw30 libjack-jackd2-0 libjaula1 libjavascriptcoregtk-4.0-18 \
+    libjbig0 libjbig2dec0 libjose0 libjpeg-turbo-progs libjpeg62-turbo libjson-glib-1.0-0 libjson-glib-1.0-common libjson-maybexs-perl libjson-perl libjsonparser1.1 libjudydebian1 libjulia1 libjxr0 libkickpass0 libknet1 libkpathsea6 libksba8 \
+    liblangtag-common liblangtag1 liblapack3 liblcms2-2 libldb2 libldm-1.0-0 libldns3 liblexical-persistence-perl liblhasa0 liblilv-0-0 liblinear4 liblinux-inotify2-perl liblist-compare-perl liblist-moreutils-perl liblist-moreutils-xs-perl \
+    liblist-someutils-perl liblist-utilsby-perl libllvm11 libllvm13 libllvm9 liblo7 liblocale-gettext-perl liblog-any-adapter-screen-perl liblog-any-perl liblog-contextual-perl liblog-log4perl-perl liblog4cpp5v5 liblqr-1-0 liblsan0 libltdl7 liblua5.1-0 \
+    liblua5.2-0 liblua5.3-0 libluajit-5.1-2 libluajit-5.1-common liblwp-mediatypes-perl liblwp-protocol-https-perl liblz-dev liblz1 liblzma-dev libm17n-0 libmaa4 libmad0 libmagickcore-6.q16-6 libmagickwand-6.q16-6 libmail-mbox-messageparser-perl \
+    libmail-sendmail-perl libmail-srs-perl libmalcontent-0-0 libmanette-0.2-0 libmariadb3 libmarkdown2 libmath-random-isaac-perl libmatroska7 libmbedtls-dev libmbim-glib4 libmbim-proxy libmcpp0 libmcrypt4 libmd4c0 libmeanwhile1 libmediainfo0v5 \
+    libmemcached11 libmeta-builder-perl libmfx1 libmhash2 libmicrohttpd12 libmilter1.0.1 libmime-tools-perl libmime-types-perl libminiupnpc17 libminizip1 libmjpegutils-2.1-0 libmldbm-perl libmm-glib0 libmm14 libmms0 libmng1 libmodplug1 \
+    libmodule-implementation-perl libmodule-refresh-perl libmodule-runtime-perl libmoo-perl libmoox-aliases-perl libmoox-struct-perl libmouse-perl libmp3-info-perl libmp3lame0 libmpc3 libmpcdec6 libmpeg3-2 libmpg123-0 libmspack0 libmtbl1 \
+    libmtdev1 libmujs1 libmunge2 libmxml1 libmysofa1 libnamespace-autoclean-perl libnamespace-clean-perl libncap44 libncurses-dev libncurses5-dev libndp0 libneon27-gnutls libnet-http-perl libnetpbm10 libnewt0.52 libnfs13 libnfsidmap2 libnice10 \
+    libniftiio2 libnih-dbus1 libnih1 libnitrokey-common libnitrokey3 libnm0 libnorm1 libnotify-bin libnotify4 libnotmuch5 libnozzle1 libnpth0 libnsl-dev libnspr4 libnss3-tools libnss3 libntfs-3g883 libntirpc3.4 libntlm0 libnumber-compare-perl \
+    libnumber-range-perl libnuspell4 liboath0 libobjc4 libobject-id-perl libodfgen-0.1-1 libogg-vorbis-header-pureperl-perl libogg0 libomemo0 libopenal-data libopenal1 libopenconnect5 libopencore-amrnb0 libopencore-amrwb0 libopencsd0 libopendbx1 \
+    libopendkim11 libopenexr25 libopengl0 libopenipmi0 libopeniscsiusr libopenjp2-7 libopenlibm3 libopenmpt0 libopts25 libopusfile0 liborc-0.4-0 libostree-1-1 libotf0 libotr5-bin libotr5 libpackage-stash-perl libpackagekit-glib2-18 libpadwalker-perl \
+    libpam-cgfs libpam-elogind libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparallel-forkmanager-perl libparams-classify-perl libparams-util-perl libparams-validate-perl libparmap-ocaml libparse-debian-packages-perl libparted-fs-resize0 \
+    libpath-iterator-rule-perl libpath-tiny-perl libpcc-dev libpcre16-3 libpcre2-16-0 libpcre2-32-0 libpcre2-posix2 libpcre3-dev libpcre32-3 libpcrecpp0v5 libpcsclite1 libperl4-corelibs-perl libperlio-gzip-perl libpgm-5.3-0 libpipewire-0.3-0 \
+    libpipewire-0.3-modules libpkcs11-helper1 libpkgconf3 libplist3 libpmem1 libpmemblk1 libpng16-16 libpocketsphinx3 libpod-constants-perl libpod-parser-perl libpolkit-agent-1-0 libpolkit-gobject-1-0 libpolkit-gobject-elogind-1-0 libportaudio2 \
+    libpostproc55 libpq5 libprimesieve9 libproc-processtable-perl libproc-waitstat-perl libprotobuf23 libprotoc23 libproxy1v5 libproxychains4 libpseudo libpugixml1v5 libpulse0 libpurple0 libpwquality-common libpwquality-tools libpwquality1 \
+    libqalculate20-data libqalculate20 libqb100 libqmi-glib5 libqmi-proxy libqpdf28 libqrencode4 libqt5core5a libqt5dbus5 libqt5gui5 libqt5network5 libqt5widgets5 libquadmath0 libquorum5 libquvi-0.9-0.9.3 libquvi-scripts-0.9 librabbitmq4 \
+    librados2 librandomx0 libraw1394-11 libraw20 librbd1 librbl1 librcc0 librcd0 libre-engine-re2-perl libre2-9 librecode0 libref-util-perl libregexp-assemble-perl libregexp-common-perl libregexp-pattern-license-perl libregexp-pattern-perl librep16 \
+    libresid-builder0c2a librest-0.7-0 librevenge-0.0-0 librole-tiny-perl librpm9 librpmbuild9 librpmio9 librpmsign9 librsvg2-2 librubberband2 libs6-2.10 libsasl2-modules libsbc1 libsctp1 libsdl1.2debian libsdl2-2.0-0 libsecret-1-0 libsecret-common \
+    libserd-0-0 libsereal-decoder-perl libsereal-encoder-perl libserf-1-1 libsgutils2-2 libshairplay0 libshell-command-perl libshine3 libshout3 libsidplay2 libsidutils0 libsigc++-2.0-0v5 libsignal-protocol-c2.3.2 libskarnet2.10 libslang2 libsm6 \
+    libsmbclient libsmi2ldbl libsnapper5 libsnappy1v5 libsndfile1 libsndio7.0 libsnmp-base libsnmp40 libsonic0 libsord-0-0 libsort-key-perl libsort-naturally-perl libsoup-gnome2.4-1 libsoup2.4-1 libsox-fmt-alsa libsox-fmt-base libsox3 libsoxr0 \
+    libspa-0.2-modules libspandsp2 libspeex1 libspeexdsp1 libsphinxbase3 libsqlite3-dev libsratom-0-0 libsrt1.4-gnutls libssh-4 libssh-dev libssh-gcrypt-4 libssh2-1-dev libssl-dev libstatgrab10 libstdc++-10-dev libstdcompat-ocaml libstemmer0d \
+    libstoken1 libstrictures-perl libstring-copyright-perl libstring-escape-perl libstrongswan-extra-plugins libstrongswan-standard-plugins libstrongswan libstrophe0 libsub-exporter-perl libsub-exporter-progressive-perl libsub-identify-perl \
+    libsub-install-perl libsub-name-perl libsub-override-perl libsub-quote-perl libsub-uplevel-perl libsvn-perl libsvn1 libswresample3 libswscale5 libsys-cpuaffinity-perl libsys-hostname-long-perl libsysfs2 libsz2 libtachyon-mt-0 libtag1v5-vanilla \
+    libtag1v5 libtagc0 libtcl8.6 libtcmalloc-minimal4 libtcplay libtdb1 libteamdctl0 libtelepathy-glib0 libterm-readkey-perl libterm-readline-gnu-perl libterm-shellui-perl libterm-size-perl libtest-deep-perl libtest-differences-perl libtest-exception-perl \
+    libtest-most-perl libtest-warn-perl libtevent0 libtext-charwidth-perl libtext-glob-perl libtext-hogan-perl libtext-iconv-perl libtext-levenshteinxs-perl libtext-markdown-discount-perl libtext-trim-perl libtext-unidecode-perl libtext-wrapi18n-perl \
+    libtext-xslate-perl libtgl-0.0.0.20160623-0 libthai-data libthai0 libtheora0 libtidy5deb1 libtiff-tools libtiff5 libtime-moment-perl libtime-parsedate-perl libtime-period-perl libtirpc-dev libtlsh0 libtokyocabinet9 libtomoyotools3 libtool libtre5 \
+    libtry-tiny-perl libtsan0 libtsk19 libtspi1 libtss0 libtss2-esys-3.0.2-0 libtss2-mu0 libtss2-rc0 libtss2-sys1 libtss2-tcti-cmd0 libtss2-tcti-device0 libtss2-tcti-mssim0 libtss2-tcti-swtpm0 libtss2-tctildr0 libtty1 libturbojpeg0 libtwolame0 \
+    libtype-tiny-perl libu2f-host0 libu2f-server0 libubsan1 libucl1 libucommon8 libudfread0 libudisks2-0 libunac1 libunbound8 libunicode-string-perl libunicode-utf8-perl libuniconf4.6 libuninum5 libunix-syslog-perl libunshield0 libupower-glib3 \
+    liburi-perl libusb-0.1-4 libusbmuxd6 libusbredirhost1 libuserbindmount0 libuuid-perl libv4l-0 libv4l2rds0 libv4lconvert0 libva-drm2 libva-x11-2 libva2 libvamp-sdk2v5 libvariable-magic-perl libvbr2 libvde0 libvdpau1 libvformat0 libvhdi1 \
+    libvidstab1.1 libvirt-daemon-driver-lxc libvirt-daemon-driver-storage-zfs libvirt-daemon-driver-xen libvisual-0.4-0 libvmdk1 libvolume-key1 libvorbis0a libvorbisenc2 libvorbisfile3 libvotequorum8 libvpx6 libvterm-bin libvterm0 libvulkan1 \
+    libwacom-common libwacom2 libwavpack1 libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0 libwbclient0 libwebkit2gtk-4.0-37 libwebm-tools libwebm1 libwebp6 libwebpdemux2 libwebpmux3 libwget0 libwildmidi2 libwireshark-data \
+    libwireshark14 libwiretap11 libwoff1 libwpe-1.0-1 libwpebackend-fdo-1.0-1 libwsutil12 libwvstreams4.6-base libwvstreams4.6-extras libwww-curl-perl libwww-perl libwww-robotrules-perl libx11-6 libx11-data libx11-xcb1 libx264-160 libx265-192 \
+    libx32asan6 libx32atomic1 libx32gcc-10-dev libx32gcc-s1 libx32gomp1 libx32itm1 libx32quadmath0 libx32stdc++-10-dev libx32stdc++6 libx32ubsan1 libx86-1 libx86emu3 libxapian30 libxaw7 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-icccm4 \
+    libxcb-image0 libxcb-keysyms1 libxcb-present0 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcb1 libxcomposite1 libxcursor1 \
+    libxdamage1 libxdmcp6 libxext6 libxfixes3 libxft2 libxi6 libxinerama1 libxkbcommon-x11-0 libxkbcommon0 libxml-libxml-perl libxml-namespacesupport-perl libxml-parser-perl libxml-sax-base-perl libxml-sax-perl libxml-simple-perl \
+    libxml-simpleobject-libxml-perl libxmu6 libxmuu1 libxpm4 libxrandr2 libxrender1 libxshmfence1 libxss1 libxt6 libxtables-dev libxv1 libxvidcore4 libxxf86vm1 libyaml-libyaml-perl libyaml-perl libyara4 libyascreen0 libykpers-1-1 libykpiv2 \
+    libyubikey-udev libyubikey0 libz3-4 libzbar0 libzck1 libzen0v5 libzephyr4 libzint2.9 libzip4 libzmq5 libznz3 libzopfli1 libzstd-dev libzulucrypt-exe1.2.0 libzulucrypt-plugins libzulucrypt1.2.0 libzulucryptpluginmanager1.0.0 libzvbi-common \
+    libzvbi0 libzzip-0-13 licensecheck lilypond-fonts links lintian linux-compiler-gcc-10-x86 linux-cpupower linux-headers-5.10.0-21-amd64 linux-headers-5.10.0-21-common linux-headers-amd64 linux-kbuild-5.10 linux-perf-5.10 linux-perf linuxinfo \
+    live-boot-initramfs-tools live-boot live-tools lksctp-tools lld-11 lld lldpd lm-sensors locales locate loggedfs logtail logtool logtools lr lrzsz lsb-release lscolors lua-bitop lua-expat lua-filesystem lua-json lua-lpeg lua-sec lua-socket \
+    lua5.2 lua5.3 luajit lunzip lv lxc-tests lz4json lzd lzma-alone m17n-db m4 macutils madison-lite magic-wormhole mailagent mailcap maildir-utils maildirsync mailsync mairix make makepasswd makepp mariadb-common mason mblaze mboxgrep mbpfan \
+    mbr mc-data mc mcpp mcrypt mcstrans mdevctl mediainfo memdump memlockd memstat memtester menu metamonger mg mhddfs mhonarc microcom microsocks mime-construct mime-support mimedefang mingetty minicom minilzip minizip mk-configure mkvtoolnix \
+    mlock mmc-utils mmdebstrap moc module-assistant mokutil morsegen morty most mp3check mp3gain mp3guessenc mp3info mpack mpeg3-utils mpg321 mrb mscompress msmtp msort msr-tools mt-st mtbl-bin mtd-utils mtr-tiny mtree-netbsd muchsync multicat \
+    multipath-tools multistrap multitail multitee multitime musl-dev musl-tools musl myrescue mysql-common n2n nano nasm nat-traverse nbd-client ncal ncaptool ncat ncdu ncompress ncurses-examples ncurses-term ndiff ndisc6 netcat netpbm netrik \
+    netrw network-manager newmail newrole nfs-common nfs-ganesha-mount-9p nfs-ganesha ngrep nicstat nim ninja-build nitrocli nix-bin nmap-common nmap nomad-driver-lxc nomad nomarch notmuch nsd ntfs-3g nuspell nyacc nyancat oathtool obfs4proxy \
+    ocaml-base-nox ocaml-compiler-libs ocaml-findlib ocaml-interp ocaml-nox ocl-icd-libopencl1 ocproxy ocrad odbcinst1debian2 odbcinst only opalmod open-iscsi openconnect opendkim-tools opendkim openipmi openntpd openssh-server openssh-sftp-server \
+    openvpn optipng opus-tools orpie os-prober oss-compat ostree otf2bdf otp outguess ovmf p7zip-full p7zip-rar p7zip packer paexec pakcs pamix pandoc-data pandoc paperkey parallel partclone pass-extension-otp pass-extension-tail pass-extension-tomb \
+    pass-git-helper pass patchelf pax-utils paxtest pbuilder pbzip2 pcaputils pcc pccts pcf2bdf pcmciautils pcscd pdlzip peg pen perceptualdiff perf-tools-unstable perforate perlconsole perltidy pexec pgpdump pick picocom pidgin-data pigz \
+    pipebench pipewire-bin pipewire pipexec pixz pkgconf playmidi plocate plzip pm-utils pmidi pnopaste-cli po-debconf policycoreutils policykit-1 policyrcd-script-zg2 pollinate poppler-data posh power-calibrate powermgmt-base ppp pppconfig \
+    pppoe pptp-linux primesieve-bin primesieve pristine-lfs pristine-tar privbind privoxy procmail-lib procmail profanity-light progress proj-data protobuf-compiler proxsmtp proxychains4 proxytunnel pseudo psf-unifont ptunnel-ng ptunnel \
+    publicsuffix pullimap puredata-utils pwgen px pxelinux pypy-ipaddress pypy-lib pypy-pkg-resources pypy-setuptools pypy-stem pypy python-apt-common python-pip-whl python3-apparmor python3-apt python3-attr python3-autobahn python3-automat \
+    python3-backcall python3-bcrypt python3-botocore python3-bpfcc python3-cached-property python3-cbor python3-certifi python3-cffi-backend python3-chardet python3-click python3-colorama python3-constantly python3-cryptography python3-dateutil \
+    python3-dbus python3-debian python3-decorator python3-docker python3-dockerpty python3-docopt python3-docutils python3-dput python3-firewall python3-geoip python3-gi python3-hamcrest python3-hkdf python3-humanize python3-hyperlink python3-idna \
+    python3-importlib-metadata python3-incremental python3-ipython-genutils python3-ipython python3-jedi python3-jmespath python3-jsonschema python3-jwt python3-ldb python3-libapparmor python3-lxml python3-lz4 python3-more-itertools python3-nacl \
+    python3-netaddr python3-newt python3-nftables python3-openssl python3-parso python3-pexpect python3-pickleshare python3-pip python3-prompt-toolkit python3-ptyprocess python3-pyasn1-modules python3-pyasn1 python3-pycurl python3-pygments \
+    python3-pyperclip python3-pyqrcode python3-pyrsistent python3-pyudev python3-requests python3-roman python3-rsa python3-s3transfer python3-scapy python3-sdnotify python3-selinux python3-service-identity python3-setuptools python3-sh python3-six \
+    python3-slip-dbus python3-slip python3-snappy python3-socks python3-software-properties python3-spake2 python3-stem python3-talloc python3-termbox python3-texttable python3-tqdm python3-traitlets python3-trie python3-twisted-bin python3-twisted \
+    python3-txaio python3-txtorcon python3-u-msgpack python3-ubjson python3-urllib3 python3-urwid python3-venv python3-wcwidth python3-websocket python3-wheel python3-wsaccel python3-zfec python3-zipp python3-zope.interface python3.9-venv qalc \
+    qbs-common qemu-block-extra qemu-guest-agent qemu-system-data qemu-user-static qmenu qpdf qprint qrencode quicktun quilt quvi racket-common racket ragel ranger rar rarcrack rcs rdfind rdiff-backup-fs rdiff-backup re2c recode redir redsocks \
+    reflex remake remote-tty rename renrot rep restic restricted-ssh-commands retry rinse ripmime rlwrap rmlint robotfindskitten roffit rover rpcbind rpm-common rpm2cpio rpm rrep rsakeyfind rsbackup rubberband-cli rubberband-ladspa rubberband-vamp \
+    runawk rungetty runit runlim rzip s-nail s3fs s6-doc s6 sac safecat safecopy saidar samba-common samba-libs sanitizer sbcl sbsigntool scheme-chez-srfi scmail scrub scrypt seabios seatd secilc secrecy selinux-utils semodule-utils sendip \
+    sepol-utils setserial sg3-utils-udev sg3-utils sgml-base sgml-data sgrep sha1cdsum shadowsocks-libev shairplay shared-mime-info shim-helpers-amd64-signed shim-signed-common shim-signed shim-unsigned shntool shorewall-core shorewall-lite \
+    shorewall6-lite shove shtool shunit2 sia sic signify-openbsd-keys simple-obfs simpleproxy since sipcalc sipgrep sipsak skopeo slay sleepenh sleuthkit slib slice slime smartmontools smbclient smenu smstools snapper snarf snd-common snd-nox \
+    sndfile-programs sndio-tools sndiod snmp snoopy sntp socket softether-common softether-vpnclient softether-vpncmd software-properties-common soong source-highlight sox spectre-meltdown-checker speech-tools speex spell sphinx-rtd-theme-common \
+    spice-html5 spin splay splitvt sqlite3 squidclient sqv srs srt-tools ssdeep ssed sshguard ssl-cert ssldump sslscan sslsniff ssmtp steghide stegsnow storebackup stow stress strongswan-charon strongswan-libcharon strongswan-starter strongswan \
+    stunnel4 subversion-tools subversion sudo sunxi-tools super supercat supermin swi-prolog-core-packages swi-prolog-core swi-prolog-nox swish++ swish-e sxid symlinks syncthing sysfsutils systemtap-common systemtap-runtime systemtap systune \
+    sysuser-helper sysv-rc-conf t1utils tachyon-bin-nox tarlz tasksel-data tasksel tcc tcl-expect tcl8.6 tcl tcllib tcpd tcpick tcpreen tcpreplay tcpslice tcpspy tcpstat tcptrace tcptrack tcputils telegram-cli telnet-ssl telnet termrec termshark \
+    tesseract-ocr-eng tesseract-ocr-osd testdisk testssl.sh tex-common texify texinfo tftp tgt-glusterfs tgt-rbd tgt thin-provisioning-tools thunderbolt-tools tinc tinyirc tinyproxy-bin tinyproxy tio tlp tlsh-tools tmfs tmux-plugin-manager \
+    tnftp tofrodos tomb tomoyo-tools tor torsocks tpm-udev tpm2-tools tree triehash tripwire trousers tshark tss2 ttm tty-clock ttyrec ttysnoop tup tuxonice-userui twinkle-common twinkle-console twolame u2f-host u2f-server ucpp udev udfclient \
+    udisks2-bcache udisks2-btrfs udisks2-lvm2 udisks2 udpcast udptunnel ufw ugrep uml-utilities unaccent unace-nonfree unace unadf unalz unar unbound-anchor unbound-host unbound uncrustify unhide unhtml unifdef unifont unison-2.51+4.11.1 \
+    unison units universal-ctags unmass unp unrar-free unrar unshield upass update-inetd upower upx-ucl usb.ids usbip usbmuxd usbredirserver usbtop user-setup userbindmount userinfo utalk uucp uuid-dev uuid v4l-utils v86d valgrind vanguards \
+    vbackup vbetool vbindiff vde-switch vde-wirefilter vde2-cryptcab vde2 vdens vdeplug vflib3 vgabios videogen vncsnapshot vobcopy vorbis-tools vpnc-scripts vpnc vpx-tools vrms vrrpd vtun wakeonlan wamerican-huge wamerican watchdog watchman \
+    wavpack wbritish-huge wcalc wcanadian-huge wcc wdiff weechat-core weechat-curses weechat-perl weechat-plugins weechat-scripts weechat wget2 whichman whiptail wiggle wildmidi wireguard-go wireless-regdb wireless-tools wireshark-common wodim \
+    wpasupplicant wput wvdial x11-common x11-xserver-utils x264 x265 x86info xcb-proto xdg-dbus-proxy xdg-utils xdms xe xfstt xkb-data xlunzip xml-core xmount xsltproc xstow xtables-addons-common xtables-addons-dkms xtables-addons-source xtail \
+    xtermset xtitle xtrace xzdec yajl-tools yapet yara yasm ylva yubico-piv-tool yubikey-luks yubikey-personalization z3 zbackup zchunk zerofree zfs-fuse zgen zint zipalign zipcmp zipmerge ziptime ziptool zlib1g-dev znc-perl znc-push znc zopfli \
+    zram-tools zulucrypt-cli zulumount-cli zulusafe-cli zutils zziplib-bin \
+  " && \
+  extended_pool=" \
+    adwaita-icon-theme alot alsaplayer-alsa alsaplayer-common anbox apt-offline asciinema audacious audacious-plugins audiotools audtty autorandr autossh avahi-daemon bdebstrap bisonc++ bochs bochs-term bookworm borgbackup brp-pacu brz bspwm bup butt \
+    ca-certificates-mono caca-utils cherrytree chromium chromium-common chromium-driver clang clang-11 clfswm cli-common clisp-module-clx cnee coccinelle comparepdf cool-retro-term cppcheck csvkit cups cups-core-drivers cups-daemon cups-filters \
+    cups-filters-core-drivers cups-ipp-utils cups-ppdc cups-server-common cutycapt dconf-cli debdelta debian-builder debmake diffoscope diffoscope-minimal diffpdf dillo dirdiff dislocker dpkg-sig drm-info dtrx dunst duplicity dvi2ps ecatools \
+    empathy-skype enscribe entropybroker evince evince-common facter fail2ban feh ffmpeg ffmpeg2theora ffmpegthumbnailer fftw2 fio firefox-esr flameshot font-manager-common font-viewer fontforge fontforge-common fontmake fontmatrix fonts-3270 \
+    fonts-aenigma fonts-agave fonts-anonymous-pro fonts-arapey fonts-atarismall fonts-bebas-neue fonts-beteckna fonts-cantarell fonts-cardo fonts-cascadia-code fonts-century-catalogue fonts-clear-sans fonts-cmu fonts-comfortaa fonts-comic-neue \
+    fonts-compagnon fonts-courier-prime fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-dejavu fonts-dejavu-extra fonts-dosis fonts-elstob fonts-engadget fonts-eurofurence fonts-fantasque-sans fonts-fanwood fonts-ferrite-core \
+    fonts-firacode fonts-fork-awesome fonts-freefont-otf fonts-freefont-ttf fonts-georgewilliams fonts-glasstty fonts-gnutypewriter fonts-go fonts-gotico-antiqua fonts-hack fonts-hack-otf fonts-hack-ttf fonts-hack-web fonts-hermit fonts-humor-sans \
+    fonts-inconsolata fonts-jsmath fonts-junction fonts-junicode fonts-jura fonts-katex fonts-league-mono fonts-league-spartan fonts-liberation fonts-liberation2 fonts-lindenhill fonts-linuxlibertine fonts-lmodern fonts-lyx fonts-monofur fonts-monoid \
+    fonts-mononoki fonts-noto-color-emoji fonts-noto-mono fonts-ocr-a fonts-ocr-b fonts-oflb-asana-math fonts-oldstandard fonts-opensymbol fonts-pc fonts-pc-extra fonts-play fonts-povray fonts-powerline fonts-prociono fonts-proggy fonts-recommended \
+    fonts-roboto fonts-roboto-fontface fonts-roboto-hinted fonts-roboto-slab fonts-roboto-unhinted fonts-spleen fonts-staypuft fonts-stick fonts-stix fonts-summersby fonts-symbola fonts-takao-mincho fonts-terminus fonts-terminus-otb fonts-tiresias \
+    fonts-tuffy fonts-ubuntu fonts-ubuntu-console fonts-ubuntu-font-family-console fonts-wqy-zenhei fonty-rg foot foot-terminfo gconf2-common gcp ghostscript-x giblib1 gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-dbusmenu-glib-0.4 gir1.2-dbusmenu-gtk3-0.4 \
+    gir1.2-freedesktop gir1.2-gdkpixbuf-2.0 gir1.2-gst-plugins-base-1.0 gir1.2-gstreamer-1.0 gir1.2-gtk-3.0 gir1.2-harfbuzz-0.0 gir1.2-ibus-1.0 gir1.2-keybinder-3.0 gir1.2-pango-1.0 gir1.2-vte-2.91 gitless gitolite3 glyphsinfo gnome-bluetooth \
+    gnome-desktop3-data gnuplot-nox gobject-introspection goobook googler gpac gpac-modules-base grabc graphviz gsfonts-other gsfonts-x11 gstreamer1.0-omx-bellagio-config gstreamer1.0-omx-generic gstreamer1.0-omx-generic-config gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly gstreamer1.0-pulseaudio gstreamer1.0-vaapi gstreamer1.0-x gtk2-engines-pixbuf gucharmap guncat gv handbrake-cli hardinfo hashid html2ps httpie httraqt hv3 hw-probe i965-va-driver ibus ibus-data ibus-gtk icdiff \
+    icu-devtools imagemagick imagemagick-6.q16 img2pdf imv intel-media-va-driver intel-media-va-driver-non-free internetarchive iptables-converter itk3 iwidgets4 j2cli jc jgrep jsmath jsmath-fonts katarakt keepass2 keepassxc kitty kitty-terminfo \
+    kodi kodi-bin kodi-data larch latex-make latex2rtf lib32z1 libalgorithm-c3-perl libann0 libantlr3c-3.4-0 libaribb24-0 libarmadillo10 libarpack2 libasound2-dev libasound2-plugins libatk-bridge2.0-dev libatk1.0-dev libatk3.0-cil libatkmm-1.6-1v5 \
+    libatspi2.0-dev libaudclient2 libaudcore5 libaudgui5 libaudio2 libaudqt2 libaudtag3 libavahi-core7 libavahi-ui-gtk3-0 libayatana-appindicator3-1 libayatana-ido3-0.4-0 libayatana-indicator3-7 libbaseencode1 libbctoolbox1 libbelcard1 libbellesip1 \
+    libbelr1 libblkid-dev libbluray-bin libbobcat5 libboolean-perl libboost-log1.74.0 libboost-nowide1.74.0 libbrotli-dev libbzrtp0 libc++1 libc++1-11 libc++abi1-11 libcairo-script-interpreter2 libcairo1.10-cil libcairo2-dev libcairo2-ocaml \
+    libcairomm-1.0-1v5 libcanberra-gtk3-0 libcanberra0 libcddb2 libcdt5 libcec6 libcfitsio9 libcgi-pm-perl libcgraph6 libcharls2 libclang-common-11-dev libclass-accessor-chained-perl libclass-accessor-perl libclass-c3-perl libclass-errorhandler-perl \
+    libclass-inspector-perl libclass-methodmaker-perl libclass-singleton-perl libclass-tiny-perl libconfig-file-perl libconfuse-common libconfuse2 libcotp12 libcpp-hocon0.3.0 libcrossguid0 libcrypt-openssl-bignum-perl libcrypt-openssl-random-perl \
+    libcrypt-openssl-rsa-perl libcue2 libcupsfilters1 libdaemon0 libdap27 libdapclient6v5 libdata-page-perl libdata-perl-perl libdatetime-format-builder-perl libdatetime-format-flexible-perl libdatetime-format-iso8601-perl libdatetime-format-mail-perl \
+    libdatetime-format-natural-perl libdatetime-format-strptime-perl libdatetime-format-w3cdtf-perl libdatetime-locale-perl libdatetime-perl libdatetime-timezone-perl libdatrie-dev libdbus-1-dev libdbusmenu-glib4 libdbusmenu-gtk3-4 libdca0 \
+    libdirectfb-1.7-7 libdirectfb-extra libdislocker0.7 libdjvulibre-text libdjvulibre21 libdmx1 libdv-bin libdvbpsi10 libdvdnav4 libdw-dev libebur128-1 libecasoundc1v5 libegl-dev libegl1-mesa libegl1-mesa-dev libelf-dev libepoxy-dev libepsilon1 \
+    libeval-closure-perl libevdocument3-4 libevview3-3 libexpat1-dev libfabric1 libfacter3.14.12 libfam0 libfaudio0 libfcft3 libfeed-find-perl libffi-dev libffmpegthumbnailer4v5 libfile-sharedir-perl libfilesys-df-perl libfltk-images1.3 \
+    libfltk1.3 libfluidsynth2 libfontconfig-dev libfontconfig1-dev libfontembed1 libfontenc1 libfontforge4 libfreerdp-client2-2 libfreerdp2-2 libfreetype-dev libfreetype6-dev libfreexl1 libfribidi-dev libfs6 libfstrcmp0 libftdi1 libfyba0 \
+    libgck-1-0 libgconf-2-4 libgcr-base-3-1 libgcr-ui-3-1 libgdal28 libgdcm3.0 libgdiplus libgdk-pixbuf-2.0-dev libgdk-pixbuf-xlib-2.0-0 libgdk-pixbuf2.0-0 libgdk-pixbuf2.0-bin libgdk3.0-cil libgdk3.0-cil-dev libgee-0.8-2 libgeos-3.9.0 \
+    libgeos-c1v5 libgeotiff5 libgio3.0-cil libgio3.0-cil-dev libgirara-gtk3-3 libgl-dev libgl1-mesa-dev libgl1-mesa-glx libglade2-0 libgles-dev libgles1 libgles2 libglew2.1 libglib2.0-dev libglib2.0-dev-bin libglib3.0-cil libglib3.0-cil-dev \
+    libglibmm-2.4-1v5 libglu1-mesa-dev libglvnd-dev libglx-dev libgnome-bluetooth13 libgnome-desktop-3-19 libgnupg-interface-perl libgphoto2-6 libgphoto2-port12 libgranite-common libgranite5 libgraphicsmagick-q16-3 libgraphite2-dev libgspell-1-2 \
+    libgspell-1-common libgstreamer-plugins-bad1.0-0 libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev libgtk-3-dev libgtk-layer-shell0 libgtk2.0-0 libgtk2.0-common libgtk3.0-cil libgtk3.0-cil-dev libgtkdatabox0 libgtkmm-2.4-1v5 libgtkmm-3.0-1v5 \
+    libgtksourceview-3.0-1 libgtksourceview-3.0-common libgtksourceviewmm-3.0-0v5 libgts-0.7-5 libgucharmap-2-90-7 libgvc6 libgvpr2 libgxps2 libharfbuzz-dev libharfbuzz-gobject0 libhdf4-0-alt libhdf5-hl-100 libhwloc-plugins libibus-1.0-5 libice-dev \
+    libicu-dev libieee1284-3 libigdgmm11 libimage-magick-perl libimage-magick-q16-perl libimagequant0 libimlib2 libinstpatch-1.0-2 libixml10 libjs-iscroll libjs-xmlextras libkate1 libkeybinder-3.0-0 libkf5completion-data libkf5completion5 \
+    libkf5config-data libkf5configcore5 libkf5configgui5 libkf5coreaddons-data libkf5coreaddons5 libkf5crash5 libkf5guiaddons5 libkf5i18n-data libkf5i18n5 libkf5itemviews-data libkf5itemviews5 libkf5widgetsaddons-data libkf5widgetsaddons5 \
+    libkf5windowsystem-data libkf5windowsystem5 libkmlbase1 libkmldom1 libkmlengine1 liblab-gamut1 liblablgtk3-ocaml liblablgtksourceview3-ocaml liblavfile-2.1-0 liblavjpeg-2.1-0 liblavplay-2.1-0 liblbfgsb0 libleatherman1.12.1 liblept5 \
+    liblinphone10 liblirc-client0 libltc11 liblua5.4-0 liblwp-authen-wsse-perl libmailutils7 libmediastreamer11 libmikmod3 libmlt++3 libmlt-data libmlt6 libmodule-pluggable-perl libmono-2.0-dev libmono-accessibility4.0-cil libmono-cairo4.0-cil \
+    libmono-cecil-private-cil libmono-cil-dev libmono-codecontracts4.0-cil libmono-compilerservices-symbolwriter4.0-cil libmono-corlib4.5-cil libmono-corlib4.5-dll libmono-cscompmgd0.0-cil libmono-csharp4.0c-cil libmono-custommarshalers4.0-cil \
+    libmono-data-tds4.0-cil libmono-db2-1.0-cil libmono-debugger-soft4.0a-cil libmono-http4.0-cil libmono-i18n-cjk4.0-cil libmono-i18n-mideast4.0-cil libmono-i18n-other4.0-cil libmono-i18n-rare4.0-cil libmono-i18n-west4.0-cil libmono-i18n4.0-all \
+    libmono-i18n4.0-cil libmono-ldap4.0-cil libmono-management4.0-cil libmono-messaging-rabbitmq4.0-cil libmono-messaging4.0-cil libmono-microsoft-build-engine4.0-cil libmono-microsoft-build-framework4.0-cil libmono-microsoft-build-tasks-v4.0-4.0-cil \
+    libmono-microsoft-build-utilities-v4.0-4.0-cil libmono-microsoft-build4.0-cil libmono-microsoft-csharp4.0-cil libmono-microsoft-visualc10.0-cil libmono-microsoft-web-infrastructure1.0-cil libmono-oracle4.0-cil libmono-parallel4.0-cil libmono-peapi4.0a-cil \
+    libmono-posix4.0-cil libmono-rabbitmq4.0-cil libmono-relaxng4.0-cil libmono-security4.0-cil libmono-sharpzip4.84-cil libmono-simd4.0-cil libmono-smdiagnostics0.0-cil libmono-sqlite4.0-cil libmono-system-componentmodel-composition4.0-cil \
+    libmono-system-componentmodel-dataannotations4.0-cil libmono-system-configuration-install4.0-cil libmono-system-configuration4.0-cil libmono-system-core4.0-cil libmono-system-data-datasetextensions4.0-cil libmono-system-data-entity4.0-cil \
+    libmono-system-data-linq4.0-cil libmono-system-data-services-client4.0-cil libmono-system-data-services4.0-cil libmono-system-data4.0-cil libmono-system-deployment4.0-cil libmono-system-design4.0-cil libmono-system-drawing-design4.0-cil \
+    libmono-system-drawing4.0-cil libmono-system-dynamic4.0-cil libmono-system-enterpriseservices4.0-cil libmono-system-identitymodel-selectors4.0-cil libmono-system-identitymodel4.0-cil libmono-system-io-compression-filesystem4.0-cil \
+    libmono-system-io-compression4.0-cil libmono-system-json-microsoft4.0-cil libmono-system-json4.0-cil libmono-system-ldap-protocols4.0-cil libmono-system-ldap4.0-cil libmono-system-management4.0-cil libmono-system-messaging4.0-cil \
+    libmono-system-net-http-formatting4.0-cil libmono-system-net-http-webrequest4.0-cil libmono-system-net-http4.0-cil libmono-system-net4.0-cil libmono-system-numerics-vectors4.0-cil libmono-system-numerics4.0-cil libmono-system-reactive-core2.2-cil \
+    libmono-system-reactive-debugger2.2-cil libmono-system-reactive-experimental2.2-cil libmono-system-reactive-interfaces2.2-cil libmono-system-reactive-linq2.2-cil libmono-system-reactive-observable-aliases0.0-cil \
+    libmono-system-reactive-platformservices2.2-cil libmono-system-reactive-providers2.2-cil libmono-system-reactive-runtime-remoting2.2-cil libmono-system-reactive-windows-forms2.2-cil libmono-system-reactive-windows-threading2.2-cil \
+    libmono-system-reflection-context4.0-cil libmono-system-runtime-caching4.0-cil libmono-system-runtime-durableinstancing4.0-cil libmono-system-runtime-serialization-formatters-soap4.0-cil libmono-system-runtime-serialization4.0-cil \
+    libmono-system-runtime4.0-cil libmono-system-security4.0-cil libmono-system-servicemodel-activation4.0-cil libmono-system-servicemodel-discovery4.0-cil libmono-system-servicemodel-internals0.0-cil libmono-system-servicemodel-routing4.0-cil \
+    libmono-system-servicemodel-web4.0-cil libmono-system-servicemodel4.0a-cil libmono-system-serviceprocess4.0-cil libmono-system-threading-tasks-dataflow4.0-cil libmono-system-transactions4.0-cil libmono-system-web-abstractions4.0-cil \
+    libmono-system-web-applicationservices4.0-cil libmono-system-web-dynamicdata4.0-cil libmono-system-web-extensions-design4.0-cil libmono-system-web-extensions4.0-cil libmono-system-web-http-selfhost4.0-cil libmono-system-web-http-webhost4.0-cil \
+    libmono-system-web-http4.0-cil libmono-system-web-mobile4.0-cil libmono-system-web-mvc3.0-cil libmono-system-web-razor2.0-cil libmono-system-web-regularexpressions4.0-cil libmono-system-web-routing4.0-cil libmono-system-web-services4.0-cil \
+    libmono-system-web-webpages-deployment2.0-cil libmono-system-web-webpages-razor2.0-cil libmono-system-web-webpages2.0-cil libmono-system-web4.0-cil libmono-system-windows-forms-datavisualization4.0a-cil libmono-system-windows-forms4.0-cil \
+    libmono-system-windows4.0-cil libmono-system-workflow-activities4.0-cil libmono-system-workflow-componentmodel4.0-cil libmono-system-workflow-runtime4.0-cil libmono-system-xaml4.0-cil libmono-system-xml-linq4.0-cil libmono-system-xml-serialization4.0-cil \
+    libmono-system-xml4.0-cil libmono-system4.0-cil libmono-tasklets4.0-cil libmono-webbrowser4.0-cil libmono-webmatrix-data4.0-cil libmono-windowsbase4.0-cil libmono-xbuild-tasks4.0-cil libmonosgen-2.0-1 libmonosgen-2.0-dev libmoox-handlesvia-perl \
+    libmoox-late-perl libmosquitto1 libmotif-common libmount-dev libmovit8 libmpdclient2 libmpeg2-4 libmpeg2encpp-2.1-0 libmplex2-2.1-0 libmpv1 libmro-compat-perl libnautilus-extension1a libnet-idn-encode-perl libnetcdf18 libnum-ocaml libnunit-cil-dev \
+    libnunit-console-runner2.6.3-cil libnunit-core-interfaces2.6.3-cil libnunit-core2.6.3-cil libnunit-framework2.6.3-cil libnunit-mocks2.6.3-cil libnunit-util2.6.3-cil libnx-x11-6 libnxcl-bin libnxcl1 libobjc-10-dev libobrender32v5 libobt2v5 \
+    libodbc1 libofa0 libogdi4.1 liboggkate1 libopencolorio1v5 libopencv-calib3d4.5 libopencv-contrib4.5 libopencv-core4.5 libopencv-dnn4.5 libopencv-features2d4.5 libopencv-flann4.5 libopencv-highgui4.5 libopencv-imgcodecs4.5 libopencv-imgproc4.5 \
+    libopencv-ml4.5 libopencv-objdetect4.5 libopencv-superres4.5 libopencv-video4.5 libopencv-videoio4.5 libopengl-dev libopenmpi3 libopenmpt-modplug1 libopenni2-0 liborc-0.4-dev liborc-0.4-dev-bin libortp15 libout123-0 libp8-platform2 \
+    libpango1.0-dev libpango3.0-cil libpangomm-1.4-1v5 libpangoxft-1.0-0 libpaper-utils libparams-validationcompiler-perl libpathplan4 libpcre2-dev libpdf-api2-perl libpeas-1.0-0 libpeas-common libphodav-2.0-0 libphodav-2.0-common libpiano0 \
+    libpixman-1-dev libplacebo72 libplot2c2 libpmix2 libpng-dev libpoppler-cpp0v5 libpoppler-glib8 libpoppler-qt5-1 libpoppler102 libpotrace0 libproj19 libprotobuf-lite23 libpsm-infinipath1 libpsm2-2 libptexenc1 libpthread-stubs0-dev libpulse-dev \
+    libpulse-mainloop-glib0 libpulsedsp libpurple-bin libpvm3 libpython2-stdlib libpython2.7-minimal libpython2.7-stdlib libqbscore1.18 libqhull8.0 libqt5concurrent5 libqt5designer5 libqt5help5 libqt5multimedia5 libqt5opengl5 libqt5positioning5 \
+    libqt5printsupport5 libqt5qml5 libqt5qmlmodels5 libqt5qmlworkerscript5 libqt5quick5 libqt5quickwidgets5 libqt5script5 libqt5sensors5 libqt5sql5 libqt5sql5-sqlite libqt5svg5 libqt5test5 libqt5waylandclient5 libqt5webchannel5 libqt5webkit5 \
+    libqt5x11extras5 libqt5xml5 libquazip5-1 libquicktime2 librsvg2-common librtaudio6 librttopo1 libruby2.7 libsane-common libsane1 libsasl2-modules-otp libsbuild-perl libsdbus-c++0 libsdl-image1.2 libsdl2-image-2.0-0 libselinux1-dev libsepol1-dev \
+    libsidplay1v5 libsidplayfp5 libsm-dev libsoci-core4.0 libsoci-sqlite3-4.0 libsocket++1 libsoundtouch1 libspatialaudio0 libspatialite7 libspdlog1 libspecio-perl libspectre1 libspice-client-glib-2.0-8 libspice-client-gtk-3.0-5 libspiro1 \
+    libsqlite3-tcl libsrtp2-1 libstartup-notification0 libstb0 libstd-rust-mozilla-1.59 libstd-rust-mozilla-dev libsub-handlesvia-perl libsuperlu5 libsyn123-0 libsynctex2 libsys-cpu-perl libtbb2 libteckit0 libtesseract4 libtexlua53 libtexluajit2 \
+    libthai-dev libtinyxml2.6.2v5 libtk8.6 libttfautohint1 libucx0 libuninameslist1 libunwind-dev libupnp13 liburi-fetch-perl liburi-template-perl liburiparser1 libva-wayland2 libvcdinfo0 libvdpau-va-gl1 libvkd3d1 libvlc-bin libvlc5 libvlccore9 \
+    libvncclient1 libvo-aacenc0 libvo-amrwbenc0 libvorbisidec1 libvte-2.91-0 libvte-2.91-common libwayland-bin libwayland-client++0 libwayland-cursor++0 libwayland-dev libwayland-egl++0 libwebrtc-audio-processing1 libweston-9-0 libwine libwinpr2-2 \
+    libwlroots6 libwmf0.2-7 libwmf0.2-7-gtk libwv-1.2-4 libwww-opensearch-perl libwxbase3.0-0v5 libwxbase3.0-dev libwxgtk-media3.0-gtk3-0v5 libwxgtk-webview3.0-gtk3-0v5 libwxgtk3.0-gtk3-0v5 libwxgtk3.0-gtk3-dev libx11-dev libx11-xcb-dev libxau-dev \
+    libxcb-composite0 libxcb-damage0 libxcb-ewmh2 libxcb-randr0-dev libxcb-render0-dev libxcb-res0 libxcb-screensaver0 libxcb-shape0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-xrm0 libxcb-xtest0 libxcb-xv0 libxcb1-dev libxcomp3 libxcomposite-dev \
+    libxcompshad3 libxcursor-dev libxdamage-dev libxdg-basedir1 libxdmcp-dev libxdo-dev libxdo3 libxerces-c3.2 libxext-dev libxfixes-dev libxfont2 libxft-dev libxi-dev libxine2 libxine2-bin libxine2-console libxine2-ffmpeg libxine2-misc-plugins \
+    libxine2-plugins libxinerama-dev libxkbcommon-dev libxkbfile1 libxkbregistry0 libxm4 libxml++2.6-2v5 libxml-atom-perl libxml-feed-perl libxml-libxslt-perl libxml-rss-perl libxml-xpath-perl libxmlsec1 libxmlsec1-openssl libxnee0 libxneur \
+    libxnvctrl0 libxosd2 libxrandr-dev libxrender-dev libxres1 libxstring-perl libxtst-dev libxtst6 libxvmc1 libxxf86dga1 libyaml-cpp0.6 libzbarqt0 libzxcvbn0 lieer lilypond lilypond-data links2 linphone-cli linphone-common linphone-nogtk lios \
+    lmodern localslackirc magicrescue magnus mailutils mailutils-common maim mandos mandos-client melt mencoder mercurial mercurial-common mesa-utils mesa-utils-extra mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers mftrace midori mikmod \
+    minbif minbif-common minitube mitmproxy mjpegtools mkvtoolnix-gui monkeysphere mono-4.0-gac mono-devel mono-gac mono-mcs mono-runtime mono-runtime-common mono-runtime-sgen mono-xbuild mono-xsp4 mono-xsp4-base monodoc-base monodoc-gtk3.0-manual \
+    monodoc-http monodoc-manual mosh motion mp3diags mpeg2dec mpg123 mplayer mpv mupdf mupdf-tools nas-bin netsurf-common netsurf-gtk nitrokey-app nitrokey-authenticator notion novnc nunit-console nx-x11-common nxagent nxdialog nxproxy offlineimap3 \
+    oggvideotools open-vm-tools openbox openvswitch-common openvswitch-ipsec openvswitch-switch osdsh otpclient-cli pango1.0-tools pastebinit patool pavucontrol pdfgrep pdfproctools pepperflashplugin-nonfree perlmagick pgpgpg pianobar picom \
+    pidgin-skype pidgin-skype-common pius pkg-config plotutils plover pngcrush poezio policycoreutils-python-utils poppler-utils potrace povray povray-examples povray-includes pqiv pulseaudio pulseaudio-equalizer pulseaudio-utils pvm pvm-examples \
+    python-babel-localedata python2 python2-minimal python2.7 python2.7-minimal python3-agate python3-agatedbf python3-agateexcel python3-agatesql python3-aiodns python3-appdirs python3-args python3-asgiref python3-audit python3-axolotl-curve25519 \
+    python3-babel python3-blinker python3-booleanoperations python3-boto3 python3-breezy python3-brotli python3-cachetools python3-cairo python3-cffi python3-clint python3-compreffor python3-configobj python3-consonance python3-construct python3-csvkit \
+    python3-dbfread python3-dbus.mainloop.pyqt5 python3-debtcollector python3-defcon python3-dissononce python3-distro python3-dulwich python3-ecasound python3-ecdsa python3-enchant python3-et-xmlfile python3-fasteners python3-fastimport \
+    python3-fido2 python3-fitz python3-flask python3-fontmake python3-fontmath python3-fonttools python3-fs python3-future python3-gi-cairo python3-glyphslib python3-gnupg python3-google-auth python3-google-auth-httplib2 python3-googleapi \
+    python3-gpg python3-h11 python3-h2 python3-harmony python3-hid python3-hpack python3-httplib2 python3-hyperframe python3-ibus-1.0 python3-imaplib2 python3-img2pdf python3-internetarchive python3-iso8601 python3-isodate python3-itsdangerous \
+    python3-jdcal python3-jeepney python3-jinja2 python3-jsmin python3-json-pointer python3-jsonpatch python3-jwcrypto python3-kaitaistruct python3-kaptan python3-keyring python3-ldap3 python3-leather python3-libarchive-c python3-librecaptcha \
+    python3-libtmux python3-lockfile python3-magic python3-mako python3-markdown python3-markupsafe python3-mnemonic python3-mock python3-monotonic python3-mpmath python3-msgpack python3-netifaces python3-networkx python3-notmuch python3-novnc \
+    python3-numpy python3-oauth2client python3-openpyxl python3-openvswitch python3-oslo.config python3-oslo.context python3-oslo.i18n python3-oslo.log python3-oslo.serialization python3-oslo.utils python3-packaging python3-parsedatetime \
+    python3-passlib python3-pathspec python3-patiencediff python3-pbr python3-pikepdf python3-pil python3-ply python3-poezio-poopt python3-protobuf python3-publicsuffix2 python3-pycares python3-pyclipper python3-pycparser python3-pycryptodome \
+    python3-pydbus python3-pygit2 python3-pyinotify python3-pylibacl python3-pyparsing python3-pyqt5 python3-pyqt5.qtopengl python3-pyqt5.qtquick python3-pyqt5.qtsql python3-pyqt5.qtwebkit python3-pyqt5.sip python3-pyscard python3-pytimeparse \
+    python3-rencode python3-rfc3986 python3-rstr python3-ruamel.yaml python3-ruamel.yaml.clib python3-sane python3-schema python3-scipy python3-secretstorage python3-semanage python3-sepolgen python3-sepolicy python3-serial python3-setools \
+    python3-setproctitle python3-simplejson python3-sip python3-slimit python3-slixmpp python3-slugify python3-sortedcontainers python3-speechd python3-sqlalchemy python3-stevedore python3-sympy python3-tmuxp python3-tornado python3-transitions \
+    python3-trezor python3-typedload python3-typing-extensions python3-tz python3-ufo2ft python3-ufolib2 python3-ufonormalizer python3-unidecode python3-uritemplate python3-urwidtrees python3-usb1 python3-websockets python3-websockify \
+    python3-werkzeug python3-wrapt python3-wsproto python3-xattr python3-xlib python3-xlrd python3-xmltodict python3-ykman qbs qemu-system qemu-system-common qemu-system-x86 qemubuilder qiv qml-module-qmltermwidget qml-module-qt-labs-folderlistmodel \
+    qml-module-qt-labs-settings qml-module-qtgraphicaleffects qml-module-qtqml qml-module-qtqml-models2 qml-module-qtquick-controls qml-module-qtquick-dialogs qml-module-qtquick-layouts qml-module-qtquick-localstorage qml-module-qtquick-privatewidgets \
+    qml-module-qtquick-window2 qml-module-qtquick2 qtop quicktime-utils qutebrowser qutebrowser-qtwebkit rake rdesktop recoll recollcmd recollgui recordmydesktop recoverjpeg redet remmina remmina-common remmina-plugin-nx remmina-plugin-rdp \
+    remmina-plugin-spice remmina-plugin-vnc rep-gtk reprotest rofi rpl rr ruby ruby-bcrypt-pbkdf ruby-childprocess ruby-chronic ruby-concurrent ruby-ed25519 ruby-erubi ruby-excon ruby-ffi ruby-highline ruby-i18n ruby-listen ruby-locale \
+    ruby-lockfile ruby-log4r ruby-mime-types ruby-mime-types-data ruby-minitest ruby-ncurses ruby-net-scp ruby-net-sftp ruby-net-ssh ruby-net-telnet ruby-numerizer ruby-optimist ruby-power-assert ruby-rb-inotify ruby-rubygems ruby-rubymail \
+    ruby-sequel ruby-sqlite3 ruby-test-unit ruby-trollop ruby-unicode ruby-unicode-display-width ruby-vagrant-cloud ruby-xapian ruby-xmlrpc ruby-zip ruby2.7 rubygems-integration rust-mozilla-gdb rustc-mozilla s-tui s3cmd s4cmd sakura sawfish \
+    sawfish-data sawfish-lisp-source sawfish-themes sayonara sbuild sbuild-qemu schism scrot sct searchmonkey selinux-basics selinux-policy-src semanage-utils setools shairport-sync shatag shoogle showq signing-party simplescreenrecorder \
+    simplescreenrecorder-lib sirikali slop slowmovideo slurp smem smtube sndfile-tools sound-theme-freedesktop spectrwm speedtest-cli spice-client-glib-usb-acl-helper ssh-import-id ssh-tools sshfs ssvnc stgit stgit-contrib stterm subuser \
+    suckless-tools sup-mail supervisor surf surfraw surfraw-extra sway sway-backgrounds swaybg swayidle sxhkd sxiv systemctl systraq t1-cyrillic t1-xfree86-nonfree tcvt telegram-purple telepathy-haze termdebug terminus termit tesseract-ocr texlive-base \
+    texlive-binaries texlive-font-utils texlive-fonts-recommended texlive-latex-base tigervnc-common tigervnc-viewer timgm6mb-soundfont timidity tk tk-html3 tk8.6 tmuxp trezor trimage troffcvt ttf-ancient-fonts ttf-anonymous-pro ttf-bitstream-vera \
+    ttf-engadget ttf-mscorefonts-installer ttf-ubuntu-font-family ttf-xfree86-nonfree ttf2ufm ttfautohint ttygif tv-fonts twm tz-converter uefitool-cli unagi va-driver-all vagrant vainfo vdesk vdpau-driver-all vdpauinfo vkeybd vlc vlc-bin vlc-data \
+    vlc-plugin-access-extra vlc-plugin-base vlc-plugin-qt vlc-plugin-video-output vokoscreen-ng volume-key w3m-img waybar wayland-protocols wbar wbar-config wdisplays websockify weechat-python weston wev wf-recorder wine64 wininfo wl-clipboard \
+    wlogout wlr-randr wmctrl wob wofi wtype wv wx-common wx3.0-headers wxedid x-tile x11-apps x11-session-utils x11-utils x11-xfs-utils x11-xkb-utils x11proto-dev x11proto-input-dev x11proto-randr-dev x11proto-record-dev x11proto-xext-dev \
+    x11proto-xinerama-dev xattr xauth xaw3dg xbacklight xbanish xbindkeys xbindkeys-config xbitmaps xbuilder xcape xcb xcfa xclip xcolors xcolorsel xcompmgr xdm xdmx xdmx-tools xdo xdot xdotool xflip xfonts-100dpi xfonts-100dpi-transcoded \
+    xfonts-75dpi xfonts-75dpi-transcoded xfonts-base xfonts-efont-unicode xfonts-efont-unicode-ib xfonts-encodings xfonts-nexus xfonts-scalable xfonts-terminus xfonts-terminus-oblique xfonts-traditional xfonts-utils xfonts-x3270-misc xfractint \
+    xine-console xininfo xinit xinput xkbind xkbset xkeycaps xlax xli xloadimage xmacro xnee xnest xneur xorg xorg-docs-core xorg-sgml-doctools xpdf xpra xrootconsole xscreensaver xscreensaver-data xsecurelock xsel xserver-common xserver-xephyr \
+    xserver-xorg xserver-xorg-core xserver-xorg-input-all xserver-xorg-input-libinput xserver-xorg-legacy xserver-xorg-video-dummy xss-lock xterm xtightvncviewer xtrans-dev xtrlock xtv xutils xvfb xvkbd xwallpaper xwayland xwit xxkb xzoom yaggo \
+    yamllint yank youtube-dl yubikey-manager yudit-common zathura zathura-pdf-poppler zathura-ps zbar-tools zenity zenity-common znc-python \
+  " && \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 022 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export TMP=/tmp && \
+  export TEMP="${TMP}" && \
+  export TMPDIR="${TMP}" && \
+  sed -i -e "/^Acquire/s/true/false/" /etc/apt/apt.conf.d/docker-gzip-indexes && \
+  for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '"0";' | tee -a /etc/apt/apt.conf.d/42disable; done && \
+  chmod --verbose go+r /etc/apt/apt.conf.d/42disable && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  exec </dev/null && \
+  chmod --verbose go-w /etc /etc/apt /etc/apt/apt.conf.d /etc/dpkg /etc/dpkg/dpkg.cfg.d /usr /usr/sbin && \
+  chmod --verbose go-w /etc/apt/apt.conf.d/docker-autoremove-suggests /etc/apt/apt.conf.d/docker-clean /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages /etc/dpkg/dpkg.cfg.d/docker-apt-speedup /usr/sbin/policy-rc.d && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  mkdir -v -p /opt/artifact/archives && \
+  cd /opt/artifact/archives && \
+  apt-get -y download ${fetch_pool} && \
+  unset fetch_pool && \
+  cd .. && \
+  tar -c -f - archives |gzip -1 -v > archives.gtar.gz && \
+  rm -r archives && \
+  mkdir -v -p /opt/artifact/extended && \
+  cd /opt/artifact/extended && \
+  apt-get -y download ${extended_pool} && \
+  unset extended_pool && \
+  cd .. && \
+  tar -c -f - extended |gzip -1 -v > extended.gtar.gz && \
+  rm -r extended && \
+  true
+
 FROM docker://devuan/devuan:stable AS devuan-4
 
 RUN \
@@ -1723,8 +2006,16 @@ RUN \
   mv -v /etc/apt/sources.list.d/debian.list /usr/local/src/attic/etc/apt/sources.list.d/debian.list && \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
+  mkdir -v -p /opt/artifact/archives && \
+  tar -c -f - /var/lib/apt/lists /usr/share/keyrings/derivative.asc |xz -9 -e -v -v -C crc32 > /opt/artifact/lists-key.gtar.xz && \
   sed -i -e '/Defaults.*secure_path/s,secure_path="[^"]*",secure_path="/sbin:/bin:/usr/sbin:/usr/bin",' /etc/sudoers && \
   mv -v /etc/profile.d/30_setup.sh /usr/local/src/attic/etc/profile.d/ && \
+  cd /opt/artifact/archives && \
+  apt-get download anon-apt-sources-list apparmor-profile-dist apparmor-profile-hexchat apparmor-profile-thunderbird apparmor-profile-torbrowser apparmor-profiles-kicksecure bootclockrandomization damngpl debug-misc desktop-config-dist dist-base-files grub-live grub-live-initramfs-tools hardened-malloc helper-scripts icon-pack-dist initializer-dist kicksecure-base-files kicksecure-cli kicksecure-cli-vm kicksecure-default-applications-cli kicksecure-dependencies-cli kicksecure-dependencies-system kicksecure-network-conf kicksecure-recommended-cli msgcollector non-qubes-vm-enhancements-cli open-link-confirmation repository-dist sdwdate security-misc setup-dist swap-file-creator systemcheck timesanitycheck tirdad tirdad-dkms tor usability-misc vm-config-dist && \
+  cd .. && \
+  tar -c -f - archives |gzip -1 -v > archives.gtar.gz && \
+  rm -r archives && \
+  cd /root && \
   find /usr/lib /usr/share -maxdepth 24 -name "*.pyc" -ls -delete && \
   find /usr/lib /usr/share -maxdepth 24 -name __pycache__ -type d -print | xargs rmdir -v -- && \
   apt-get -y clean && \
@@ -1767,8 +2058,10 @@ COPY --from=devuan-4-kicksecure /root/dpkg-l /root/dpkg-l-kicksecure
 COPY --from=devuan-4-local / /root/initrd/
 COPY --from=kernelbuild /opt/artifact /root/kernel
 COPY Scripts/05entropy /root/
-
-ENV SHELL /bin/bash-static
+COPY --from=devuan-archive-pool /opt/artifact/archives.gtar.gz /root/archives-devuan.gtar.gz
+COPY --from=devuan-archive-pool /opt/artifact/extended.gtar.gz /root/extended-devuan.gtar.gz
+COPY --from=devuan-4-kicksecure /opt/artifact/archives.gtar.gz /root/archives-kicksecure.gtar.gz
+COPY --from=devuan-4-kicksecure /opt/artifact/lists-key.gtar.xz /root/kicksecure-lists-key.gtar.xz
 
 RUN \
   module_list=" 8021q ac aes_generic aesni_intel af_alg af_packet agpgart algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix blktap bochs_drm br_netfilter bridge button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat fb fb_sys_fops fbdev floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_core i2c_piix4 icp ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mousedev mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 nls_utf8 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm snd snd-pcm snd_timer soundcore spl squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid veth vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_physdev xt_tcpudp xts zavl zcommon zfs zlua znvpair zunicode zzstd " && \
@@ -1787,6 +2080,7 @@ RUN \
   export TERM=dumb && \
   export TTY=/dev/null && \
   export PYTHONDONTWRITEBYTECODE=1 && \
+  export BUILD_IDENTIFIER="$(TZ=Universal date +%Y.%m.%d-%H.%M.%S-%N)" && \
   exec </dev/null && \
   for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '"0";' | tee -a /etc/apt/apt.conf.d/42disable; done && \
   (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
@@ -1814,6 +2108,7 @@ RUN \
   echo nameserver 1.1.1.1 > etc/resolv.conf && \
   ( echo '#!/bin/bash-static' && \
     echo "set -x" && \
+    echo "cd /" && \
     echo "exec </dev/null" && \
     echo "umask 022" && \
     echo "ulimit -v unlimited" && \
@@ -1896,7 +2191,7 @@ RUN \
     echo "export TMP=/mnt/VOLATILE/tmp" && \
     echo 'export TEMP="${TMP}"' && \
     echo 'export TMPDIR="${TMP}"' && \
-    echo "zstd -dvv -T1 -single-thread --long=30 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
+    echo "zstd -dvv -T1 --single-thread --long=30 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
     echo "umask 022" && \
     echo "export TMP=/run/tmp" && \
     echo 'export TEMP="${TMP}"' && \
@@ -1932,6 +2227,7 @@ RUN \
     echo "umount -v /mnt/CACHE" && \
     echo "rmdir -v /mnt/CACHE" && \
     echo "rm -r /opt/bootstrap/bin /opt/bootstrap/sbin /opt/bootstrap/lib" && \
+    echo "if test -d /opt/bootstrap/etc/boot.d; then run-parts /opt/bootstrap/etc/boot.d; rm -r /opt/bootstrap/etc; fi" && \
     echo "rmdir -v /opt/bootstrap" && \
     echo "unset LD_LIBRARY_PATH" && \
     echo "mkdir -v -p /mnt/EFI" && \
@@ -1946,6 +2242,7 @@ RUN \
     echo "mv /usr/local /new/usr/local" && \
     echo "mv /usr/share /new/usr/share" && \
     echo "mv /stand/env /stand/env-static" && \
+    echo "mkdir -p -v /new/lib" && \
     echo "tar -C /lib -c --remove-files -f - modules | tar -C /new/lib -x -p -f -" && \
     echo "cp -p /usr/bin/env /tmp/env" && \
     echo "mv /usr/bin /new/usr/bin" && \
@@ -2017,7 +2314,7 @@ RUN \
   rmdir -v /root/initrd/boot/ && \
   mv -v /root/boot/ /root/initrd/boot/ && \
   ulimit -d unlimited && ulimit -v unlimited && \
-  mkdir -p /root/drive/mnt/CACHE/overlay /root/drive/mnt/EFI/linux && \
+  mkdir -p /root/drive/mnt/CACHE/overlay /root/drive/mnt/CACHE/lists /root/drive/mnt/EFI/linux && \
   tar -C /root/overlay -cf - usr var lib | zstd -v -v -v -T1 --single-thread --long=30 --ultra -22 > /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   ls -ldsi --full-time /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   rm -r -v /root/overlay/usr/local/etc/boot.d/ && \
@@ -2059,9 +2356,9 @@ RUN \
       n 3 "" +32m 8301 \
       n 4 "" +32m 8301 \
       n 5 "" +32m 8301 \
-      n 6 "" +4g 8301 \
+      n 6 "" +5g 8301 \
       n 7 "" +4g 8301 \
-      n 8 "" +4g 8301 \
+      n 8 "" +3g 8301 \
       n 9 "" +42g 8309 \
       c 1 EFI \
       c 2 BIOSGRUB \
@@ -2169,7 +2466,9 @@ RUN \
   echo 'tar -C /mnt/STAGING/ -c -f - . | tar -C / -x -p -v --warning=no-timestamp -f -' >> init && \
   echo 'umount -v /mnt/STAGING' >> init && \
   echo 'ls -ladsi --full-time /mnt/EFI/linux/initrd* /mnt/CACHE/overlay/overlay*tar*' >> init && \
-  echo '(cd /mnt/EFI/linux/; for i in initrd*; do stat -L -c%s "$i" > "$i".isize; done)' >> init && \
+  echo 'mkdir -v -p /mnt/EFI/metadata' >> init && \
+  echo '(cd /mnt/EFI/linux/; for i in initrd*; do stat -L -c%s -- "$i" > ../metadata/"$i".isize; done)' >> init && \
+  echo "echo ${BUILD_IDENTIFIER} >> /mnt/EFI/metadata/origin" >> init && \
   echo 'umount -v /mnt/CACHE' >> init && \
   echo 'cp -p -v /boot/xen* /mnt/EFI/xen/' >> init && \
   echo 'cp -p -v /boot/System.map* /boot/config* /mnt/EFI/linux/' >> init && \
@@ -2180,7 +2479,7 @@ RUN \
   echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=4352M,max:4608M guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=vga,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=4352M,max:4608M guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
   echo 'cat syslinux.cfg' >> init && \
@@ -2219,5 +2518,8 @@ RUN \
   cd / && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
   rm -r -f /usr/share/doc /usr/share/man && \
+  mkdir -v -p /opt/artifact/archives && \
+  mv -v /root/archives-devuan.gtar.gz /root/extended-devuan.gtar.gz /root/archives-kicksecure.gtar.gz /opt/artifact/archives/ && \
+  mv -v /root/kicksecure-lists-key.gtar.xz /opt/artifact/meta/ && \
   find /opt/artifact -ls && \
   true
