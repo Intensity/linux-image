@@ -2274,7 +2274,7 @@ RUN \
     echo "sync" && \
     echo "sleep 2" && \
     echo "mkdir /new" && \
-    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=85% tmpfs /new" && \
+    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=65% tmpfs /new" && \
     echo "chmod --verbose go-w /new/." && \
     echo "mkdir -v -p /mnt/CACHE" && \
     echo "/stand/e2fsck -p -v /dev/disk/by-partlabel/CACHE || true" && \
