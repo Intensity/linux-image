@@ -362,6 +362,7 @@ RUN \
     ebtables \
     ecdsautils \
     ed \
+    emacsen-common \
     encfs \
     ethtool \
     eudev \
@@ -425,6 +426,7 @@ RUN \
     inetutils-tools \
     inetutils-traceroute \
     initscripts \
+    install-info \
     intel-microcode \
     iproute2 \
     ipset \
@@ -443,15 +445,35 @@ RUN \
     less \
     libarchive-tools \
     libarchive13 \
+    libasan6 \
+    libatomic1 \
+    libc-dev-bin \
+    libc6-dev \
+    libcrypt-dev \
     libdevmapper1.02.1 \
+    libgcc-10-dev \
+    libgccjit0 \
     libglib2.0-0 \
+    libgmp10 \
     libicu67 \
+    libisl23 \
+    libitm1 \
+    liblsan0 \
     libmnl0 \
+    libmpc3 \
+    libmpfr6 \
     libncursesw6 \
     libnetfilter-queue1 \
     libnfnetlink0 \
+    libnsl-dev \
+    libquadmath0 \
     libsodium23 \
+    libtinfo6 \
+    libtirpc-dev \
+    libtsan0 \
+    libubsan1 \
     libxml2 \
+    libzstd1 \
     lockfile-progs \
     lrzip \
     lsh-client \
@@ -592,6 +614,7 @@ RUN \
     xxhash \
     xz-utils \
     zip \
+    zlib1g \
     zoxide \
     zpaq \
     zsh-autosuggestions \
@@ -777,7 +800,7 @@ RUN \
   rm -v /bin/rmksh && \
   ln -sv mksh-static /bin/rmksh && \
   cp -av /usr/bin/gpg1 /usr/bin/gpg && \
-  for conf in /etc/bash.bashrc /etc/profile /etc/skel/.bashrc /etc/skel/.profile /root/.bashrc /root/.profile; do (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand) | tee -a "${conf}"; done && \
+  for conf in /etc/bash.bashrc /etc/profile /etc/skel/.bashrc /etc/skel/.profile /root/.bashrc /root/.profile; do (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand; echo unset HUSHLOGIN; echo unset MOTD_SHOWN) | tee -a "${conf}"; done && \
   rm -v /etc/localtime && \
   /usr/bin/env --chdir=/etc ln -sv ../usr/share/zoneinfo/Universal ./localtime && \
   echo Universal > /etc/timezone && \
@@ -836,7 +859,7 @@ RUN \
   : > /var/log/alternatives.log && \
   : |xz -vv > /var/log/apt/eipp.log.xz && \
   chmod --verbose -R go-rwx /etc/skel && \
-  (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand) | tee -a /etc/skel/.bashrc && \
+  (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand; echo unset HUSHLOGIN; echo unset MOTD_SHOWN) | tee -a /etc/skel/.bashrc && \
   find /tmp /var/tmp -type f -ls -delete && \
   ( echo "# Example aliases" && \
     echo 'alias ered="env -i -- TMP=/dev/shm TEMP=/dev/shm TMPDIR=/dev/shm TERM=vt220 SHELL=/bin/false /bin/ed -E -r --"' && \
@@ -886,6 +909,8 @@ RUN \
   export CXXFLAGS=" ${CFLAGS} " && \
   \
   apt-get install -y --verbose-versions asciidoc asciidoctor autoconf automake binutils-dev bison build-essential cargo ccache cdbs clang cmake devscripts dh-autoreconf dh-exec dh-make dh-python docbook-xml docbook-xsl doxygen dpkg-dev flex fuse3 g++ golang-go help2man libacl1-dev libaio-dev libarchive-dev libarchive13 libaudit-dev libboost-context-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-regex-dev libboost-system-dev libboost-thread-dev libbsd-dev libbz2-dev libcap-dev libcap-ng-dev libdevmapper-dev libdivsufsort-dev libdouble-conversion-dev libdrm-dev libdwarf-dev libelf-dev libevent-dev libfido2-dev libfmt-dev libfuse3-dev libgcrypt20-dev libglib2.0-dev libgnutls28-dev libgoogle-glog-dev libiberty-dev libjemalloc-dev liblz4-dev liblzma-dev liblzo2-dev libncurses-dev libncursesw5-dev libnet1-dev libnettle8 libnftables-dev libnl-3-dev libnl-route-3-dev libpam0g-dev libpkcs11-helper1-dev libprotobuf-c-dev libprotobuf-dev libprotoc-dev libsodium-dev libssl-dev libunwind-dev libwolfssl-dev libxxhash-dev libzstd-dev make musl-dev musl-tools nettle-dev ninja-build p7zip-full pandoc pkg-config protobuf-c-compiler protobuf-compiler python3-all python3-fuse python3-llfuse python3-pyfuse3 python3-setuptools ronn texinfo unrar xmlto yasm zlib1g-dev && \
+  apt-get install -y --verbose-versions adwaita-icon-theme autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 comerr-dev cpp cpp-10 dbus dbus-x11 dconf-gsettings-backend dconf-service debhelper dh-autoreconf dh-exec dh-runit dh-strip-nondeterminism dpkg-dev dwz file fontconfig fontconfig-config fonts-dejavu-core g++ g++-10 gcc gcc-10 gettext gettext-base gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-freedesktop gir1.2-gdkpixbuf-2.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-harfbuzz-0.0 gir1.2-pango-1.0 glib-networking glib-networking-common glib-networking-services groff-base gsettings-desktop-schemas gtk-update-icon-cache hicolor-icon-theme icu-devtools intltool-debian krb5-multidev libapparmor1 libarchive-zip-perl libasan6 libatk-bridge2.0-0 libatk-bridge2.0-dev libatk1.0-0 libatk1.0-data libatk1.0-dev libatomic1 libatspi2.0-0 libatspi2.0-dev libaudit-dev libavahi-client3 libavahi-common-data libavahi-common3 libbinutils libblkid-dev libbrotli-dev libbrotli1 libbsd-dev libbsd0 libc-dev-bin libc6-dev libcairo-gobject2 libcairo-script-interpreter2 libcairo2 libcairo2-dev libcap-ng-dev libcbor0 libcc1-0 libclone-perl libcolord2 libcrypt-dev libctf-nobfd0 libctf0 libcups2 libdatrie-dev libdatrie1 libdbus-1-3 libdbus-1-dev libdconf1 libdebhelper-perl libdeflate0 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit-dev libedit2 libegl-dev libegl-mesa0 libegl1 libegl1-mesa-dev libelf1 libepoxy-dev libepoxy0 libexpat1 libexpat1-dev libffi-dev libfido2-1 libfido2-dev libfile-copy-recursive-perl libfile-slurp-perl libfile-stripnondeterminism-perl libfontconfig-dev libfontconfig1 libfontconfig1-dev libfreetype-dev libfreetype6 libfreetype6-dev libfribidi-dev libfribidi0 libgbm1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgdk-pixbuf-2.0-0 libgdk-pixbuf-2.0-dev libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgirepository-1.0-1 libgl-dev libgl1 libgl1-mesa-dri libglapi-mesa libgles-dev libgles1 libgles2 libglib2.0-0 libglib2.0-bin libglib2.0-data libglib2.0-dev libglib2.0-dev-bin libglvnd-dev libglvnd0 libglx-dev libglx-mesa0 libglx0 libgomp1 libgraphite2-3 libgraphite2-dev libgssrpc4 libgtk-3-0 libgtk-3-common libgtk-3-dev libharfbuzz-dev libharfbuzz-gobject0 libharfbuzz-icu0 libharfbuzz0b libice-dev libice6 libicu-dev libicu67 libisl23 libitm1 libjbig0 libjpeg62-turbo libjson-glib-1.0-0 libjson-glib-1.0-common libkadm5clnt-mit12 libkadm5srv-mit12 libkdb5-10 libkrb5-dev liblcms2-2 libllvm11 liblsan0 liblzo2-2 libmagic-mgc libmagic1 libmd-dev libmd0 libmount-dev libmpc3 libmpdec3 libmpfr6 libncurses-dev libncurses6 libncursesw6 libnsl-dev libopengl-dev libopengl0 libpam0g-dev libpango-1.0-0 libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 libpangoxft-1.0-0 libpciaccess0 libpcre16-3 libpcre2-16-0 libpcre2-32-0 libpcre2-dev libpcre2-posix2 libpcre3-dev libpcre32-3 libpcrecpp0v5 libperl5.32 libpipeline1 libpixman-1-0 libpixman-1-dev libpng-dev libpng16-16 libproxy1v5 libpsl5 libpthread-stubs0-dev libpython3-stdlib libpython3.9-minimal libpython3.9-stdlib libquadmath0 libreadline8 libref-util-perl librest-0.7-0 libselinux1-dev libsensors-config libsensors5 libsepol1-dev libsigsegv2 libsm-dev libsm6 libsoup-gnome2.4-1 libsoup2.4-1 libsqlite3-0 libssl-dev libstdc++-10-dev libsub-override-perl libsystemd-dev libsystemd0 libtext-hogan-perl libtext-trim-perl libthai-data libthai-dev libthai0 libtiff5 libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libvulkan1 libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-dev libwayland-egl1 libwayland-server0 libwebp6 libwrap0 libwrap0-dev libx11-6 libx11-data libx11-dev libx11-xcb1 libxau-dev libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-render0 libxcb-render0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync1 libxcb-xfixes0 libxcb1 libxcb1-dev libxcomposite-dev libxcomposite1 libxcursor-dev libxcursor1 libxdamage-dev libxdamage1 libxdmcp-dev libxdmcp6 libxext-dev libxext6 libxfixes-dev libxfixes3 libxft-dev libxft2 libxi-dev libxi6 libxinerama-dev libxinerama1 libxkbcommon-dev libxkbcommon0 libxml2 libxrandr-dev libxrandr2 libxrender-dev libxrender1 libxshmfence1 libxtst-dev libxtst6 libxxf86vm1 libz3-4 linux-libc-dev m4 make man-db media-types pango1.0-tools patch perl perl-modules-5.32 pkg-config po-debconf python3 python3-distutils python3-lib2to3 python3-minimal python3.9 python3.9-minimal readline-common sensible-utils shared-mime-info ucf uuid-dev wayland-protocols x11-common x11proto-dev x11proto-input-dev x11proto-randr-dev x11proto-record-dev x11proto-xext-dev x11proto-xinerama-dev xkb-data xorg-sgml-doctools xtrans-dev xz-utils zlib1g-dev libcap2 libprocps8 procps psmisc runit-helper && \
+  apt-get install -y --verbose-versions bsd-mailx diffstat exim4-base exim4-config exim4-daemon-light gir1.2-rsvg-2.0 imagemagick imagemagick-6-common imagemagick-6.q16 libacl1-dev libaom0 libasound2-dev libattr1-dev libbz2-dev libdav1d4 libde265-0 libdeflate-dev libdjvulibre-dev libdjvulibre-text libdjvulibre21 libexif-dev libexif12 libfftw3-double3 libgd3 libgif-dev libgif7 libgmp-dev libgmpxx4ldbl libgnutls-dane0 libgnutls-openssl27 libgnutls28-dev libgnutlsxx28 libgpm-dev libheif1 libidn2-dev libilmbase-dev libilmbase25 libjansson-dev libjbig-dev libjpeg-dev libjpeg62-turbo-dev liblcms2-dev liblockfile-dev liblqr-1-0 liblqr-1-0-dev libltdl-dev libltdl7 liblzma-dev libm17n-0 libm17n-dev libmagick++-6-headers libmagick++-6.q16-8 libmagick++-6.q16-dev libmagickcore-6-arch-config libmagickcore-6-headers libmagickcore-6.q16-6 libmagickcore-6.q16-6-extra libmagickcore-6.q16-dev libmagickwand-6-headers libmagickwand-6.q16-6 libmagickwand-6.q16-dev libopenexr-dev libopenexr25 libopenjp2-7 libopenjp2-7-dev libotf-dev libotf0 libp11-kit-dev librsvg2-2 librsvg2-common librsvg2-dev libtasn1-6-dev libtext-unidecode-perl libtiff-dev libtiffxx5 libunbound8 libwebpdemux2 libwebpmux3 libwmf-dev libwmf0.2-7 libx265-192 libxaw7 libxaw7-dev libxml-libxml-perl libxml-namespacesupport-perl libxml-sax-base-perl libxml-sax-perl libxml2-dev libxmu-dev libxmu-headers libxmu6 libxpm-dev libxpm4 libxt-dev libxt6 m17n-db nettle-dev quilt tex-common texinfo xaw3dg xaw3dg-dev xutils-dev  gnupg-agent libgccjit-10-dev libgccjit0 libncurses5-dev   emacsen-common install-info  libtinfo6 zlib1g libgccjit0 libgmp10 libisl23 libmpc3 libmpfr6 libzstd1 && \
   \
   : > /usr/bin/x86_64-linux-gnu-strip && \
   cd /usr/local && \
@@ -1145,8 +1170,30 @@ RUN \
   rm losetup && make losetup 2>&1 |grep '^libtool: link:' |tail -n 1| sed 's,.*:,,' |sed 's,$, -static ,' | sed 's,\.so ,.a ,g' | sh && cp -p .libs/losetup /usr/local/src/stand/ul_losetup && \
   \
   echo "deb-src http://deb.devuan.org/merged daedalus main contrib non-free" | tee -a /etc/apt/sources.list && \
-  cd /usr/local/src && \
   apt-get update && \
+  \
+  cd /usr/local/src && \
+  apt-get source openssh-server && \
+  cd ./openssh-9.?p?/ && \
+  ./debian/rules binary && \
+  mkdir -p -v /opt/artifact/deb && \
+  cd ../ && \
+  packages="$(ls -1trd openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb )" && \
+  dpkg -i ${packages} && \
+  cp -p -v ${packages} /opt/artifact/deb/ && \
+  unset packages && \
+  \
+  cd /usr/local/src && \
+  apt-get source emacs-nox && \
+  cd ./emacs-28.?+?/ && \
+  sed -i -e "/CC=gcc-12/d" -e "/confflags_nox.*without-gsettings/s/without-gsettings/without-gsettings --disable-build-details --disable-acl --without-all --without-mailutils --without-pop --without-kerberos --without-kerberos5 --without-hesiod --with-sound=no --without-xpm --without-jpeg --without-tiff --without-gif --without-png --without-rsvg --without-lcms2 --without-libsystemd --without-cairo --without-xml2 --without-imagemagick --without-native-image-api --without-json --without-xft --without-harfbuzz --without-libotf --without-m17n-flt --without-toolkit-scroll-bars --without-xaw3d --without-xim --without-xdbe --without-gpm --without-dbus --without-gconf --without-selinux --without-gnutls --with-zlib --with-native-compilation --without-xwidgets --without-x --without-libgmp --without-included-regex /" debian/rules && \
+  DEB_BUILD_OPTIONS=nocheck ./debian/rules binary && \
+  cd ../ && \
+  packages="$(ls -1trd emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.?+*0_all.deb)" && \
+  dpkg -i ${packages} && \
+  cp -p -v ${packages} /opt/artifact/deb/ && \
+  \
+  cd /usr/local/src && \
   apt-get source podman-compose && \
   cd podman-compose-1* && \
   ./debian/rules binary && \
@@ -1185,7 +1232,6 @@ RUN \
   mv -v ~/.cargo/bin/rosenpass /usr/local/sbin/ && \
   \
   cd /usr/local && \
-  mkdir -v -p /opt/artifact/deb && \
   mv /usr/local/src/vdmfec*.deb /usr/local/src/podman-compose*all.deb /opt/artifact/deb/ && \
   mv /usr/local/src/stand/ /opt/artifact/stand/ && \
   rm -r src && \
@@ -1193,6 +1239,49 @@ RUN \
   rm -v /usr/local/lib/lib*.a /usr/local/lib/x86_64-linux-gnu/lib*.a && \
   mv local /opt/artifact/local/ && \
   rm -r /root/.cargo /root/.rustup && \
+  true
+
+FROM docker://devuan/devuan:ascii AS ascii-builder
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 022 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export TMP=/tmp && \
+  export TEMP="${TMP}" && \
+  export TMPDIR="${TMP}" && \
+  sed -i -e "/^Acquire/s/true/false/" /etc/apt/apt.conf.d/docker-gzip-indexes && \
+  for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '"0";' | tee -a /etc/apt/apt.conf.d/42disable; done && \
+  chmod --verbose go+r /etc/apt/apt.conf.d/42disable && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security"; do echo deb"${src}" http://deb.devuan.org/merged ascii"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  exec </dev/null && \
+  chmod --verbose go-w /etc /etc/apt /etc/apt/apt.conf.d /etc/dpkg /etc/dpkg/dpkg.cfg.d /usr /usr/sbin && \
+  chmod --verbose go-w /etc/apt/apt.conf.d/docker-autoremove-suggests /etc/apt/apt.conf.d/docker-clean /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages /etc/dpkg/dpkg.cfg.d/docker-apt-speedup /usr/sbin/policy-rc.d && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  apt-get -y install --verbose-versions build-essential git-core zlib1g-dev libbz2-dev libwavpack-dev yasm file libssl1.0-dev ca-certificates && \
+  mkdir -p -v /usr/local/src /usr/local/bin && \
+  cd /usr/local/src && \
+  apt-get source wavpack && \
+  git clone --recursive https://github.com/gema-arta/pcompress && \
+  cd pcompress && \
+  export CFLAGS=" -Og -ggdb3 -fverbose-asm -mtune=generic " && \
+  export CXXFLAGS=" ${CFLAGS} " && \
+  ./config --prefix=/usr/local --enable-debug --enable-debug-stats --no-1.3-archive-compat --wavpack-dir=/usr/local/src/wavpack-5.0.0 && \
+  make && \
+  g++ -pthread -fopenmp -fno-inline -fopenmp -fPIC -o /usr/local/bin/pcompress utils/utils.o allocator.o lzma_compress.o ppmd_compress.o adaptive_compress.o lzfx_compress.o lz4_compress.o none_compress.o utils/xxhash_base.o utils/heap.o utils/cpuid.o filters/analyzer/analyzer.o meta_stream.o pcompress.o lzma/LzmaEnc.o lzma/LzFind.o lzma/LzmaDec.o lzma/Threads.o lzma/LzFindMt.o lzma/Ppmd8.o lzma/Ppmd8Enc.o lzma/Ppmd8Dec.o lzfx/lzfx.o lz4/lz4.o lz4/lz4hc.o lzma/crc64_fast.o lzma/crc64_table.o lzma/crc32_fast.o lzma/crc32_table.o rabin/rabin_dedup.o rabin/global/index.o rabin/global/dedupe_config.o bsdiff/bsdiff.o bsdiff/bspatch.o bsdiff/rle_encoder.o filters/lzp/lzp.o filters/delta2/delta2.o libbsc_compress.o crypto/skein/SHA3api_ref.o crypto/skein/skein.o crypto/skein/skein_debug.o crypto/skein/skein_block.o crypto/sha2/intel/sha512_avx.o crypto/sha2/intel/sha512_sse4.o crypto/sha2/sha512.o crypto/keccak/genKAT.o crypto/keccak/KeccakDuplex.o crypto/keccak/KeccakNISTInterface.o crypto/keccak/KeccakSponge.o crypto/keccak/KeccakF-1600-opt64.o filters/transpose/transpose.o crypto/aes/crypto_aes.o crypto/scrypt/crypto_scrypt-nosse.o crypto/scrypt/sha256.o crypto/scrypt/crypto_aesctr.o crypto/crypto_utils.o crypto/sha2_utils.o crypto/sha3_utils.o crypto/xsalsa20/xsalsa20_xor.o crypto/xsalsa20/hsalsa_core.o crypto/xsalsa20/stream.o zlib_compress.o bzip2_compress.o utils/xxhash_sse4.o utils/xxhash_sse2.o crypto/blake2/blake2b_sse2.o crypto/blake2/blake2b_ssse3.o crypto/blake2/blake2b_sse41.o crypto/blake2/blake2b_avx.o crypto/blake2/blake2bp_sse2.o crypto/blake2/blake2bp_ssse3.o crypto/blake2/blake2bp_sse41.o crypto/blake2/blake2bp_avx.o crypto/aes/vpaes-x86_64.o crypto/aes/aesni-x86_64.o archive/pc_archive.o archive/pc_arc_filter.o utils/phash/phash.o utils/phash/lookupa.o utils/phash/recycle.o filters/packjpg/aricoder.o filters/packjpg/bitops.o filters/packjpg/packjpg.o archive/pjpg_helper.o filters/dispack/dis.o archive/dispack_helper.o filters/packpnm/packpnm.o archive/ppnm_helper.o archive/wavpack_helper.o filters/dict/DictFilter.o -ldl main.o -L./buildtmp -lbz2 -L./buildtmp -lz -lm -L./bsc -lbsc -L./buildtmp -lcrypto -lrt -Larchive/libarchive/.libs -larchive -L/usr/local/src/wavpack-5.0.0/src/.libs -lwavpack -static && \
+  cd ../.. && \
+  rm -r src && \
+  cd /root && \
   true
 
 FROM docker://alpine:3.17 AS alpine-builder
@@ -1485,6 +1574,7 @@ FROM devuan-4 AS devuan-4-local
 COPY --from=devuan-4-builder /opt/artifact /root/artifact
 COPY --from=alpine-builder /usr/local /root/local
 COPY --from=kernelbuild /opt/artifact /root/kernel
+COPY --from=ascii-builder /usr/local/bin/pcompress /root/artifact/local/bin/pcompress
 
 RUN \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand && \
@@ -1509,7 +1599,6 @@ RUN \
   tar -C /root/ -c -v -f - local|tar -C /usr -x -p -v --warning=no-timestamp -f - && \
   dpkg -i /root/artifact/deb/podman-compose*.deb /root/artifact/deb/vdmfec*.deb && \
   mv -v /root/artifact/stand/* /stand/ && \
-  rm -r /root/artifact/ /root/local/ && \
   mkdir /root/ephemeral && \
   cd /root/ephemeral &&  \
   wget https://github.com/evilsocket/opensnitch/releases/download/v1.6.0-rc.5/opensnitch_1.6.0-rc.5-1_amd64.deb && \
@@ -1524,14 +1613,27 @@ RUN \
   STDIMG="$(dpkg -l |grep linux-image-5.10 |grep -v linux-image-amd64 |grep -v linux-image'.*hardened' | awk '{print $2}' | tail -n 1)" && \
   apt-mark hold "${STDIMG}" && \
   echo "${STDIMG}" hold | dpkg --set-selections && \
+  apt-mark hold linux-libc-dev && \
+  echo linux-libc-dev hold | dpkg --set-selections && \
   unset STDIMG && \
-  dpkg -l >> /root/dpkg-l && \
+  cd /root/artifact/deb/ && \
+  packages="$(ls -1trd openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.?+*0_all.deb)" && \
+  dpkg -i ${packages} && \
+  unset packages && \
+  for i in ssh; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
+  find /usr/share/emacs -type f -name "*.el" -exec rm -v -f \{\}c \; && \
+  rm -v /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_ecdsa_key.pub /etc/ssh/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key.pub /etc/ssh/sshd_not_to_be_run && \
+  chmod --verbose a-s /usr/bin/ssh-agent /usr/lib/openssh/ssh-keysign 2>&1 | tee -a /usr/local/etc/permissions && \
+  cd /root && \
+  rm -r /root/artifact/ /root/local/ && \
+  curl -fsSL https://raw.githubusercontent.com/mviereck/x11docker/master/x11docker | bash -s -- --update && \
   apt-get install -y --verbose-versions linux-image-amd64 && \
   cp -p -v /root/kernel/uml/linux /usr/local/bin/linux && \
   strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- /usr/local/bin/linux && \
   mv /root/kernel/uml/5.10* /lib/modules/ && \
   mv /root/kernel/vmlinux-* /boot/ && \
   rm -r /root/kernel && \
+  dpkg -l >> /root/dpkg-l && \
   find /usr/local -type f -exec file -- \{\} \; |grep "ELF 64-bit LSB" |cut -f1 -d: |xargs -- strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- && \
   strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- /stand/[^b]* /stand/b[^a]* /stand/base* && \
   find /usr/lib /usr/share /usr/local -maxdepth 24 -name "*.pyc" -type f -ls -delete && \
@@ -1544,7 +1646,17 @@ RUN \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type l -ls -delete && \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -- \{\} \; && \
   cd /root && \
+  rm -r .local/ .cache && \
   chown -R root:root /usr/local/etc/cni /usr/local/etc/containers /usr/local/share/man /usr/local/share/doc /usr/local/bin /usr/local/lib && \
+  rm -v -f /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- && \
+  rm -v -f /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old /var/lib/dpkg/statoverride-old && \
+  : > /var/log/alternatives.log && \
+  : > /var/log/dpkg.log && \
+  : > /var/log/apt/term.log && \
+  : > /var/log/apt/history.log && \
+  : > /var/log/fontconfig.log && \
+  : > /var/log/alternatives.log && \
+  : |xz -vv > /var/log/apt/eipp.log.xz && \
   find / -xdev -name "*.pyc" -ls && \
   find / -xdev -name "__pycache__" -ls && \
   find / -xdev -type f -perm -2000 -ls && \
@@ -1963,7 +2075,7 @@ RUN \
   rm -v -f /root/dpkg-l && \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  apt-get -y --verbose-versions install ${packages_kicksecure_dep} && \
+  apt-get -y --verbose-versions --allow-change-held-packages install ${packages_kicksecure_dep} && \
   curl --tlsv1.3 --proto =https --max-time 180 --output /usr/share/keyrings/derivative.asc https://www.kicksecure.com/keys/derivative.asc && \
   chmod --verbose go+r /usr/share/keyrings/derivative.asc && \
   adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Administrator && \
@@ -2022,11 +2134,11 @@ RUN \
   apt-get -y autoclean && \
   apt-get -y autoremove && \
   rm -r -v /usr/share/man/[^m]*/ && \
-  (rm -v /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- /etc/subgid- /etc/subuid- || true) && \
-  rm -v /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old /var/lib/dpkg/statoverride-old && \
+  rm -v -f /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- /etc/subgid- /etc/subuid- && \
   dpkg -l > /root/dpkg-l && \
   unset PYTHONDONTWRITEBYTECODE && \
   rm -v /etc/.pwd.lock && \
+  rm -v -f /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old /var/lib/dpkg/statoverride-old && \
   : > /var/log/alternatives.log && \
   : > /var/log/dpkg.log && \
   : > /var/log/apt/term.log && \
@@ -2035,7 +2147,8 @@ RUN \
   : > /var/log/alternatives.log && \
   : |xz -vv > /var/log/apt/eipp.log.xz && \
   chmod --verbose -R go-rwx /home/* /etc/skel && \
-  (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand) | tee -a /etc/skel/.bashrc.kicksecure && \
+  chmod --verbose go-w /etc/hostname && \
+  (echo umask 077; echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand; echo unset HUSHLOGIN; echo unset MOTD_SHOWN) | tee -a /etc/skel/.bashrc.kicksecure && \
   find /tmp /var/tmp -type f -ls -delete && \
   chmod --verbose -R go-rwx /root && \
   chmod --verbose a-s /bin/ntfs-3g /usr/bin/pkexec /usr/bin/sudo /usr/lib/dbus-1.0/dbus-daemon-launch-helper /usr/libexec/polkit-agent-helper-1 /usr/bin/schroot 2>&1 | tee -a /usr/local/etc/permissions && \
@@ -2064,7 +2177,7 @@ COPY --from=devuan-4-kicksecure /opt/artifact/archives.gtar.gz /root/archives-ki
 COPY --from=devuan-4-kicksecure /opt/artifact/lists-key.gtar.xz /root/kicksecure-lists-key.gtar.xz
 
 RUN \
-  module_list=" 8021q ac aes_generic aesni_intel af_alg af_packet agpgart algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix blktap bochs_drm br_netfilter bridge button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat fb fb_sys_fops fbdev floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_core i2c_piix4 icp ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mousedev mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 nls_utf8 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm snd snd-pcm snd_timer soundcore spl squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid veth vfat vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_physdev xt_tcpudp xts zavl zcommon zfs zlua znvpair zunicode zzstd " && \
+  module_list=" 8021q ac aes_generic aesni_intel af_alg af_packet agpgart algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix blktap bochs_drm br_netfilter bridge button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat fb fb_sys_fops fbdev floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_core i2c_piix4 icp ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mousedev mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 nls_utf8 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm snd snd-pcm snd_timer soundcore spl squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid veth vfat virtio_balloon vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_physdev xt_tcpudp xts zavl zcommon zfs zlua znvpair zram zsmalloc zunicode zzstd " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && \
   set -x && \
   set -e && \
@@ -2095,6 +2208,7 @@ RUN \
   mv -v -f /root/initrd/root/dpkg-l /opt/artifact/meta/dpkg-l-base && \
   mv -v -f /root/dpkg-l-kicksecure /opt/artifact/meta/dpkg-l-kicksecure && \
   cd /root/initrd && \
+  chmod --verbose go-w ./etc/hostname && \
   tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
   mkdir -p -v dev proc sys run && \
   chmod --verbose go+rx sys proc dev run . && \
@@ -2102,10 +2216,20 @@ RUN \
   echo ${module_list} |tr " " '\n'|sort |uniq >> etc/modules && \
   unset module_list && \
   cat etc/modules > /etc/modules && \
-  cd /root/initrd && \
   echo localhost > etc/hostname && \
   echo 0x00000000 > etc/hostid && \
   echo nameserver 1.1.1.1 > etc/resolv.conf && \
+  rm -r -v /root/initrd/run/[a-z]* && \
+  rm -f -v /root/initrd/run/.containerenv && \
+  rm -vf /root/initrd/etc/.pwd.lock && \
+  chmod --verbose go-w /root/initrd/etc/resolv.conf && \
+  ls -lasi --full-time /root/initrd/dev/ && \
+  mount && \
+  chmod --verbose go-w /root/initrd/dev/. && \
+  cp -a /root/initrd /opt/artifact/layer && \
+  rm -v -f -r /opt/artifact/layer/usr/local/etc/boot.d /opt/artifact/layer/etc/boot.d /opt/artifact/layer/etc/rc.local /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
+  mkdir -v -p /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
+  (cd /opt/artifact/layer && tar -c -f - . | zstd -v -v -v -T1 --single-thread --long=30 --ultra -22 > ../Linux-Image-Devuan-4-RawLayer.gtar.zst && cd .. && rm -r layer) && \
   ( echo '#!/bin/bash-static' && \
     echo "set -x" && \
     echo "cd /" && \
@@ -2136,10 +2260,10 @@ RUN \
     echo 'grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | xargs -n 1 /sbin/modprobe' && \
     echo 'grep "^[^#]" /etc/modules | awk '\''{print $1}'\'' | while read module; do modprobe "${module}" || true; done' && \
     echo "/etc/init.d/kmod start" && \
-    echo "sleep 2" && \
+    echo "sleep 1" && \
     echo "sync" && \
     echo "/etc/init.d/eudev start" && \
-    echo "sleep 2" && \
+    echo "sleep 1" && \
     echo "sync" && \
     echo "udevadm settle" && \
     echo "sleep 2" && \
@@ -2150,7 +2274,7 @@ RUN \
     echo "sync" && \
     echo "sleep 2" && \
     echo "mkdir /new" && \
-    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser tmpfs /new" && \
+    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=85% tmpfs /new" && \
     echo "chmod --verbose go-w /new/." && \
     echo "mkdir -v -p /mnt/CACHE" && \
     echo "/stand/e2fsck -p -v /dev/disk/by-partlabel/CACHE || true" && \
@@ -2162,25 +2286,25 @@ RUN \
     echo "/etc/init.d/eudev start" && \
     echo "sleep 2" && \
     echo 'cryptsetup luksFormat --type=luks1 --batch-mode=yes --verbose --cipher=aes-xts-plain64 --hash=sha256 --key-size=512 --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass /dev/disk/by-partlabel/VOLATILE' && \
-    echo "sleep 2" && \
+    echo "sleep 1" && \
     echo "sync" && \
     echo 'cryptsetup luksOpen --verbose --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass /dev/disk/by-partlabel/VOLATILE VOLATILE &' && \
     echo 'PID=$!' && \
-    echo "sleep 20" && \
+    echo "sleep 10" && \
     echo "sync" && \
     echo "dmsetup udevcomplete_all --yes" && \
-    echo "sleep 5" && \
-    echo "dmsetup udevcomplete_all --yes" && \
-    echo "sleep 8" && \
-    echo "dmsetup udevcomplete_all --yes" && \
     echo "sleep 3" && \
+    echo "dmsetup udevcomplete_all --yes" && \
+    echo "sleep 2" && \
+    echo "dmsetup udevcomplete_all --yes" && \
+    echo "sleep 1" && \
     echo "sync" && \
     echo 'kill "${PID}" >/dev/null 2>/dev/null' && \
-    echo "sleep 3" && \
+    echo "sleep 2" && \
     echo 'kill -9 "${PID}" >/dev/null 2>/dev/null' && \
     echo "unset PID" && \
     echo "udevadm settle" && \
-    echo "sleep 2" && \
+    echo "sleep 1" && \
     echo "udevadm trigger" && \
     echo "sync" && \
     echo "/etc/init.d/eudev stop" && \
@@ -2202,17 +2326,17 @@ RUN \
     echo "cryptsetup luksClose VOLATILE &" && \
     echo 'PID=$!' && \
     echo "sync" && \
-    echo "sleep 18" && \
+    echo "sleep 9" && \
     echo "sync" && \
-    echo "dmsetup udevcomplete_all --yes" && \
-    echo "sleep 8" && \
     echo "dmsetup udevcomplete_all --yes" && \
     echo "sleep 4" && \
     echo "dmsetup udevcomplete_all --yes" && \
-    echo "sleep 2" && \
+    echo "sleep 3" && \
+    echo "dmsetup udevcomplete_all --yes" && \
+    echo "sleep 1" && \
     echo "sync" && \
     echo 'kill "${PID}" >/dev/null 2>/dev/null' && \
-    echo "sleep 3" && \
+    echo "sleep 1" && \
     echo 'kill -9 "${PID}" >/dev/null 2>/dev/null' && \
     echo "unset PID" && \
     echo "udevadm settle" && \
@@ -2242,8 +2366,10 @@ RUN \
     echo "mv /usr/local /new/usr/local" && \
     echo "mv /usr/share /new/usr/share" && \
     echo "mv /stand/env /stand/env-static" && \
+    echo "mkdir -p -v /new/usr/lib/x86_64-linux-gnu" && \
+    echo "(set +x; cd /usr/lib/x86_64-linux-gnu/; tar -c --remove-files -f - libgccjit.so* libicudata.so* libasan.so* libtsan.so* libc.a libpython3.9.so* libpthread.a | tar -C /new/usr/lib/x86_64-linux-gnu/ -x -p -f -; true) || true" && \
     echo "mkdir -p -v /new/lib" && \
-    echo "tar -C /lib -c --remove-files -f - modules | tar -C /new/lib -x -p -f -" && \
+    echo "tar -C /lib -c --remove-files -f - modules | tar -C /new/lib --warning=no-timestamp -x -p -f -" && \
     echo "cp -p /usr/bin/env /tmp/env" && \
     echo "mv /usr/bin /new/usr/bin" && \
     echo "mv /usr/sbin /new/usr/sbin" && \
@@ -2260,6 +2386,9 @@ RUN \
     echo "echo set -x >>/new/init" && \
     echo "echo umask 077 >>/new/init" && \
     echo "echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin >>/new/init" && \
+ echo "echo set +x >>/new/init" && \
+ echo "echo ls -la /usr/bin/env >>/new/init" && \
+ echo "echo ldd /usr/bin/env >>/new/init" && \
     echo 'echo exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static TERM=dumb TTY=/dev/console /sbin/init "$@" >>/new/init' && \
     echo "chmod --verbose go-rwx /sbin/init" && \
     echo "cd /" && \
@@ -2268,6 +2397,7 @@ RUN \
     echo "unset TEMP" && \
     echo "unset TMPDIR" && \
     echo "umount -v /run/tmp" && \
+ echo "echo DEBUG; ls -la /usr/bin/env || true ; ldd /usr/bin/env || true; sleep 15" && \
     echo 'exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static /sbin/switch_root /new /init "$@"' \
   ) > init && \
   chmod --verbose u+rx init && \
@@ -2291,19 +2421,12 @@ RUN \
   mv -v ./kernel/ ./kernel.overlay/ && \
   mv -v /root/overlay/lib/modules/"${kver}"/kernel/ ./kernel/ && \
   mv -v ./kernel.overlay/ /root/overlay/lib/modules/"${kver}"/kernel/ && \
-  rm -r -v /root/initrd/run/[a-z]* && \
-  rm -f -v /root/initrd/run/.containerenv && \
   unset kver && \
   cd /root/initrd && \
   mv -v usr /root/overlay/usr && \
   mv -v var /root/overlay/var && \
   mkdir -p -v usr var && \
   chmod --verbose 755 usr var && \
-  rm -vf /root/initrd/etc/.pwd.lock && \
-  chmod --verbose go-w /root/initrd/etc/resolv.conf && \
-  ls -lasi --full-time /root/initrd/dev/ && \
-  mount && \
-  chmod --verbose go-w /root/initrd/dev/. && \
   mv -v /root/initrd/boot/ /root/boot/ && \
   mkdir -p -v /root/initrd/boot/ && \
   chmod --verbose 755 /root/initrd/boot/ && \
@@ -2375,22 +2498,22 @@ RUN \
   echo '(for i in n 1 "" +32m 8301 n 2 "" "" 8301 c 2 STAGING c 1 NOOP p w y; do echo "$i"; done) | gdisk /dev/disk/by-id/ata-QEMU_HARDDISK_QM00003' >> init && \
   echo 'sync' >> init && \
   echo 'sleep 2' >> init && \
-  echo 'for i in "-s" "-d" ""; do partprobe ${i}; sleep 2; sync; done' >> init && \
+  echo 'for i in "-s" "-d" ""; do partprobe ${i}; sleep 1; sync; done' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'sync' >> init && \
   echo '/etc/init.d/eudev stop' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'sync' >> init && \
   echo '/etc/init.d/eudev start' >> init && \
   echo 'sync' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
   echo 'sync' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'find /dev/disk -ls' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'mkfs.ext4 -e continue -j -L STAGING -m 8 -v /dev/disk/by-partlabel/STAGING' >> init && \
   echo 'mkfs.ext4 -e continue -j -L IDEN -m 8 -M /mnt/IDEN -v /dev/disk/by-partlabel/IDEN' >> init && \
   echo 'mkfs.ext4 -e continue -j -L CONF -m 8 -M /mnt/CONF -v /dev/disk/by-partlabel/CONF' >> init && \
@@ -2424,21 +2547,21 @@ RUN \
   echo 'sync' >> init && \
   echo 'dd if=/usr/lib/syslinux/mbr/gptmbr.bin of=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00001 bs=440 count=1 conv=notrunc' >> init && \
   echo 'sync' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'sync' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'sync' >> init && \
   echo '/etc/init.d/eudev stop' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'sync' >> init && \
   echo '/etc/init.d/eudev start' >> init && \
   echo 'sync' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
   echo 'sync' >> init && \
-  echo 'sleep 2' >> init && \
+  echo 'sleep 1' >> init && \
   echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
   echo 'cp -nav /usr/lib/syslinux/modules/bios/* /mnt/EFI/syslinux/' >> init && \
   echo 'ls -la /mnt/EFI/syslinux/ldlinux.c32' >> init && \
@@ -2479,7 +2602,7 @@ RUN \
   echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=4352M,max:4608M guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5608M,max:6120M guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off   iommu=soft amd_iommu=off   waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
   echo 'cat syslinux.cfg' >> init && \
