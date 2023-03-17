@@ -2441,6 +2441,8 @@ RUN \
   cd /root/initrd && \
   mv -v usr /root/overlay/usr && \
   mv -v var /root/overlay/var && \
+  mkdir -v -p /root/overlay/var/tmp && \
+  chmod --verbose 1777 /root/overlay/var/tmp && \
   mkdir -p -v usr var && \
   chmod --verbose 755 usr var && \
   mv -v /root/initrd/boot/ /root/boot/ && \
@@ -2449,7 +2451,7 @@ RUN \
   mv -v /root/05entropy /root/overlay/usr/local/etc/boot.d/05entropy && \
   chmod --verbose 700 /root/overlay/usr/local/etc/boot.d/05entropy && \
   chown --verbose root:root /root/overlay/usr/local/etc/boot.d/05entropy && \
-  chmod --verbose +t ./tmp ./var/tmp ./tmp/. ./var/tmp/. && \
+  chmod --verbose +t ./tmp ./tmp/. && \
   find . -print0 | sort -z | cpio -0 -H newc --renumber-inodes -o |xz -1 -v -C crc32 > /boot/initrd.img && \
   rmdir -v /root/initrd/boot/ && \
   mv -v /root/boot/ /root/initrd/boot/ && \
