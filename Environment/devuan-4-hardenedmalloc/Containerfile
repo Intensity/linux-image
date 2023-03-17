@@ -272,14 +272,14 @@ RUN \
   apt-get -y download ${fetch_pool} && \
   unset fetch_pool && \
   cd .. && \
-  tar -c -f - archives |gzip -1 -v > archives.gtar.gz && \
+  tar -c -f - archives |gzip -1 -v --synchronous --rsyncable > archives.gtar.gz && \
   rm -r archives && \
   mkdir -v -p /opt/artifact/extended && \
   cd /opt/artifact/extended && \
   apt-get -y download ${extended_pool} && \
   unset extended_pool && \
   cd .. && \
-  tar -c -f - extended |gzip -1 -v > extended.gtar.gz && \
+  tar -c -f - extended |gzip -1 -v --synchronous --rsyncable > extended.gtar.gz && \
   rm -r extended && \
   true
 
@@ -815,7 +815,6 @@ RUN \
   mkdir -v /usr/local/etc/boot.d && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "rm -v /init") >> /usr/local/etc/boot.d/00rminit && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "mount -o remount,nodev,nosuid,sync,noatime,nodiratime,dirsync,loud,nouser /") >> /usr/local/etc/boot.d/01remountroot && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo "apt-mark hold libgpgme11 && echo libgpgme11 hold | dpkg --set-selections") >> /usr/local/etc/boot.d/02holdgpg1 && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in cdebootstrap dar fstype ipconfig minips nfsmount; do ln /stand/"${i}" /usr/local/bin/"${i}"; done; ln /stand/ul_* /usr/local/bin/') >> /usr/local/etc/boot.d/02standlink && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "ldconfig") >> /usr/local/etc/boot.d/02ldconfig && \
   (echo '#!/bin/bash-static'; echo "set +x"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; exit 0') >> /usr/local/sbin/init-naive-networking && \
@@ -843,8 +842,8 @@ RUN \
   rm -v /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old && \
   rm -v /etc/.pwd.lock && \
   find /usr/share/doc /usr/share/info /usr/share/man -name \*.gz -type l -ls -delete && \
-  find /usr/share/doc /usr/share/info /usr/share/man -name \*.gz -type f -exec gunzip -N -v -- \{\} \; && \
-  gunzip -N -v /usr/lib/debug/*.gz && \
+  find /usr/share/doc /usr/share/info /usr/share/man -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
+  gunzip -N -v -f /usr/lib/debug/*.gz && \
   rm -r -v /usr/share/man/[^m]*/ && \
   find /etc/alternatives -name \*.gz -type l -ls -delete && \
   rm -v /usr/share/man/man3/LIST_* && \
@@ -942,6 +941,7 @@ RUN \
   cd /usr/local/src && \
   git clone --recursive https://github.com/Intensity/mcm && \
   cd mcm && git checkout v0.84sk4 && \
+  sed -i -e "/^STATIC/s/^/#/" Makefile && \
   ./Makefile install && mv /usr/local/bin/mcm /usr/local/src/stand/ && \
   \
   cd /usr/local/src && \
@@ -1011,7 +1011,7 @@ RUN \
   cd vdmfec-1.0 && \
   ./debian/rules binary && \
   cd .. && \
-  dpkg -i vdmfec_1.0-2_amd64.deb vdmfec-dbgsym_1.0-2_amd64.deb && \
+  dpkg -i vdmfec_1.0-2_amd64.deb && \
   \
   cd /usr/local/src && \
   git clone --recursive https://github.com/Intensity/GLZA && \
@@ -1040,6 +1040,12 @@ RUN \
   make && \
   make tests && \
   make install install-doc prefix=usr/local && \
+  \
+  cd /usr/local/src && \
+  git clone --recursive https://github.com/dm-vdo/vdo.git && \
+  cd vdo/ && \
+  make bindir=/usr/local/bin mandir=/usr/local/share/man defaultdocdir=/usr/local/share/doc sysconfdir=/usr/local/etc && \
+  make install bindir=/usr/local/bin mandir=/usr/local/share/man defaultdocdir=/usr/local/share/doc sysconfdir=/usr/local/etc && \
   \
   cd /usr/local/src && \
   cargo install orz --git https://github.com/richox/orz --tag v1.6.2 && \
@@ -1373,7 +1379,7 @@ RUN \
   export V=1 && \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  apt-get -y --verbose-versions install apt-transport-https autoconf automake bash bc bear bindgen binutils binutils-common binutils-x86-64-linux-gnu bison build-essential ca-certificates cbindgen clang cmake coccinelle cpio cpp cpp-10 curl dc dpkg-dev ed file flex gcc gcc-10 git git-man gpg-agent iptables kmod less libaio-dev libasan6 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcbor-dev libcc1-0 libclang-11-dev libclang-dev libcrypt-dev libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libedit2 libelf-dev libeudev-dev libexpat1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgit2-1.1 libgomp1 libhttp-parser2.9 libisl23 libitm1 libldap-2.4-2 libllvm11 liblsan0 libmbedcrypto3 libmbedtls12 libmbedx509-0 libmpc3 libmpfr6 libncurses-dev libnghttp2-14 libnsl-dev libomp-11-dev libpcap-dev libpsl5 libquadmath0 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl-dev libtirpc-dev libtool libtsan0 libubsan1 libudev-dev libvdeplug-dev libz3-4 linux-base linux-libc-dev linux-perf llvm llvm-11-dev llvm-dev lsb-release make mandoc musl-tools nasm ninja-build openssl perf-tools-unstable pkgconf python3-pip python3-setuptools python3-wheel rsync software-properties-common sudo uuid-dev valgrind vim-common vim-tiny wget xxd zlib1g-dev zstd && \
+  apt-get -y --verbose-versions install apt-transport-https autoconf automake bash bc bear bindgen binutils binutils-common binutils-x86-64-linux-gnu bison build-essential ca-certificates cbindgen clang cmake coccinelle cpio cpp cpp-10 curl dc dpkg-dev dkms ed file flex gcc gcc-10 git git-man gpg-agent iptables kmod less libaio-dev libasan6 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcbor-dev libcc1-0 libclang-11-dev libclang-dev libcrypt-dev libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libedit2 libelf-dev libeudev-dev libexpat1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgit2-1.1 libgomp1 libhttp-parser2.9 libisl23 libitm1 libldap-2.4-2 libllvm11 liblsan0 libmbedcrypto3 libmbedtls12 libmbedx509-0 libmpc3 libmpfr6 libncurses-dev libnghttp2-14 libnsl-dev libomp-11-dev libpcap-dev libpsl5 libquadmath0 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl-dev libtirpc-dev libtool libtsan0 libubsan1 libudev-dev libvdeplug-dev libz3-4 linux-base linux-libc-dev linux-perf llvm llvm-11-dev llvm-dev lsb-release make mandoc musl-tools nasm ninja-build openssl perf-tools-unstable pkgconf python3-pip python3-setuptools python3-wheel rsync software-properties-common sudo uuid-dev valgrind vim-common vim-tiny wget xxd zlib1g-dev zstd && \
   chmod --verbose a-s /bin/mount /bin/su /bin/umount /sbin/unix_chkpwd /usr/bin/chage /usr/bin/chfn /usr/bin/chsh /usr/bin/expiry /usr/bin/gpasswd /usr/bin/newgrp /usr/bin/passwd /usr/bin/wall /usr/bin/sudo && \
   find / -xdev -type f -perm -2000 -ls && \
   find / -xdev -type f -perm -4000 -ls && \
@@ -1395,6 +1401,7 @@ RUN \
   git submodule update && \
   mv -vf /tmp/config.amd64 .config && \
   \
+  (echo '#!/bin/sh'; echo exec echo localhost) >/bin/hostname && \
   make deb-pkg && \
   rm -v ../linux-image-5.10.*hardened1-5.10-dbg_5.10.*-hardened1-5.10-1_amd64.deb && \
   dpkg -i ../linux*.deb && \
@@ -1462,13 +1469,23 @@ RUN \
   git checkout $(git branch -a|grep origin/workstation- | sort|tail -n 1 | sed 's,.*/,,') && \
   make && \
   make install && \
-  cd /usr/local/src && \
+  \
+  cd /usr/src && \
+  mver=8.2.1.6.fixed && \
+  wget https://github.com/tigerblue77/kvdo/archive/refs/tags/"${mver}".tar.gz && \
+  tar xzpkf "${mver}".tar.gz && \
+  (echo 'PACKAGE_NAME="kvdo"'; echo 'PACKAGE_VERSION="'"${mver}"\"; echo 'AUTOINSTALL="yes"'; echo 'BUILT_MODULE_NAME[0]="kvdo"'; echo 'BUILT_MODULE_LOCATION[0]="vdo"'; echo 'DEST_MODULE_LOCATION[0]="/kernel/drivers/block/"'; echo 'BUILD_DEPENDS[0]=LZ4_COMPRESS'; echo 'BUILD_DEPENDS[0]=LZ4_DECOMPRESS'; echo 'STRIP[0]="no"') > kvdo-"${mver}"/dkms.conf && \
+  dkms add kvdo/"${mver}" && \
+  dkms build kvdo/"${mver}" -k "${KERNEL_VERSION}" && \
+  dkms install kvdo/"${mver}" -k "${KERNEL_VERSION}" && \
+  unset mver && \
   \
   depmod -a "${KERNEL_VERSION}" && \
   echo Built "${KERNEL_VERSION}" && \
   export ORIG_VERSION="${KERNEL_VERSION}" && \
   sync && \
   \
+  cd /usr/local/src && \
   git clone --recursive https://github.com/anthraxx/linux-hardened linux-hardened-uml && \
   cd linux-hardened-uml && \
   git checkout 5.10 && \
@@ -1514,7 +1531,7 @@ RUN \
   cd ephemeral && \
   ar x ../"${IMGFILE}" && \
   xz -d -v -v < data.tar.xz |tar -x -p -k -f - && \
-  find usr/share/doc -name \*.gz -type f -exec gunzip -N -v -- \{\} \; && \
+  find usr/share/doc -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   cd lib/modules && \
   for i in 5.*; do rm -r "$i" && mv /lib/modules/"$i" .; done && \
   cd ../.. && \
@@ -1620,8 +1637,9 @@ RUN \
   packages="$(ls -1trd openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.?+*0_all.deb)" && \
   dpkg -i ${packages} && \
   unset packages && \
+  find /usr/share/emacs/28.?/ /usr/share/emacs/site-lisp/ -type f -name "*.gz" -exec gunzip -N -v -f -- \{\} \; && \
+  find /usr/share/emacs/28.?/ /usr/share/emacs/site-lisp/ -type f -name "*.el" -exec rm -v -f -- \{\}c \; && \
   for i in ssh; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
-  find /usr/share/emacs -type f -name "*.el" -exec rm -v -f \{\}c \; && \
   rm -v /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_ecdsa_key.pub /etc/ssh/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key.pub /etc/ssh/sshd_not_to_be_run && \
   chmod --verbose a-s /usr/bin/ssh-agent /usr/lib/openssh/ssh-keysign 2>&1 | tee -a /usr/local/etc/permissions && \
   cd /root && \
@@ -1640,11 +1658,12 @@ RUN \
   (set +e; find /usr/lib /usr/share /usr/local -maxdepth 24 -name __pycache__ -type d -print | xargs rmdir -v -- || true; true) && \
   rm -v -f /usr/share/javascript/underscore/underscore.min.js /usr/share/javascript/underscore/underscore.min.js.map /usr/share/javascript/jquery/jquery.min.map /usr/share/javascript/jquery/jquery.min.js && \
   rm -r /usr/share/locale/[^e]* /usr/share/locale/e[^n]* && \
+  rm -f -v /etc/skel/.bash_logout && \
   : > /var/log/dpkg.log && \
   rm -v -f /root/.wget-hsts && \
   rm -v -f /var/lib/dpkg/status-old && \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type l -ls -delete && \
-  find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -- \{\} \; && \
+  find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   cd /root && \
   rm -r .local/ .cache && \
   chown -R root:root /usr/local/etc/cni /usr/local/etc/containers /usr/local/share/man /usr/local/share/doc /usr/local/bin /usr/local/lib && \
@@ -1657,6 +1676,7 @@ RUN \
   : > /var/log/fontconfig.log && \
   : > /var/log/alternatives.log && \
   : |xz -vv > /var/log/apt/eipp.log.xz && \
+  chmod --verbose +t /tmp /var/tmp /tmp/. /var/tmp/. && \
   find / -xdev -name "*.pyc" -ls && \
   find / -xdev -name "__pycache__" -ls && \
   find / -xdev -type f -perm -2000 -ls && \
@@ -2125,7 +2145,7 @@ RUN \
   cd /opt/artifact/archives && \
   apt-get download anon-apt-sources-list apparmor-profile-dist apparmor-profile-hexchat apparmor-profile-thunderbird apparmor-profile-torbrowser apparmor-profiles-kicksecure bootclockrandomization damngpl debug-misc desktop-config-dist dist-base-files grub-live grub-live-initramfs-tools hardened-malloc helper-scripts icon-pack-dist initializer-dist kicksecure-base-files kicksecure-cli kicksecure-cli-vm kicksecure-default-applications-cli kicksecure-dependencies-cli kicksecure-dependencies-system kicksecure-network-conf kicksecure-recommended-cli msgcollector non-qubes-vm-enhancements-cli open-link-confirmation repository-dist sdwdate security-misc setup-dist swap-file-creator systemcheck timesanitycheck tirdad tirdad-dkms tor usability-misc vm-config-dist && \
   cd .. && \
-  tar -c -f - archives |gzip -1 -v > archives.gtar.gz && \
+  tar -c -f - archives |gzip -1 -v --synchronous --rsyncable > archives.gtar.gz && \
   rm -r archives && \
   cd /root && \
   find /usr/lib /usr/share -maxdepth 24 -name "*.pyc" -ls -delete && \
@@ -2154,7 +2174,7 @@ RUN \
   chmod --verbose a-s /bin/ntfs-3g /usr/bin/pkexec /usr/bin/sudo /usr/lib/dbus-1.0/dbus-daemon-launch-helper /usr/libexec/polkit-agent-helper-1 /usr/bin/schroot 2>&1 | tee -a /usr/local/etc/permissions && \
   echo /usr/lib/libhardened_malloc.so/libhardened_malloc.so |tee -a /etc/ld.so.preload && \
   find /usr/share/doc /usr/share/info /usr/share/man -name \*.gz -type l -ls -delete && \
-  find /usr/share/doc /usr/share/info /usr/share/man -name \*.gz -type f -exec gunzip -N -v -- \{\} \; && \
+  find /usr/share/doc /usr/share/info /usr/share/man -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   find /etc/alternatives -name \*.gz -type l -ls -delete && \
   find / -xdev -name "*.pyc" -ls && \
   find / -xdev -name "__pycache__" -ls && \
@@ -2177,7 +2197,7 @@ COPY --from=devuan-4-kicksecure /opt/artifact/archives.gtar.gz /root/archives-ki
 COPY --from=devuan-4-kicksecure /opt/artifact/lists-key.gtar.xz /root/kicksecure-lists-key.gtar.xz
 
 RUN \
-  module_list=" 8021q ac aes_generic aesni_intel af_alg af_packet agpgart algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix blktap bochs_drm br_netfilter bridge button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat fb fb_sys_fops fbdev floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_core i2c_piix4 icp ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mousedev mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 nls_utf8 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm snd snd-pcm snd_timer soundcore spl squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid veth vfat virtio_balloon vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_physdev xt_tcpudp xts zavl zcommon zfs zlua znvpair zram zsmalloc zunicode zzstd " && \
+  module_list=" 8021q ac aes_generic aesni_intel af_alg af_packet agpgart algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix blktap bochs_drm br_netfilter bridge button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dm_crypt dm_log dm_mirror dm_mod dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore ehci_hcd ehci_pci encrypted_keys evdev ext2 ext3 ext4 fat fb fb_sys_fops fbdev floppy fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper hid hid_generic i2c_core i2c_piix4 icp ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_rapl_common intel_rapl_msr ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip_tables iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs jbd2 joydev kvdo kvm kvm_amd libaes libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic linear llc loop mbcache md_mod mousedev mptbase mptscsih mptspi mrp multipath nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nls_ascii nls_cp437 nls_utf8 parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq rng_core scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm snd snd-pcm snd_timer soundcore spl squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid veth vfat virtio_balloon vmw_pvscsi vmw_vmci vmwgfx vmxnet3 wireguard x_tables xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_pciback xen_privcmd xenfs xfs xor xt_LOG xt_MASQUERADE xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_physdev xt_tcpudp xts zavl zcommon zfs zlua znvpair zram zsmalloc zunicode zzstd " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && \
   set -x && \
   set -e && \
@@ -2227,9 +2247,9 @@ RUN \
   mount && \
   chmod --verbose go-w /root/initrd/dev/. && \
   cp -a /root/initrd /opt/artifact/layer && \
-  rm -v -f -r /opt/artifact/layer/usr/local/etc/boot.d /opt/artifact/layer/etc/boot.d /opt/artifact/layer/etc/rc.local /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
+  rm -f -r /opt/artifact/layer/usr/local/etc/boot.d /opt/artifact/layer/etc/boot.d /opt/artifact/layer/etc/rc.local /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
   mkdir -v -p /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
-  (cd /opt/artifact/layer && tar -c -f - . | zstd -v -v -v -T1 --single-thread --long=30 --ultra -22 > ../Linux-Image-Devuan-4-RawLayer.gtar.zst && cd .. && rm -r layer) && \
+  (cd /opt/artifact/layer && tar -c -f - . | zstd -v -v -v -T1 --rsyncable --long=30 --ultra -22 > ../Linux-Image-Devuan-4-RawLayer.gtar.zst && cd .. && rm -r layer) && \
   ( echo '#!/bin/bash-static' && \
     echo "set -x" && \
     echo "cd /" && \
@@ -2274,7 +2294,7 @@ RUN \
     echo "sync" && \
     echo "sleep 2" && \
     echo "mkdir /new" && \
-    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=65% tmpfs /new" && \
+    echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=70% tmpfs /new" && \
     echo "chmod --verbose go-w /new/." && \
     echo "mkdir -v -p /mnt/CACHE" && \
     echo "/stand/e2fsck -p -v /dev/disk/by-partlabel/CACHE || true" && \
@@ -2286,7 +2306,7 @@ RUN \
     echo "/etc/init.d/eudev start" && \
     echo "sleep 2" && \
     echo 'cryptsetup luksFormat --type=luks1 --batch-mode=yes --verbose --cipher=aes-xts-plain64 --hash=sha256 --key-size=512 --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass /dev/disk/by-partlabel/VOLATILE' && \
-    echo "sleep 1" && \
+    echo "sleep 4" && \
     echo "sync" && \
     echo 'cryptsetup luksOpen --verbose --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass /dev/disk/by-partlabel/VOLATILE VOLATILE &' && \
     echo 'PID=$!' && \
@@ -2315,7 +2335,7 @@ RUN \
     echo "export TMP=/mnt/VOLATILE/tmp" && \
     echo 'export TEMP="${TMP}"' && \
     echo 'export TMPDIR="${TMP}"' && \
-    echo "zstd -dvv -T1 --single-thread --long=30 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
+    echo "zstd -dvv -T1 --rsyncable --long=30 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f -" && \
     echo "umask 022" && \
     echo "export TMP=/run/tmp" && \
     echo 'export TEMP="${TMP}"' && \
@@ -2386,9 +2406,6 @@ RUN \
     echo "echo set -x >>/new/init" && \
     echo "echo umask 077 >>/new/init" && \
     echo "echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin >>/new/init" && \
- echo "echo set +x >>/new/init" && \
- echo "echo ls -la /usr/bin/env >>/new/init" && \
- echo "echo ldd /usr/bin/env >>/new/init" && \
     echo 'echo exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static TERM=dumb TTY=/dev/console /sbin/init "$@" >>/new/init' && \
     echo "chmod --verbose go-rwx /sbin/init" && \
     echo "cd /" && \
@@ -2397,7 +2414,6 @@ RUN \
     echo "unset TEMP" && \
     echo "unset TMPDIR" && \
     echo "umount -v /run/tmp" && \
- echo "echo DEBUG; ls -la /usr/bin/env || true ; ldd /usr/bin/env || true; sleep 15" && \
     echo 'exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static /sbin/switch_root /new /init "$@"' \
   ) > init && \
   chmod --verbose u+rx init && \
@@ -2433,12 +2449,13 @@ RUN \
   mv -v /root/05entropy /root/overlay/usr/local/etc/boot.d/05entropy && \
   chmod --verbose 700 /root/overlay/usr/local/etc/boot.d/05entropy && \
   chown --verbose root:root /root/overlay/usr/local/etc/boot.d/05entropy && \
+  chmod --verbose +t ./tmp ./var/tmp ./tmp/. ./var/tmp/. && \
   find . -print0 | sort -z | cpio -0 -H newc --renumber-inodes -o |xz -1 -v -C crc32 > /boot/initrd.img && \
   rmdir -v /root/initrd/boot/ && \
   mv -v /root/boot/ /root/initrd/boot/ && \
   ulimit -d unlimited && ulimit -v unlimited && \
   mkdir -p /root/drive/mnt/CACHE/overlay /root/drive/mnt/CACHE/lists /root/drive/mnt/EFI/linux && \
-  tar -C /root/overlay -cf - usr var lib | zstd -v -v -v -T1 --single-thread --long=30 --ultra -22 > /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
+  tar -C /root/overlay -cf - usr var lib | zstd -v -v -v -T1 --rsyncable --long=30 --ultra -22 > /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   ls -ldsi --full-time /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   rm -r -v /root/overlay/usr/local/etc/boot.d/ && \
   rmdir -v usr var && \
@@ -2449,7 +2466,7 @@ RUN \
   tar -C /root/initrd/opt/bootstrap/ -c --remove-files -v -f - bin sbin lib | tar -C usr/ -x -p -v -v --warning=no-timestamp -f - && \
   rmdir -v /root/initrd/opt/bootstrap && \
   cp -pv /boot/initrd.img /root/drive/mnt/EFI/linux/ && \
-  tar -C /root/drive -c -f - --remove-files mnt |gzip -1 >/root/drive.tar.gz && \
+  tar -C /root/drive -c -f - --remove-files mnt |gzip -1 -v --synchronous --rsyncable >/root/drive.tar.gz && \
   rm -r /root/drive && \
   mv -v sbin/init sbin/init.orig && \
   rm -v init && \
@@ -2602,7 +2619,7 @@ RUN \
   echo 'for i in "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5608M,max:6120M guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off   iommu=soft amd_iommu=off   waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=xvc0 console=hvc0 console=ttyS0 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
   echo 'cat syslinux.cfg' >> init && \
