@@ -1,4 +1,4 @@
-#!/usr/bin/env -vS podman --runtime crun --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --pull=false -t intensity/linux-image:devuan-4-hardenedmalloc . -f
+#!/usr/bin/env -vS podman --runtime crun --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --pull=missing -t intensity/linux-image:devuan-4-hardenedmalloc . -f
 
 FROM docker://devuan/devuan:chimaera AS devuan-archive-pool
 RUN \
@@ -94,7 +94,7 @@ RUN \
     libxdamage1 libxdmcp6 libxext6 libxfixes3 libxft2 libxi6 libxinerama1 libxkbcommon-x11-0 libxkbcommon0 libxml-libxml-perl libxml-namespacesupport-perl libxml-parser-perl libxml-sax-base-perl libxml-sax-perl libxml-simple-perl \
     libxml-simpleobject-libxml-perl libxmu6 libxmuu1 libxpm4 libxrandr2 libxrender1 libxshmfence1 libxss1 libxt6 libxtables-dev libxv1 libxvidcore4 libxxf86vm1 libyaml-libyaml-perl libyaml-perl libyara4 libyascreen0 libykpers-1-1 libykpiv2 \
     libyubikey-udev libyubikey0 libz3-4 libzbar0 libzck1 libzen0v5 libzephyr4 libzint2.9 libzip4 libzmq5 libznz3 libzopfli1 libzstd-dev libzulucrypt-exe1.2.0 libzulucrypt-plugins libzulucrypt1.2.0 libzulucryptpluginmanager1.0.0 libzvbi-common \
-    libzvbi0 libzzip-0-13 licensecheck lilypond-fonts links lintian linux-compiler-gcc-10-x86 linux-cpupower linux-headers-5.10.0-21-amd64 linux-headers-5.10.0-21-common linux-headers-amd64 linux-kbuild-5.10 linux-perf-5.10 linux-perf linuxinfo \
+    libzvbi0 libzzip-0-13 licensecheck lilypond-fonts links lintian linux-compiler-gcc-10-x86 linux-cpupower linux-headers-amd64 linux-kbuild-5.10 linux-perf-5.10 linux-perf linuxinfo \
     live-boot-initramfs-tools live-boot live-tools lksctp-tools lld-11 lld lldpd lm-sensors locales locate loggedfs logtail logtool logtools lr lrzsz lsb-release lscolors lua-bitop lua-expat lua-filesystem lua-json lua-lpeg lua-sec lua-socket \
     lua5.2 lua5.3 luajit lunzip lv lxc-tests lz4json lzd lzma-alone m17n-db m4 macutils madison-lite magic-wormhole mailagent mailcap maildir-utils maildirsync mailsync mairix make makepasswd makepp mariadb-common mason mblaze mboxgrep mbpfan \
     mbr mc-data mc mcpp mcrypt mcstrans mdevctl mediainfo memdump memlockd memstat memtester menu metamonger mg mhddfs mhonarc microcom microsocks mime-construct mime-support mimedefang mingetty minicom minilzip minizip mk-configure mkvtoolnix \
@@ -824,7 +824,7 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/conf && for dev in /dev/disk/by-partlabel/CONF*; do fsck.ext4 -v -p "${dev}" && mount -v -t ext4 -o debug,ro "${dev}" /mnt/conf && tar -C /mnt/conf/conf -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/conf; done && rmdir -v /mnt/conf && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" && mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
@@ -1197,7 +1197,7 @@ RUN \
   sed -i -e "/CC=gcc-12/d" -e "/confflags_nox.*without-gsettings/s/without-gsettings/without-gsettings --disable-build-details --disable-acl --without-all --without-mailutils --without-pop --without-kerberos --without-kerberos5 --without-hesiod --with-sound=no --without-xpm --without-jpeg --without-tiff --without-gif --without-png --without-rsvg --without-lcms2 --without-libsystemd --without-cairo --without-xml2 --without-imagemagick --without-native-image-api --without-json --without-xft --without-harfbuzz --without-libotf --without-m17n-flt --without-toolkit-scroll-bars --without-xaw3d --without-xim --without-xdbe --without-gpm --without-dbus --without-gconf --without-selinux --without-gnutls --with-zlib --with-native-compilation --without-xwidgets --without-x --without-libgmp --without-included-regex /" debian/rules && \
   DEB_BUILD_OPTIONS=nocheck ./debian/rules binary && \
   cd ../ && \
-  packages="$(ls -1trd emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.?+*0_all.deb)" && \
+  packages="$(ls -1trd emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.*_all.deb)" && \
   dpkg -i ${packages} && \
   cp -p -v ${packages} /opt/artifact/deb/ && \
   \
@@ -1636,7 +1636,7 @@ RUN \
   echo linux-libc-dev hold | dpkg --set-selections && \
   unset STDIMG && \
   cd /root/artifact/deb/ && \
-  packages="$(ls -1trd openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.?+*0_all.deb)" && \
+  packages="$(ls -1trd openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.*_all.deb)" && \
   dpkg -i ${packages} && \
   unset packages && \
   find /usr/share/emacs/28.?/ /usr/share/emacs/site-lisp/ -type f -name "*.gz" -exec gunzip -N -v -f -- \{\} \; && \
@@ -1978,8 +1978,6 @@ RUN \
     libzulucryptpluginmanager1.0.0 \
     linux-base \
     linux-compiler-gcc-10-x86 \
-    linux-headers-5.10.0-21-amd64 \
-    linux-headers-5.10.0-21-common \
     linux-headers-amd64 \
     linux-kbuild-5.10 \
     linux-libc-dev \
@@ -2199,7 +2197,7 @@ COPY --from=devuan-4-kicksecure /opt/artifact/archives.gtar.gz /root/archives-ki
 COPY --from=devuan-4-kicksecure /opt/artifact/lists-key.gtar.xz /root/kicksecure-lists-key.gtar.xz
 
 RUN \
-  module_list=" 8021q ac ac97_bus acpi_call acpi_pad acpi_tad acpi_thermal_rel aes_generic aesni_intel af_alg af_packet agpgart ahci algif_hash algif_skcipher async_memcpy async_pq async_raid6_recov async_tx async_xor ata_generic ata_piix aufs autofs4 binfmt_misc blake2b_generic blktap bochs bochs_drm br_netfilter bridge btrfs button ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt chacha_x86_64 cirrus configfs cpuid crc16 crc32_pclmul crc32c_generic crc32c_intel crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cryptd crypto_simd ctr curve25519_x86_64 dca dm_crypt dm_log dm_mirror dm_mod dm_multipath dm_region_hash drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper e1000 ecb ecryptfs efi_pstore efivarfs ehci_hcd ehci_pci ena encrypted_keys evdev ext2 ext3 ext4 failover fat fb fb_sys_fops fbdev fuse garp gcm gf128mul ghash_clmulni_intel ghash_generic glue_helper gve hid hid_generic i2c-smbus i2c_algo_bit i2c_core i2c_hid i2c_hid_acpi i2c_i801 i2c_piix4 i2c_smbus iTCO_vendor_support iTCO_wdt icp ide_cd_mod ide_core ide_gd_mod ide_pci_generic input_leds intel_agp intel_gtt intel_pmc_bxt intel_rapl_common intel_rapl_msr iosf_mbi ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip6table_nat ip_tables ipt_REJECT iptable_filter iptable_mangle iptable_nat ipv6 irqbypass isofs ixgbe ixgbevf jbd2 jfs joydev kvdo kvm kvm_amd kvm_intel ledtrig_audio libaes libahci libata libchacha libchacha20poly1305 libcrc32c libcurve25519_generic libphy linear llc loop lpc_ich mbcache md_mod mdio mdio_devres mousedev mptbase mptscsih mptspi mrp msdos multipath net_failover nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_netlink nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_reject_ipv4 nf_tables nfnetlink nft_chain_nat nft_compat nft_counter nft_ct nft_masq nls_ascii nls_cp437 nls_iso8859_1 nls_utf8 ntfs nvme nvme_core overlay parport parport_pc pata_acpi pcspkr piix pktcdvd poly1305_x86_64 ppdev psmouse pvpanic qemu_fw_cfg raid0 raid1 raid10 raid456 raid6_pq ramoops rapl reed_solomon rng_core sch_fq_codel scsi_dh_alua scsi_dh_emc scsi_dh_rdac scsi_mod scsi_transport_spi sd_mod serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx2 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 sg simpledrm snd snd-intel-dspcfg snd-pcm snd_compress snd_hda_codec snd_hda_codec_generic snd_hda_core snd_hda_intel snd_hwdep snd_intel_dspcfg snd_pcm snd_pcm_dmaengine snd_pcsp snd_soc_core snd_timer soundcore soundwire-intel soundwire_bus soundwire_cadence soundwire_generic_allocation soundwire_intel spl squashfs sr_mod stp syscopyarea sysfillrect sysimgblt t10_pi tap tls tpm tpm_crb tpm_tis tpm_tis_core trusted ttm tun udp_tunnel uhci_hcd usb_common usb_storage usbcore usbhid usbkbd usbmouse veth vfat virtio virtio_balloon virtio_blk virtio_console virtio_dma_buf virtio_gpu virtio_net virtio_pci virtio_pci_modern_dev virtio_ring virtio_rng vmw_pvscsi vmw_vmci vmwgfx vmxnet3 watchdog wireguard x_tables xen-acpi-processor xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_netfront xen_pciback xen_privcmd xenfs xfrm_algo xfs xhci-hcd xhci_hcd xhci_pci xor xt_CHECKSUM xt_LOG xt_MASQUERADE xt_addrtype xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_nat xt_physdev xt_tcpudp xts zavl zcommon zfs zlua znvpair zram zsmalloc zstd_compress zunicode zzstd " && \
+  module_list=" 3c574_cs 3c589_cs 3c59x 3w-9xxx 3w-sas 3w-xxxx 8021q 8139cp 8139too 8390 88pg86x 88pm800 88pm800-regulator 88pm805 88pm80x BusLogic a100u2w aacraid ac ac97_bus acard-ahci acenic acpi_call acpi_pad acpi_tad acpi_thermal_rel act8865-regulator ad5398 adc-keys adf7242 adin adp5588-keys adp5589-keys advansys aec62xx aes_generic aesni_intel af_alg af_packet agpgart aha152x_cs ahci aic79xx aic7xxx aic94xx alcor alcor_pci algif_hash algif_skcipher alim15x3 altera_tse alx am53c974 amd amd-xgbe amd74xx amd8111e android-goldfish applespi aquantia ar9331 arcmsr arizona-i2c arizona-ldo1 arizona-micsupp arizona-spi asus-wmi async_memcpy async_pq async_raid6_recov async_tx async_xor at803x at86rf230 ata_generic ata_piix aten atiixp atl1 atl1c atl1e atl2 atlantic atp870u atusb aufs autofs4 ax88796b axnet_cs axp20x axp20x-i2c axp20x-regulator b44 b53_common b53_mdio b53_mmap b53_serdes b53_spi b53_srab bareudp battery bcm-phy-lib bcm-sf2 bcm54140 bcm590xx bcm590xx-regulator bcm7xxx bcm84881 bcm87xx bcma bcma-hcd bd9571mwv bd9571mwv-regulator be2iscsi be2net binfmt_misc blake2b_generic blktap bna bnx2 bnx2fc bnx2i bnx2x bnxt_en bochs bochs_drm bpck br_netfilter brd bridge broadcom bsd_comp btrfs button ca8210 cassini cb710 cb710-mmc cc2520 ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt ch chacha-x86_64 chacha_x86_64 ci_hdrc ci_hdrc_msm ci_hdrc_pci ci_hdrc_usb2 cicada cirrus clk-cdce706 clk-cs2000-cp clk-max9485 clk-pwm clk-s2mps11 clk-si5341 clk-si5351 clk-si544 cmd640 cmd64x cnic comm configfs cortina cpuid cqhci crc-ccitt crc-itu-t crc16 crc32-pclmul crc32_pclmul crc32c-intel crc32c_generic crc32c_intel crc7 crc8 crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cros_ec cros_ec_dev cros_ec_keyb cros_ec_lpcs cros_ec_spi cryptd crypto_simd cryptoloop ctr curve25519-x86_64 curve25519_x86_64 cxgb cxgb3 cxgb3i cxgb4 cxgb4i cxgb4vf da9062-core da9062-regulator da9063 da9150-core da9210-regulator da9211-regulator davicom dc395x dca de2104x defxx delkin_cb dl2k dlink-dir685-touchkeys dln2 dm_crypt dm_log dm_mirror dm_mod dm_multipath dm_region_hash dmfe dmx3191d dnet dns_resolver dp83822 dp83848 dp83867 dp83869 dp83tc811 dpt_i2o drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper dsa_core dsa_loop dsa_loop_bdinfo dstr dw_dmac dw_dmac_core dwc2 dwc3 dwc3-haps dwc3-pci e100 e1000 e1000e ec_bhf ecb ecryptfs eeprom_93cx6 efi_pstore efivarfs efivars ehci-hcd ehci-pci ehci-platform ehci_hcd ehci_pci ena enclosure encrypted_keys enic epat epia epic100 eql esas2r esp_scsi et1011c et131x evdev ext2 ext3 ext4 extcon-usb-gpio extcon-usbc-cros-ec failover fakelb fan fan53555 fat fb fb_sys_fops fbdev fcoe fealnx ff-memless firewire-core firewire-ohci firewire-sbp2 fit2 fit3 fixed fixed_phy fjes floppy fm10k fmvj18x_cs fnic forcedeth fotg210-hcd friq frpw fscache fuse garp gcm gdth geneve gf128mul ghash_clmulni_intel ghash_generic glue_helper goldfish_events gpio-adp5588 gpio-aggregator gpio-amd-fch gpio-amd8111 gpio-amdpt gpio-dwapb gpio-exar gpio-f7188x gpio-generic gpio-ich gpio-it87 gpio-kempld gpio-max3191x gpio-max7300 gpio-max7301 gpio-max730x gpio-max732x gpio-mb86s7x gpio-mc33880 gpio-ml-ioh gpio-mockup gpio-pca953x gpio-pca9570 gpio-pcf857x gpio-pci-idio-16 gpio-pcie-idio-24 gpio-pisosr gpio-rdc321x gpio-regulator gpio-sch gpio-sch311x gpio-tpic2810 gpio-viperboard gpio-vx855 gpio-winbond gpio-ws16c48 gpio-xilinx gpio-xra1403 gpio_keys gpio_keys_polled grace gre gtp gve hamachi hid hid-accutouch hid-alps hid-apple hid-appleir hid-asus hid-aureal hid-belkin hid-cherry hid-chicony hid-cmedia hid-corsair hid-cougar hid-cp2112 hid-creative-sb0540 hid-elan hid-elo hid-ezkey hid-gembird hid-generic hid-gfrm hid-glorious hid-gt683r hid-holtek-kbd hid-holtek-mouse hid-hyperv hid-ite hid-jabra hid-keytouch hid-led hid-lenovo hid-lg-g15 hid-logitech hid-logitech-dj hid-logitech-hidpp hid-macally hid-maltron hid-mcp2221 hid-mf hid-microsoft hid-monterey hid-nti hid-ortek hid-penmount hid-plantronics hid-primax hid-prodikeys hid-redragon hid-retrode hid-rmi hid-roccat hid-roccat-arvo hid-roccat-common hid-roccat-isku hid-roccat-lua hid-roccat-ryos hid-roccat-savu hid-samsung hid-sensor-custom hid-sensor-hub hid-sjoy hid-steam hid-steelseries hid-sunplus hid-topseed hid-u2fzero hid-udraw-ps3 hid-viewsonic hid-vivaldi hid-xinmo hid_generic hinic hpsa hpt366 hptiop htc-pasic3 hv_netvsc hv_storvsc hv_vmbus i2c-algo-bit i2c-algo-pca i2c-ali1535 i2c-ali1563 i2c-ali15x3 i2c-amd756 i2c-amd756-s4882 i2c-amd8111 i2c-cht-wc i2c-cros-ec-tunnel i2c-designware-pci i2c-diolan-u2c i2c-hid i2c-i801 i2c-isch i2c-ismt i2c-kempld i2c-nforce2 i2c-nforce2-s4985 i2c-ocores i2c-parport i2c-pca-platform i2c-piix4 i2c-robotfuzz-osif i2c-scmi i2c-simtec i2c-sis5595 i2c-sis630 i2c-sis96x i2c-smbus i2c-taos-evm i2c-tiny-usb i2c-via i2c-viapro i2c-viperboard i2c_algo_bit i2c_core i2c_hid i2c_hid_acpi i2c_i801 i2c_piix4 i2c_smbus i40e iTCO_vendor_support iTCO_wdt iavf ib_cm ib_core ib_uverbs ice icp icplus ide-cd_mod ide-core ide-cs ide-gd_mod ide-generic ide-pci-generic ide-pnp ide-tape ide_cd_mod ide_core ide_gd_mod ide_pci_generic ide_platform idma64 ieee802154 igb igbvf igc industrialio initio input_leds intel-ish-ipc intel-ishtp intel-ishtp-hid intel-ishtp-loader intel-lpss intel-lpss-acpi intel-lpss-pci intel-m10-bmc intel-xway intel_agp intel_gtt intel_pmc_bxt intel_quark_i2c_gpio intel_rapl_common intel_rapl_msr intel_soc_pmic_bxtwc intel_soc_pmic_chtdc_ti intel_soc_pmic_mrfld iosf_mbi ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip6table_nat ip_tables ipr ips ipt_REJECT iptable_filter iptable_mangle iptable_nat ipv6 ipvlan ipvtap iqs62x iqs62x-keys irqbypass isci isl6271a-regulator isl9305 isofs isp116x-hcd isp1760 it8172 it8213 it821x iw_cm ixgb ixgbe ixgbevf janz-cmodio jbd2 jfs jme jmicron joydev kbic kempld-core ks8842 ks8851_common ks8851_par ks8851_spi ksz8795 ksz8795_spi ksz884x ksz9477 ksz9477_i2c ksz9477_spi ksz_common ktti kvdo kvm kvm_amd kvm_intel lan743x lan9303-core lan9303_i2c lan9303_mdio lantiq_gswip ledtrig_audio libaes libahci libarc4 libata libceph libchacha libchacha20poly1305 libcrc32c libcurve25519-generic libcurve25519_generic libcxgb libcxgbi libfc libfcoe libphy linear liquidio liquidio_vf lkkbd llc lm3533-core lm3533-ctrlbank lm363x-regulator lm8323 lm8333 lockd loop lp3943 lp3971 lp3972 lp872x lp873x lp8755 lpc_ich lpc_sch lpfc ltc3589 ltc3676 lxt mac802154 mac802154_hwsim macsec madera madera-i2c madera-spi marvell marvell10g matrix-keymap matrix_keypad max14577 max14577-regulator max1586 max3421-hcd max7359_keypad max77693 max77693-regulator max77826-regulator max8649 max8660 max8907 max8907-regulator max8952 mbcache mc13783-regulator mc13892-regulator mc13xxx-core mc13xxx-i2c mc13xxx-regulator-core mc13xxx-spi mcr20a mcs_touchkey md_mod mdio mdio-bcm-unimac mdio-bitbang mdio-cavium mdio-gpio mdio-i2c mdio-mscc-miim mdio-mvusb mdio-thunder mdio_devres megaraid megaraid_mbox megaraid_mm megaraid_sas menf21bmc mhi micrel microchip microchip_t1 mii mlx4_core mlx4_en mlx4_ib mlx5_core mlx5_ib mlxfw mmc_block mmc_core mmc_hsq mmc_spi mousedev mp2629 mp8859 mpr121_touchkey mpt3sas mptbase mptfc mptsas mptscsih mptspi mrf24j40 mrp mscc mscc_ocelot_switch_lib mscc_seville msdos mt6311-regulator mt6323-regulator mt6358-regulator mt6360-core mt6360-regulator mt6397 mt6397-regulator mt7530 mtd mtip32xx mtk-pmic-keys mtk-sd multipath musb_hdrc mux-core mv88e6060 mv88e6xxx mvmdio mvsas mvumi myri10ge national natsemi ne2k-pci net_failover netconsole netxen_nic newtonkbd nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_netlink nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_reject_ipv4 nf_tables nfnetlink nfp nfs nfs_acl nfs_ssc nfsv2 nfsv3 nfsv4 nft_chain_nat nft_compat nft_counter nft_ct nft_masq niu nlmon nls_ascii nls_cp437 nls_iso8859_1 nls_utf8 nmclan_cs ns83820 ns87415 ntb ntb_netdev ntb_transport ntfs null_blk nvme nvme-loop nvme-rdma nvme_core nvmet nvmet-fc nvmet-rdma nvmet-tcp nxp-tja11xx ohci-hcd ohci-pci ohci-platform on20 on26 opencores-kbd opti621 overlay oxu210hp-hcd paride parport parport_pc pata_acpi pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_efar pata_hpt366 pata_hpt37x pata_hpt3x2n pata_hpt3x3 pata_it8213 pata_it821x pata_jmicron pata_marvell pata_mpiix pata_netcell pata_ninja32 pata_ns87410 pata_ns87415 pata_oldpiix pata_pcmcia pata_pdc2027x pata_pdc202xx_old pata_piccolo pata_platform pata_rdc pata_rz1000 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pca9450-regulator pcd pcf50633 pcf50633-regulator pci-hyperv pci-hyperv-intf pcmcia pcmcia_core pcnet32 pcnet_cs pcs-lynx pcs-xpcs pcspkr pd pdc202xx_new pdc202xx_old pdc_adma pf pfuze100-regulator pg phy-bcm-kona-usb2 phy-cpcap-usb phy-exynos-usb2 phy-generic phy-gpio-vbus-usb phy-intel-lgm-emmc phy-isp1301 phy-lgm-usb phy-pxa-28nm-hsic phy-pxa-28nm-usb2 phy-qcom-usb-hs phy-qcom-usb-hsic phy-tahvo phy-tusb1210 phylink piix pinctrl-emmitsburg pinctrl-jasperlake pinctrl-lynxpoint pinctrl-madera pinctrl-tigerlake pktcdvd plip pm80xx pmcraid poly1305-x86_64 poly1305_x86_64 ppdev ppp_async ppp_deflate ppp_generic ppp_mppe ppp_synctty pppoe pppox pptp psmouse pt pv88060-regulator pv88080-regulator pv88090-regulator pvpanic pwm-cros-ec pwm-regulator pwm_bl qca8k qcom-labibb-regulator qcom_spmi-regulator qcom_usb_vbus-regulator qed qede qedf qedi qemu_fw_cfg qla1280 qla2xxx qla3xxx qla4xxx qlcnic qlogic_cs qlogicfas408 qsemi qt1050 qt1070 qt2160 r6040 r8169 r8a66597-hcd raid0 raid1 raid10 raid456 raid6_pq ramoops rapidio rapl rave-sp rbd rdc321x-southbridge rdma_cm realtek realtek-smi reed_solomon regmap-spi regmap-spi-avmm reiserfs retu-mfd rfkill rionet rmi_core rnbd-client rnbd-server rng_core rockchip roles rpi-panel-attiny-regulator rsxx rt4801-regulator rt5033 rt5033-regulator rtc-88pm80x rtc-ab-b5ze-s3 rtc-ab-eoz9 rtc-abx80x rtc-bq32k rtc-bq4802 rtc-da9063 rtc-ds1286 rtc-ds1302 rtc-ds1305 rtc-ds1307 rtc-ds1343 rtc-ds1347 rtc-ds1374 rtc-ds1390 rtc-ds1511 rtc-ds1553 rtc-ds1672 rtc-ds1685 rtc-ds1742 rtc-ds2404 rtc-ds3232 rtc-em3027 rtc-fm3130 rtc-ftrtc010 rtc-isl12022 rtc-isl1208 rtc-m41t80 rtc-m41t93 rtc-m41t94 rtc-m48t35 rtc-m48t59 rtc-m48t86 rtc-max6900 rtc-max6902 rtc-max6916 rtc-max8907 rtc-mc13xxx rtc-mcp795 rtc-msm6242 rtc-mt6397 rtc-pcf2123 rtc-pcf2127 rtc-pcf50633 rtc-pcf85063 rtc-pcf8523 rtc-pcf85363 rtc-pcf8563 rtc-pcf8583 rtc-r9701 rtc-rp5c01 rtc-rs5c348 rtc-rs5c372 rtc-rv3028 rtc-rv3029c2 rtc-rv3032 rtc-rv8803 rtc-rx4581 rtc-rx6110 rtc-rx8010 rtc-rx8025 rtc-rx8581 rtc-s35390a rtc-s5m rtc-sd3078 rtc-stk17ta8 rtc-v3020 rtc-wilco-ec rtc-x1205 rtmv20-regulator rtrs-client rtrs-core rtrs-server rtsx_pci rtsx_pci_sdmmc rtsx_usb rtsx_usb_sdmmc rz1000 s2io s2mpa01 s2mps11 s5m8767 samsung-keypad sata_mv sata_nv sata_promise sata_qstor sata_sil sata_sil24 sata_sis sata_svw sata_sx4 sata_uli sata_via sata_vsc sc92031 sch_fq_codel scsi_debug scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh_rdac scsi_mod scsi_transport_spi sd_mod sdhci sdhci-acpi sdhci-pci sdhci-pltfm sdhci-xenon-driver sdhci_f_sdh30 sdio_uart sdricoh_cs sec-core sec-irq serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx2 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 serverworks ses sfc sfc-falcon sfp sg siimage simpledrm sis190 sis5513 sis900 sja1105 skd skfp skge sky2 sky81452 sky81452-regulator slc90e66 slg51000-regulator slhc slip sm501 smartpqi smc91c92_cs smsc smsc9420 snd snd-compress snd-intel-dspcfg snd-pcm snd-pcm-dmaengine snd-rawmidi snd-seq-device snd-soc-core snd-timer snd_compress snd_hda_codec snd_hda_codec_generic snd_hda_core snd_hda_intel snd_hwdep snd_intel_dspcfg snd_pcm snd_pcm_dmaengine snd_pcsp snd_soc_core snd_timer snic soundcore soundwire-intel soundwire_bus soundwire_cadence soundwire_generic_allocation soundwire_intel sparse-keymap spi-altera spi-amd spi-axi-spi-engine spi-bitbang spi-butterfly spi-cadence spi-dw spi-gpio spi-lantiq-ssc spi-lm70llp spi-loopback-test spi-mux spi-mxic spi-nxp-fspi spi-oc-tiny spi-pxa2xx-pci spi-pxa2xx-platform spi-rockchip spi-sc18is602 spi-sifive spi-tle62x0 spi-xcomm spi-xilinx spi-zynqmp-gqspi spi_ks8995 spl squashfs sr_mod ssb ssb-hcd st starfire ste10Xp stex stowaway stp sundance sungem sungem_phy sunhme sunkbd sunrpc sx8 sym53c500_cs sym53c8xx syscopyarea sysfillrect sysimgblt t10_pi tag_8021q tap target_core_mod tc86c001 tca6416-keypad tca8418_keypad tcm_qla2xxx tehuti teranetics tg3 thermal thunderbolt thunderbolt-net ti-lmu ti_am335x_tscadc tifm_core tifm_sd tlan tls tm2-touchkey toshsd tpm tpm_crb tpm_tis tpm_tis_core tps51632-regulator tps6105x tps6105x-regulator tps62360-regulator tps65010 tps65023-regulator tps6507x tps6507x-regulator tps65086 tps65086-regulator tps65132-regulator tps6524x-regulator tps65912-core tps65912-i2c tps65912-regulator tps65912-spi tqmx86 triflex trm290 trusted ttm tulip tun typhoon uPD60620 uas ucb1400_core udc-core udf udp_tunnel ufshcd-core ufshcd-pci uhci-hcd uhci_hcd uhid uio uli526x ulpi umem ums-alauda ums-cypress ums-datafab ums-eneub6250 ums-freecom ums-isd200 ums-jumpshot ums-karma ums-onetouch ums-realtek ums-sddr09 ums-sddr55 ums-usbat usb-common usb-storage usb_common usb_storage usbcore usbhid usbkbd usbmouse usdhi6rol0 userspace-consumer ushc veth vfat via-rhine via-sdmmc via-velocity via82cxxx video viperboard virtio virtio_balloon virtio_blk virtio_console virtio_dma_buf virtio_gpu virtio_mmio virtio_net virtio_pci virtio_pci_modern_dev virtio_ring virtio_rng virtual vitesse vitesse-vsc73xx-core vitesse-vsc73xx-platform vitesse-vsc73xx-spi vmd vmw_pvscsi vmw_vmci vmwgfx vmxnet3 vrf vub300 vx855 vxge vxlan wacom watchdog wbsd wd719x wilco_ec winbond-840 wireguard wl1273-core wm8994 wm8994-regulator wmi x_tables xen-acpi-processor xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_netfront xen_pciback xen_privcmd xenfs xfrm_algo xfs xhci-hcd xhci-pci xhci-plat-hcd xhci_hcd xhci_pci xilinx_gmii2rgmii xirc2ps_cs xircom_cb xor xt_CHECKSUM xt_LOG xt_MASQUERADE xt_addrtype xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_nat xt_physdev xt_tcpudp xtkbd xts yellowfin zavl zcommon zfs zlua znvpair zram zsmalloc zstd_compress zunicode zzstd " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && \
   set -x && \
   set -e && \
@@ -2221,12 +2219,37 @@ RUN \
   (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
   apt-get update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr qemu-system-x86 tar cpio zstd findutils qemu-utils xz-utils initramfs-tools-core && \
-  rm -r -f /lib/modules/5.10.0-[0-9][0-9]-amd64/ /root/initrd/lib/modules/5.10.0-[0-9][0-9]-amd64/ && \
-  rm -v /boot/vmlinuz* /boot/initr* && \
-  rm -v -f /boot/System.map-5.10.0-??-amd64 /boot/config-5.10.0-??-amd64 && \
-  cp -p -v /root/initrd/boot/vmlinu* /boot/ && \
+  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr qemu-system-x86 tar cpio zstd findutils wget curl ca-certificates qemu-utils xz-utils jq initramfs-tools-core amd64-microcode intel-microcode && \
+  echo AMD64UCODE_INITRAMFS=early >> /etc/default/amd64-microcode && \
+  echo IUCODE_TOOL_INITRAMFS=early >> /etc/default/intel-microcode && \
+  echo IUCODE_TOOL_SCANCPUS=no >> /etc/default/intel-microcode && \
+  wget http://http.us.debian.org/debian/pool/non-free-firmware/i/intel-microcode/intel-microcode_3.20230214.1_amd64.deb && \
+  dpkg -i intel-microcode_3.20230214.1_amd64.deb && \
+  rm -v intel-microcode_3.20230214.1_amd64.deb && \
   mkdir -v -p /opt/artifact/meta && \
+  nerdctl_version="$(curl -sL https://api.github.com/repos/containerd/nerdctl/releases/latest | jq -r .tag_name | tr -d v)" && \
+  wget https://github.com/containerd/nerdctl/releases/download/v"${nerdctl_version}"/nerdctl-full-"${nerdctl_version}"-linux-amd64.tar.gz && \
+  gunzip -v -N nerdctl-full-"${nerdctl_version}"-linux-amd64.tar.gz && \
+  zstd --verbose --verbose --threads=1 --single-thread --memory=256M --long=30 --keep --ultra -22 nerdctl-full-"${nerdctl_version}"-linux-amd64.tar && \
+  rm -v nerdctl-full-"${nerdctl_version}"-linux-amd64.tar && \
+  mv -v nerdctl-full-"${nerdctl_version}"-linux-amd64.tar.zst /opt/artifact/nerdctl-full-"${nerdctl_version}"-linux-amd64.gtar.zst && \
+  kver_debian="$(ls -1rd /lib/modules/5.10.0-[0-9][0-9]-amd64 | tail -n 1 | sed 's,.*/,,')" && \
+  rm -v -f /boot/initrd.img-"${kver_debian}" && \
+  update-initramfs -v -c -k "${kver_debian}" && \
+  unmkinitramfs /boot/initrd.img-"${kver_debian}" /root/initramfs && \
+  rm -v /boot/initrd.img-"${kver_debian}" && \
+  cd /root/initramfs/early && \
+  find kernel -print0 |sort -z |cpio -0 -H newc --renumber-inodes -o > /root/initramfs-microcode.cpio && \
+  if test -d /root/initramfs/early2; then cd /root/initramfs/early2 && find kernel -print0 |sort -z |cpio -0 -H newc --renumber-inodes -o >> /root/initramfs-microcode.cpio; fi && \
+  cd /root/initramfs/main && \
+  tar -c -v -v -f - init conf scripts etc > /root/initramfs-extra.gtar && \
+  cd /root && \
+  rm -r initramfs && \
+  rm -r -f /lib/modules/"${kver_debian}"/ /root/initrd/lib/modules/"${kver_debian}"/ && \
+  rm -v -f /boot/vmlinuz* /boot/initr* && \
+  rm -v -f /boot/System.map-"${kver_debian}" /boot/config-"${kver_debian}" && \
+  unset kver_debian && \
+  cp -p -v /root/initrd/boot/vmlinu* /boot/ && \
   mv -v -f /root/initrd/root/dpkg-l /opt/artifact/meta/dpkg-l-base && \
   mv -v -f /root/dpkg-l-kicksecure /opt/artifact/meta/dpkg-l-kicksecure && \
   cd /root/initrd && \
@@ -2239,10 +2262,11 @@ RUN \
   (echo tty1; echo ttyS0; echo ttyUSB0; echo hvc0; echo xvc0; echo console) >> etc/securetty && \
   mkdir -p -v dev proc sys run && \
   chmod --verbose go+rx sys proc dev run . && \
-  : > etc/modules && \
-  echo ${module_list} |tr " " '\n'|sort |uniq >> etc/modules && \
+  echo loop max_loop=256 > etc/modules && \
+  : > etc/modules.inc && \
+  echo ${module_list} |tr " " '\n'|sort |uniq >> etc/modules.inc && \
   unset module_list && \
-  cat etc/modules > /etc/modules && \
+  cat etc/modules.inc >> /etc/modules && \
   echo localhost > etc/hostname && \
   echo 0x00000000 > etc/hostid && \
   echo nameserver 1.1.1.1 > etc/resolv.conf && \
@@ -2267,7 +2291,7 @@ RUN \
     echo "ulimit -v unlimited" && \
     echo "ulimit -d unlimited" && \
     echo "export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin" && \
-    echo "export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/opt/bootstrap/lib/x86_64-linux-gnu" && \
+    echo "export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/opt/bootstrap/lib/x86_64-linux-gnu:/opt/bootstrap/lib" && \
     echo "mount -v -t proc proc /proc" && \
     echo "mount -v -t sysfs sysfs /sys" && \
     echo "mount -v -t devtmpfs devtmpfs /dev" && \
@@ -2281,7 +2305,6 @@ RUN \
     echo 'hostname $(cat /etc/hostname)' && \
     echo "mkdir -v -p /usr" && \
     echo "tar -C /opt/bootstrap/ -c -f - bin sbin lib | tar -C /usr/ -x -p -k --warning=no-timestamp -f -" && \
-    echo "hash -r" && \
     echo "rm -r /opt/bootstrap/bin /opt/bootstrap/sbin /opt/bootstrap/lib" && \
     echo "unset LD_LIBRARY_PATH" && \
     echo '/sbin/modprobe loop max_loop=256' && \
@@ -2303,26 +2326,25 @@ RUN \
     echo "mkdir /new" && \
     echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=70% tmpfs /new" && \
     echo "chmod --verbose go-w /new/." && \
-    echo "mkdir -v -p /mnt/CACHE" && \
-    echo "/stand/e2fsck -p -v /dev/disk/by-partlabel/CACHE || true" && \
-    echo "mount -v -t ext4 -o debug,ro /dev/disk/by-partlabel/CACHE /mnt/CACHE" && \
+    echo 'lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CACHE"; then d=$(basename "${part}"); /stand/e2fsck -p -v "${part}" || true; R="${RANDOM}"; mkdir -v -p /mnt/CACHE-"${d}"-"${R}"; mount -v -t ext4 -o debug,ro "${part}" /mnt/CACHE-"${d}"-"${R}"; fi; done' && \
     echo "umask 077" && \
     echo "mkdir -v -p /mnt/VOLATILE" && \
     echo 'dd if=/dev/zero of="${TMP}"/luks.header bs=1048576 count=0 seek=4' && \
     echo 'dd if=/dev/urandom bs=8192 count=1 2>/dev/null | /stand/sha512sum | /stand/awk '\''{print $1}'\'' > "${TMP}"/luks.pass' && \
     echo "/etc/init.d/eudev start" && \
     echo "sleep 2" && \
-    echo 'cryptsetup luksFormat --type=luks1 --batch-mode=yes --verbose --cipher=aes-xts-plain64 --hash=sha256 --key-size=512 --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass /dev/disk/by-partlabel/VOLATILE' && \
+    echo 'VOLATILE=$( (lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^VOLATILE"; then echo "${part}"; fi; done) |head -n 1)' && \
+    echo 'cryptsetup luksFormat --type=luks1 --batch-mode=yes --verbose --cipher=aes-xts-plain64 --hash=sha256 --key-size=512 --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass "${VOLATILE}"' && \
     echo "sleep 4" && \
     echo "sync" && \
-    echo 'cryptsetup luksOpen --verbose --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass /dev/disk/by-partlabel/VOLATILE VOLATILE &' && \
+    echo 'cryptsetup luksOpen --verbose --header="${TMP}"/luks.header --key-file="${TMP}"/luks.pass "${VOLATILE}" VOLATILE &' && \
     echo 'PID=$!' && \
     echo "sleep 10" && \
     echo "sync" && \
     echo "dmsetup udevcomplete_all --yes" && \
-    echo "sleep 3" && \
-    echo "dmsetup udevcomplete_all --yes" && \
     echo "sleep 2" && \
+    echo "dmsetup udevcomplete_all --yes" && \
+    echo "sleep 1" && \
     echo "dmsetup udevcomplete_all --yes" && \
     echo "sleep 1" && \
     echo "sync" && \
@@ -2342,7 +2364,7 @@ RUN \
     echo "export TMP=/mnt/VOLATILE/tmp" && \
     echo 'export TEMP="${TMP}"' && \
     echo 'export TMPDIR="${TMP}"' && \
-    echo "(set +e; zstd --decompress --verbose --verbose --threads=1 --single-thread --long=30 < /mnt/CACHE/overlay/overlay*tar.zst |tar -C / -x -p -k --warning=no-timestamp -f - || true; true)" && \
+    echo '(set +e; for i in /mnt/CACHE-*/overlay/overlay*tar.zst; do zstd --decompress --verbose --verbose --threads=1 --single-thread --long=30 < "${i}" |tar -C / -x -p --warning=no-timestamp -f - || true; done; true)' && \
     echo "umask 022" && \
     echo "export TMP=/run/tmp" && \
     echo 'export TEMP="${TMP}"' && \
@@ -2358,7 +2380,7 @@ RUN \
     echo "dmsetup udevcomplete_all --yes" && \
     echo "sleep 4" && \
     echo "dmsetup udevcomplete_all --yes" && \
-    echo "sleep 3" && \
+    echo "sleep 2" && \
     echo "dmsetup udevcomplete_all --yes" && \
     echo "sleep 1" && \
     echo "sync" && \
@@ -2371,15 +2393,15 @@ RUN \
     echo "udevadm trigger" && \
     echo "sync" && \
     echo "rmdir -v /mnt/VOLATILE" && \
+    echo "unset VOLATILE" && \
     echo "/etc/init.d/eudev stop" && \
-    echo "umount -v /mnt/CACHE" && \
-    echo "rmdir -v /mnt/CACHE" && \
+    echo 'lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CACHE"; then umount -v "${part}"; fi; done' && \
+    echo 'for i in /mnt/CACHE-*; do umount "${i}" >/dev/null 2>/dev/null || true; done' && \
+    echo "rmdir -v /mnt/CACHE-*" && \
     echo "if test -d /opt/bootstrap/etc/boot.d; then run-parts /opt/bootstrap/etc/boot.d; rm -r /opt/bootstrap/etc; fi" && \
     echo "rmdir -v /opt/bootstrap" && \
     echo "mkdir -v -p /mnt/EFI" && \
-    echo "mount -v -t vfat -o ro /dev/disk/by-partlabel/EFI /mnt/EFI" && \
-    echo "cp -p -v /mnt/EFI/xen/xen* /mnt/EFI/linux/System.map* /mnt/EFI/linux/config* /mnt/EFI/syslinux/memtest* /boot/" && \
-    echo "umount -v /mnt/EFI" && \
+    echo 'lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^EFI"; then mount -v -t vfat -o ro "${part}" /mnt/EFI; cp -p -v /mnt/EFI/xen/xen* /mnt/EFI/linux/System.map* /mnt/EFI/linux/config* /mnt/EFI/syslinux/memtest* /boot/; sync; sleep 1; umount -v /mnt/EFI; sync; fi; done' && \
     echo "rmdir -v /mnt/EFI" && \
     echo "mv -v /stand/mcm /stand/nzcc /stand/nz /stand/srep /usr/local/bin/" && \
     echo "mkdir -v -p /new/usr" && \
@@ -2423,7 +2445,9 @@ RUN \
   chmod --verbose go-rwx init && \
   mkdir -p -v opt/bootstrap/lib/x86_64-linux-gnu/ && \
   cd /root/initrd/usr/lib/x86_64-linux-gnu && \
-  tar -c --remove-files -v -f - $(ls -1d libacl.so* libargon2.so* libattr.so* libblkid.so* libbsd.so* libcrypto.so* libgmp.so* libjson-c.so* libkmod.so* liblz4.so* libmd.so* libmount.so* libmpfr.so* libpcre2*so* libpopt.so* libsigsegv.so* libstdc++*.so* libuuid.so*) | tar -C /root/initrd/opt/bootstrap/lib/x86_64-linux-gnu/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  tar -c --remove-files -v -f - $(ls -1d libacl.so* libaio.so* libargon2.so* libattr.so* libblkid.so* libbsd.so* libcrypto.so* libedit.so* libgcrypt* libgmp.so* libjson-c.so* libkmod.so* liblz4.so* libmd.so* libmount.so* libmpfr.so* libpcre2*so* libpopt.so* libsigsegv.so* libsmartcols.so* libsodium.so* libstdc++*.so* libsystemd.so* liburcu.so* libuuid.so* libzstd.so*) | tar -C /root/initrd/opt/bootstrap/lib/x86_64-linux-gnu/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  cd /root/initrd/usr/lib && \
+  tar -c --remove-files -v -f - $(ls -1d libscrypt.so*) | tar -C /root/initrd/opt/bootstrap/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
   cd /root/initrd/usr && \
   tar -c --remove-files -v -f - bin/xargs bin/gawk sbin/pktsetup bin/zstd | tar -C /root/initrd/opt/bootstrap/ -x -p -k -v -v --warning=no-timestamp -f - && \
   cd /root/initrd && \
@@ -2432,7 +2456,8 @@ RUN \
   mv lib/modules/5.10.*-hardened*-5.10uml*/ /root/overlay/lib/modules/ && \
   cd lib/modules/"${kver}"/kernel && \
   find . -type f -name '*.ko' -print > /root/modules && \
-  cat /root/initrd/etc/modules |tr _- .. | while read i; do grep "/${i}\.ko\$" /root/modules >> /root/modules. || true; done && \
+  cat /root/initrd/etc/modules.inc |tr _- .. | while read i; do grep "/${i}\.ko\$" /root/modules >> /root/modules. || true; done && \
+  rm -v /root/initrd/etc/modules.inc && \
   cat /root/modules. |sort |uniq > /root/modules && \
   tar -c -f - --remove-files $(cat /root/modules) | tar -C /root/overlay/lib/modules/"${kver}"/kernel -x -p -k --warning=no-timestamp -f - && \
   rm -v /root/modules /root/modules. && \
@@ -2459,8 +2484,12 @@ RUN \
   rmdir -v /root/initrd/boot/ && \
   mv -v /root/boot/ /root/initrd/boot/ && \
   ulimit -d unlimited && ulimit -v unlimited && \
-  mkdir -p /root/drive/mnt/CACHE/overlay /root/drive/mnt/CACHE/lists /root/drive/mnt/EFI/linux && \
+  mkdir -p -v /root/drive/mnt/CACHE/overlay /root/drive/mnt/CACHE/lists /root/drive/mnt/EFI/linux /root/drive/root/ && \
+  mv -v /root/initramfs-microcode.cpio /root/drive/root/ && \
   tar -C /root/overlay -cf - usr var lib > /root/drive/mnt/CACHE/overlay/overlay.gtar && \
+  mkdir -v -p /root/overlay/usr/local/etc/initramfs-stock.d && \
+  cat /root/initramfs-extra.gtar |tar -C /root/overlay/usr/local/etc/initramfs-stock.d -x -p -v -v -f - && \
+  rm -v /root/initramfs-extra.gtar && \
   (cd /root/drive/mnt/CACHE/overlay/ && zstd --verbose --verbose --threads=1 --single-thread --memory=256M --long=30 --keep --ultra -22 overlay.gtar && rm -v overlay.gtar) && \
   ls -ldsi --full-time /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   rm -r -v /root/overlay/usr/local/etc/boot.d/ && \
@@ -2472,7 +2501,7 @@ RUN \
   tar -C /root/initrd/opt/bootstrap/ -c --remove-files -v -f - bin sbin lib | tar -C usr/ -x -p -v -v --warning=no-timestamp -f - && \
   rmdir -v /root/initrd/opt/bootstrap && \
   cp -pv /boot/initrd.img /root/drive/mnt/EFI/linux/ && \
-  tar -C /root/drive -c -f - --remove-files mnt |gzip -1 -v --synchronous --rsyncable >/root/drive.tar.gz && \
+  tar -C /root/drive -c -f - --remove-files mnt root |gzip -1 -v --synchronous --rsyncable >/root/drive.tar.gz && \
   rm -r /root/drive && \
   mv -v sbin/init sbin/init.orig && \
   rm -v init && \
@@ -2495,7 +2524,6 @@ RUN \
   echo 'udevadm trigger' >> init && \
   echo 'lsblk' >> init && \
   echo 'sync' >> init && \
-  echo 'ls /dev/disk/by-*/' >> init && \
   echo '(for i in \
       n 1 "" +768m EF00 \
       n 2 "" +32m EF02 \
@@ -2517,8 +2545,8 @@ RUN \
       c 9 DATA \
       x a 1 2 "" \
       p w y; \
-    do echo "$i"; done) | gdisk /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
-  echo '(for i in n 1 "" +32m 8301 n 2 "" "" 8301 c 2 STAGING c 1 NOOP p w y; do echo "$i"; done) | gdisk /dev/disk/by-id/ata-QEMU_HARDDISK_QM00003' >> init && \
+    do echo "$i"; done) | gdisk /dev/hda' >> init && \
+  echo '(for i in n 1 "" +32m 8301 n 2 "" "" 8301 c 2 STAGING c 1 NOOP p w y; do echo "$i"; done) | gdisk /dev/hdc' >> init && \
   echo 'sync' >> init && \
   echo 'sleep 2' >> init && \
   echo 'for i in "-s" "-d" ""; do partprobe ${i}; sleep 1; sync; done' >> init && \
@@ -2535,40 +2563,23 @@ RUN \
   echo 'udevadm trigger' >> init && \
   echo 'sync' >> init && \
   echo 'sleep 1' >> init && \
-  echo 'find /dev/disk -ls' >> init && \
   echo 'sleep 1' >> init && \
-  echo 'mkfs.ext4 -e continue -j -L STAGING -m 8 -v /dev/disk/by-partlabel/STAGING' >> init && \
-  echo 'mkfs.ext4 -e continue -j -L IDEN -m 8 -M /mnt/IDEN -v /dev/disk/by-partlabel/IDEN' >> init && \
-  echo 'mkfs.ext4 -e continue -j -L CONF -m 8 -M /mnt/CONF -v /dev/disk/by-partlabel/CONF' >> init && \
-  echo 'mkfs.ext4 -e continue -j -L CACHE -m 8 -M /mnt/CACHE -v /dev/disk/by-partlabel/CACHE' >> init && \
-  echo 'mkfs.ext4 -e continue -j -L LOG -m 8 -M /mnt/LOG -v /dev/disk/by-partlabel/LOG' >> init && \
   echo 'mkdir -v /mnt/CONF /mnt/IDEN /mnt/LOG /mnt/STAGING' >> init && \
-  echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/IDEN /mnt/IDEN' >> init && \
-  echo 'mkdir -v /mnt/IDEN/iden' >> init && \
-  echo 'umount -v /mnt/IDEN' >> init && \
-  echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/CONF /mnt/CONF' >> init && \
-  echo 'mkdir -v /mnt/CONF/conf' >> init && \
-  echo 'umount -v /mnt/CONF' >> init && \
-  echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/LOG /mnt/LOG' >> init && \
-  echo 'mkdir -v /mnt/LOG/log' >> init && \
-  echo 'chmod --verbose 3775 /mnt/LOG/log' >> init && \
-  echo 'chattr -V +a /mnt/LOG/log' >> init && \
-  echo 'chattr -V +a /mnt/LOG' >> init && \
-  echo 'umount -v /mnt/LOG' >> init && \
-  echo 'ls /dev/disk/by-partlabel/EFI' >> init && \
-  echo 'mkfs.fat -F 32 -n EFI --invariant -v /dev/disk/by-partlabel/EFI' >> init && \
+  echo 'for partname in IDEN CONF CACHE STAGING; do lsblk -l -p |grep part |cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^${partname}"; then mkfs.ext4 -e continue -j -L "${partname}" -m 8 -M /mnt/"${partname}" -v "${part}" && mount -v -t ext4 -o debug "${part}" /mnt/"${partname}" && mkdir -v -p /mnt/"${partname}"/"${partname}" && umount /mnt/"${partname}"; fi; done; done' >> init && \
+  echo 'lsblk -l -p |grep part |cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^LOG"; then mkfs.ext4 -e continue -j -L "LOG" -m 8 -M /mnt/LOG -v "${part}" && mount -v -t ext4 -o debug "${part}" /mnt/LOG && mkdir -v -p /mnt/LOG/LOG && chmod --verbose 3775 /mnt/LOG/LOG && chattr -V +a /mnt/LOG/LOG && chattr -V +a /mnt/LOG && umount -v /mnt/LOG; fi; done' >> init && \
+  echo 'EFI=$( (lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^EFI"; then echo "${part}"; fi; done) |head -n 1)' >> init && \
+  echo 'mkfs.fat -F 32 -n EFI --invariant -v "${EFI}"' >> init && \
   echo 'mkdir -v /mnt/EFI' >> init && \
-  echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
+  echo 'mount -v -t vfat "${EFI}" /mnt/EFI' >> init && \
   echo 'mkdir -v /mnt/EFI/syslinux' >> init && \
   echo 'umount -v /mnt/EFI' >> init && \
-  echo 'syslinux --install --stupid --raid --directory /syslinux /dev/disk/by-partlabel/EFI' >> init && \
+  echo 'syslinux --install --stupid --raid --directory /syslinux "${EFI}"' >> init && \
   echo 'sync' >> init && \
-  echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
+  echo 'mount -v -t vfat "${EFI}" /mnt/EFI' >> init && \
   echo 'ls -la /mnt/EFI/syslinux' >> init && \
   echo 'umount -v /mnt/EFI' >> init && \
-  echo 'find /dev/disk -ls' >> init && \
   echo 'sync' >> init && \
-  echo 'dd if=/usr/lib/syslinux/mbr/gptmbr.bin of=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00001 bs=440 count=1 conv=notrunc' >> init && \
+  echo 'dd if=/usr/lib/syslinux/mbr/gptmbr.bin of=/dev/hda bs=440 count=1 conv=notrunc' >> init && \
   echo 'sync' >> init && \
   echo 'sleep 1' >> init && \
   echo 'sync' >> init && \
@@ -2585,17 +2596,22 @@ RUN \
   echo 'udevadm trigger' >> init && \
   echo 'sync' >> init && \
   echo 'sleep 1' >> init && \
-  echo 'mount -v -t vfat /dev/disk/by-partlabel/EFI /mnt/EFI' >> init && \
+  echo 'mount -v -t vfat "${EFI}" /mnt/EFI' >> init && \
+  echo "unset EFI" >> init && \
   echo 'cp -nav /usr/lib/syslinux/modules/bios/* /mnt/EFI/syslinux/' >> init && \
   echo 'ls -la /mnt/EFI/syslinux/ldlinux.c32' >> init && \
-  echo 'blkid -s PTTYPE -o value /dev/disk/by-id/ata-QEMU_HARDDISK_QM00001' >> init && \
+  echo 'blkid -s PTTYPE -o value /dev/hda' >> init && \
   echo 'ls -la /boot' >> init && \
   echo 'mkdir -v -p /mnt/EFI/xen /mnt/EFI/linux' >> init && \
   echo 'mkdir -v /mnt/CACHE' >> init && \
-  echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/CACHE /mnt/CACHE' >> init && \
+  echo 'CACHE=$( (lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^CACHE"; then echo "${part}"; fi; done) |head -n 1)' >> init && \
+  echo 'mount -v -t ext4 -o debug "${CACHE}" /mnt/CACHE' >> init && \
+  echo 'unset CACHE' >> init && \
   echo 'mkdir -v /mnt/CACHE/overlay' >> init && \
-  echo 'mount -v -t ext4 -o debug /dev/disk/by-partlabel/STAGING /mnt/STAGING' >> init && \
-  echo 'gunzip -v < /dev/disk/by-id/ata-QEMU_HARDDISK_QM00002 | tar -C /mnt/STAGING/ -x -p -v -v --warning=no-timestamp -f -' >> init && \
+  echo 'STAGING=$( (lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^STAGING"; then echo "${part}"; fi; done) |head -n 1)' >> init && \
+  echo 'mount -v -t ext4 -o debug "${STAGING}" /mnt/STAGING' >> init && \
+  echo 'unset STAGING' >> init && \
+  echo 'gunzip -v < /dev/hdb | tar -C /mnt/STAGING/ -x -p -v -v --warning=no-timestamp -f -' >> init && \
   echo 'cd /mnt/STAGING/mnt/EFI/linux' >> init && \
   echo 'mkdir dir' >> init && \
   echo 'cd dir' >> init && \
@@ -2603,9 +2619,12 @@ RUN \
   echo 'mkdir --verbose /mnt/dev' >> init && \
   echo 'mount -v -t devtmpfs devtmpfs /mnt/dev' >> init && \
   echo 'tar -C /mnt/ -cf - dev | tar xpf -' >> init && \
-  echo 'rm -r dev/disk/' >> init && \
+  echo 'rm -r -f dev/disk/' >> init && \
   echo 'umount -v /mnt/dev' >> init && \
-  echo 'find . -print0 | sort -z | cpio -0 -H newc --renumber-inodes -o | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > ../initrd.img' >> init && \
+  echo 'find . -print0 | sort -z | cpio -0 -H newc --renumber-inodes -o | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > ../initrd.img-post' >> init && \
+  echo 'cat /mnt/STAGING/root/initramfs-microcode.cpio ../initrd.img-post > ../initrd.img' >> init && \
+  echo 'rm -v /mnt/STAGING/root/initramfs-microcode.cpio ../initrd.img-post' >> init && \
+  echo 'rm -r -f -v /mnt/STAGING/root' >> init && \
   echo 'cd ..' >> init && \
   echo 'rm -r dir' >> init && \
   echo 'cd /root' >> init && \
@@ -2619,6 +2638,8 @@ RUN \
   echo 'cp -p -v /boot/xen* /mnt/EFI/xen/' >> init && \
   echo 'cp -p -v /boot/System.map* /boot/config* /mnt/EFI/linux/' >> init && \
   echo 'cp -p -v /boot/vmlinuz-* /mnt/EFI/linux/vmlinuz' >> init && \
+  echo 'mv -v /boot/memtest86.bin /boot/memtest86' >> init && \
+  echo 'mv -v /boot/memtest86+.bin /boot/memtest86+' >> init && \
   echo 'cp -p -v /boot/memtest* /mnt/EFI/syslinux/' >> init && \
   echo 'sync' >> init && \
   echo 'cd /mnt/EFI/syslinux' >> init && \
@@ -2632,12 +2653,34 @@ RUN \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL linux-0" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Linux serial" >> syslinux.cfg' >> init && \
+  echo 'echo "  LINUX /linux/vmlinuz"' >> init && \
+  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
+  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft intel_iommu=on amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug --" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL linux-1" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Linux display" >> syslinux.cfg' >> init && \
+  echo 'echo "  LINUX /linux/vmlinuz"' >> init && \
+  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
+  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug --" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Memtest86" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Memtest86" >> syslinux.cfg' >> init && \
+  echo 'echo "  LINUX /syslinux/memtest86" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Memtest86+" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Memtest86+" >> syslinux.cfg' >> init && \
+  echo 'echo "  LINUX /syslinux/memtest86+" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
   echo 'cat syslinux.cfg' >> init && \
   echo 'sync' >> init && \
   echo 'cd /root' >> init && \
   echo 'umount -v /mnt/EFI' >> init && \
-  echo 'dd if=/dev/urandom of=/dev/disk/by-partlabel/ENTROPY bs=65536 count=1 2>/dev/null' >> init && \
+  echo 'ENTROPY=$( (lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^ENTROPY"; then echo "${part}"; fi; done) |head -n 1)' >> init && \
+  echo 'dd if=/dev/urandom of="${ENTROPY}" bs=65536 count=1 2>/dev/null' >> init && \
+  echo 'unset ENTROPY' >> init && \
   echo 'sync' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
@@ -2654,7 +2697,7 @@ RUN \
   rm -r initrd && \
   qemu-img create -f qcow2 /root/disk.qcow2 60G && \
   qemu-img create -f qcow2 /root/scratch.qcow2 8G && \
-  qemu-system-x86_64 -m 5g -kernel /boot/vmlinuz* -initrd /boot/initrd.img -drive file=disk.qcow2,format=qcow2,index=0 -drive file=/root/drive.tar.gz,format=raw,index=1 -drive file=scratch.qcow2,format=qcow2,index=2 -append "console=ttyS0 init=/init" -nographic && \
+  qemu-system-x86_64 -m 5g -device virtio-rng-pci -kernel /boot/vmlinuz* -initrd /boot/initrd.img -drive file=disk.qcow2,format=qcow2,index=0 -drive file=/root/drive.tar.gz,format=raw,index=1 -drive file=scratch.qcow2,format=qcow2,index=2 -append "console=ttyS0 init=/init" -nographic && \
   rm -v /boot/initrd.img && \
   rm -v /root/drive.tar.gz && \
   rm -r -f /usr/local && \
