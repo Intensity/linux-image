@@ -824,7 +824,7 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" && mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
@@ -947,6 +947,20 @@ RUN \
   ./Makefile install && mv /usr/local/bin/mcm /usr/local/src/stand/ && \
   \
   cd /usr/local/src && \
+  wget https://nishi.dreamhosters.com/u/mcm_084_textprep_v1.7z && \
+  7z x mcm_084_textprep_v1.7z && \
+  cd mcm_084_textprep_v1/src && \
+  sh g && \
+  cp -p ./mcmwrt /usr/local/bin/ && \
+  \
+  cd /usr/local/src && \
+  git clone --recursive https://git.gavinhoward.com/gavin/bc && \
+  cd bc && \
+  ./configure.sh -g && \
+  make && \
+  make install && \
+  \ 
+  cd /usr/local/src && \
   git clone --recursive https://github.com/IlyaGrebnov/bsc-m03 && \
   cd bsc-m03/ && \
   cmake . && \
@@ -981,13 +995,6 @@ RUN \
   cd aenker && \
   make && \
   make install PREFIX=/usr/local && \
-  \
-  cd /usr/local/src && \
-  git clone --recursive https://git.gavinhoward.com/gavin/bc && \
-  cd bc && \
-  ./configure.sh -g && \
-  make && \
-  make install && \
   \
   cd /usr/local/src && \
   git clone --recursive https://github.com/nlitsme/gnubc && \
@@ -1134,7 +1141,16 @@ RUN \
   make install && \
   rm -v /usr/include/drm && \
   \
-  cd /usr/local/src && \
+  cd /usr/local/src/ && \
+  apt-get -y install --verbose-versions autoconf automake autopoint autotools-dev bash-completion binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism docbook-xml docbook-xsl dpkg-dev dwz eudev file flex g++ g++-10 gcc gcc-10 gettext gettext-base groff-base intltool-debian libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu67 libisl23 libitm1 libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libosp5 libperl5.32 libpipeline1 libpod-parser-perl libprocps8 libquadmath0 libsgmls-perl libsigsegv2 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 libxslt1.1 libyaml-tiny-perl linux-libc-dev m4 make man-db opensp patch perl perl-modules-5.32 po-debconf po4a procps sensible-utils sgml-base sgml-data udev xml-core xsltproc xz-utils && \
+  git clone --recursive -b 9.23.1 https://github.com/LINBIT/drbd-utils && \
+  cd drbd-utils/ && \
+  ./autogen.sh && \
+  ./configure --with-xen --with-distro=debian --with-initscripttype=sysv --with-bashcompletion --with-udev && \
+  make && \
+  make install && \
+  \
+  cd /usr/local/src/ && \
   wget https://openvpn.fox-it.com/repos/source/2.4.12/openvpn-nl-src-2.4.12.tar.gz && \
   tar xzpkf openvpn-nl-src-2.4.12.tar.gz && \
   cd openvpn-nl && \
@@ -1589,10 +1605,102 @@ RUN \
   sync && \
   true
 
+FROM docker://devuan/devuan:daedalus AS kernelbuild5
+COPY --from=kernelbuild /opt/artifact /root/artifact
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 02 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  export V=1 && \
+  (echo deb http://deb.devuan.org/merged daedalus main contrib non-free && echo deb-src http://deb.devuan.org/merged daedalus main contrib non-free) > /etc/apt/sources.list && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  apt-get -y --verbose-versions install apt-transport-https autoconf automake bash bc bear bindgen binutils binutils-common binutils-x86-64-linux-gnu bison build-essential ca-certificates cbindgen clang cmake coccinelle cpio cpp cpp-10 curl dc dpkg-dev dkms ed file flex gcc gcc-10 git git-man gpg-agent iptables kmod less libaio-dev libasan6 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcbor-dev libcc1-0 libclang-dev libcrypt-dev libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libedit2 libelf-dev libeudev-dev libexpat1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgit2-1.5 libgomp1 libhttp-parser2.9 libisl23 libitm1 libldap-common libldap-2.5-0 liblsan0 libmbedcrypto7 libmbedtls14 libmbedx509-1 libmpc3 libmpfr6 libncurses-dev libnghttp2-14 libnsl-dev libomp-dev libpcap-dev libpsl5 libquadmath0 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl-dev libtirpc-dev libtool libtsan0 libubsan1 libudev-dev libvdeplug-dev libz3-4 linux-base linux-libc-dev linux-perf llvm llvm-dev lsb-release make mandoc musl-tools nasm ninja-build openssl perf-tools-unstable pkgconf python3-pip python3-setuptools python3-wheel rsync software-properties-common sudo uuid-dev valgrind vim-common vim-tiny wget xxd zlib1g-dev zstd && \
+  apt-get -y --verbose-versions install autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 ca-certificates cpio cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism distro-info-data docutils-common dpkg-dev dwz eudev file g++ g++-10 gcc gcc-10 gettext gettext-base groff-base html2text initramfs-tools initramfs-tools-core intltool-debian kernel-wedge klibc-utils kmod libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libexpat1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu72 libisl23 libitm1 libjs-jquery libjs-sphinxdoc libjs-underscore libklibc libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libperl5.36 libpipeline1 libpopt0 libpython3-stdlib libpython3.11-minimal libpython3.11-stdlib libquadmath0 libreadline8 libsigsegv2 libsqlite3-0 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 linux-base linux-kbuild-6.1 linux-libc-dev linux-support-6.1.0-6 lsb-release m4 make man-db media-types openssl patch perl perl-modules-5.36 po-debconf procps python-babel-localedata python3 python3-alabaster python3-babel python3-certifi python3-chardet python3-distutils python3-docutils python3-idna python3-imagesize python3-jinja2 python3-lib2to3 python3-markupsafe python3-minimal python3-packaging python3-pkg-resources python3-pygments python3-pyparsing python3-requests python3-roman python3-six python3-snowballstemmer python3-sphinx python3-tz python3-urllib3 python3.11 python3.11-minimal readline-common rsync sbsigntool sensible-utils sgml-base sphinx-common udev xml-core xz-utils && \
+  apt-get -y --verbose-versions install coccinelle wget git-core python3 python3-dev libeudev-dev libxen-dev pkgconf gcc-10 asciidoctor && \
+  dpkg -i /root/artifact/deb/*.deb && \
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 200 && \
+  \
+  cd /usr/local/src && \
+  export KERNEL_VERSION="$(ls -1d /lib/modules/5.10.*-hardened*-5.10 | tail -n 1 | sed 's,/lib/modules/,,')" && \
+  (for line in '#!/bin/bash' 'if echo "$@" |grep -q -- -r >/dev/null' 'then' 'echo "${KERNEL_VERSION}"' 'else' 'exec /bin/uname "$@"' 'fi'; do echo "${line}"; done) > /usr/local/sbin/uname && chmod +x /usr/local/sbin/uname && \
+  git clone --recursive -b drbd-9.1 https://github.com/LINBIT/drbd && \
+  cd drbd/ && \
+  V=1 KVER="${KERNEL_VERSION}" make V=1 && \
+  V=1 KVER="${KERNEL_VERSION}" make V=1 install && \
+  \
+  cd /usr/local/src/ && \
+  mkdir ung && \
+  cd ung && \
+  wget 'https://cdn.electronic.us/products/usb-over-ethernet/linux/download/usb_network_gate_x64-2.deb?_ga=2.180708775.1242351919.1676292214-133569265.1676292213' && \
+  mv usb_network_gate_x64-2.deb* usb_network_gate_x64-2.deb && \
+  ar x usb_network_gate_x64-2.deb && \
+  cat data.tar.xz |xz -dvv|tar -x -p -f - && \
+  mv opt/ElectronicTeam/eveusb ../eveusb && \
+  cd ../eveusb/module && \
+  rm -r ../../ung && \
+  PATH=/usr/local/sbin:"${PATH}" make && \
+  PATH=/usr/local/sbin:"${PATH}" make install && \
+  \
+  cd /usr/local/src/ && \
+  mkdir nx && \
+  cd nx && \
+  wget "https://download.nomachine.com/download/8.4/Linux/nomachine_8.4.2_1_x86_64.tar.gz" && \
+  tar xpkzf nomachine_8.4.2_1_x86_64.tar.gz && \
+  mkdir ../nxr && \
+  cat NX/etc/NX/server/packages/nxrunner.tar.gz  |gunzip -v | tar -C ../nxr -x -p -v -f - && \
+  cd ../nxr/NX/share/src/nxusb && \
+  sed -i -e s,bin/uname,usr/local/sbin/uname, Makefile && \
+  make && \
+  make install && \
+  \
+  cd /usr/local/src/ && \
+  wget http://www.openafs.org/dl/openafs/1.8.9/openafs-1.8.9-src.tar.gz && \
+  tar xzpkf openafs-1.8.9-src.tar.gz && \
+  cd openafs-1.8.9 && \
+  PATH=/usr/local/sbin:"${PATH}" ./configure --enable-supergroups --disable-strip-binaries --enable-debug --disable-optimize --enable-debug-locks --enable-debug-kernel --disable-optimize-kernel --enable-debug-pam --disable-optimize-pam && \
+  (set +e; export PATH=/usr/local/sbin:"${PATH}"; make || true; make -k || true; make -i || true; cp -p $(find . -name \*.ko -type f -print | grep -v libafs-5.10) /lib/modules/"${KERNEL_VERSION}"/extra/) && \
+  \
+  cd /usr/local/src/ && \
+  depmod -a "${KERNEL_VERSION}" && \
+  rm -f -v /boot/*.old && \
+  rm -f -v /lib/modules/*/build && \
+  rm -f -v /lib/modules/*/source && \
+  find /lib/modules/5.*/*/ -type f -name '*.so' -exec strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- \{\} \; && \
+  find /lib/modules/5.*/*/ -type f -name '*.ko' -exec strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- \{\} \; && \
+  IMGFILE="$(cd /root/artifact/deb && ls -1d linux-image-5.10.*-hardened1-5.10_5.10.*-hardened1-5.10-1_amd64.deb | tail -n 1)" && \
+  mkdir ephemeral && \
+  cd ephemeral && \
+  ar x /root/artifact/deb/"${IMGFILE}" && \
+  xz -d -v -v < data.tar.xz |tar -x -p -k -f - && \
+  find usr/share/doc -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
+  cd lib/modules && \
+  for i in 5.*; do rm -r "$i" && mv /lib/modules/"$i" .; done && \
+  cd ../.. && \
+  tar -cf - boot lib etc usr | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > data.tar.xz && \
+  rm -v /root/artifact/deb/"${IMGFILE}" && \
+  ar rcv /root/artifact/deb/"${IMGFILE}" debian-binary control.tar.xz data.tar.xz && \
+  unset IMGFILE && \
+  cd /usr/local/ && \
+  rm -r src/ && \
+  rm -f /boot/* && \
+  mv /root/artifact /opt/artifact && \
+  true
+
 FROM devuan-4 AS devuan-4-local
 COPY --from=devuan-4-builder /opt/artifact /root/artifact
 COPY --from=alpine-builder /usr/local /root/local
-COPY --from=kernelbuild /opt/artifact /root/kernel
+COPY --from=kernelbuild5 /opt/artifact /root/kernel
 COPY --from=ascii-builder /usr/local/bin/pcompress /root/artifact/local/bin/pcompress
 
 RUN \
@@ -1636,7 +1744,7 @@ RUN \
   echo linux-libc-dev hold | dpkg --set-selections && \
   unset STDIMG && \
   cd /root/artifact/deb/ && \
-  packages="$(ls -1trd openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.*_all.deb)" && \
+  packages="$(ls -1d openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.*_all.deb)" && \
   dpkg -i ${packages} && \
   unset packages && \
   find /usr/share/emacs/28.?/ /usr/share/emacs/site-lisp/ -type f -name "*.gz" -exec gunzip -N -v -f -- \{\} \; && \
@@ -2189,7 +2297,7 @@ FROM docker://devuan/devuan:chimaera AS devuan-4-hardenedmalloc
 COPY --from=devuan-4-kicksecure /usr/lib/libhardened_malloc.so/ /usr/lib/libhardened_malloc.so/
 COPY --from=devuan-4-kicksecure /root/dpkg-l /root/dpkg-l-kicksecure
 COPY --from=devuan-4-local / /root/initrd/
-COPY --from=kernelbuild /opt/artifact /root/kernel
+COPY --from=kernelbuild5 /opt/artifact /root/kernel
 COPY Scripts/05entropy /root/
 COPY --from=devuan-archive-pool /opt/artifact/archives.gtar.gz /root/archives-devuan.gtar.gz
 COPY --from=devuan-archive-pool /opt/artifact/extended.gtar.gz /root/extended-devuan.gtar.gz
@@ -2238,9 +2346,9 @@ RUN \
   update-initramfs -v -c -k "${kver_debian}" && \
   unmkinitramfs /boot/initrd.img-"${kver_debian}" /root/initramfs && \
   rm -v /boot/initrd.img-"${kver_debian}" && \
+  if test -d /root/initramfs/early2; then cd /root/initramfs/early2 && find kernel -print0 |sort -z |cpio -0 -H newc --renumber-inodes -o > /root/initramfs-microcode.cpio; fi && \
   cd /root/initramfs/early && \
-  find kernel -print0 |sort -z |cpio -0 -H newc --renumber-inodes -o > /root/initramfs-microcode.cpio && \
-  if test -d /root/initramfs/early2; then cd /root/initramfs/early2 && find kernel -print0 |sort -z |cpio -0 -H newc --renumber-inodes -o >> /root/initramfs-microcode.cpio; fi && \
+  find kernel -print0 |sort -z |cpio -0 -H newc --renumber-inodes -o >> /root/initramfs-microcode.cpio && \
   cd /root/initramfs/main && \
   tar -c -v -v -f - init conf scripts etc > /root/initramfs-extra.gtar && \
   cd /root && \
@@ -2642,7 +2750,7 @@ RUN \
   echo 'mv -v /boot/memtest86+.bin /boot/memtest86+' >> init && \
   echo 'cp -p -v /boot/memtest* /mnt/EFI/syslinux/' >> init && \
   echo 'sync' >> init && \
-  echo 'cd /mnt/EFI/syslinux' >> init && \
+ echo 'cd /tmp' >> init && \
   echo 'for i in "SERIAL 0 115200" "NOHALT 1" "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux serial" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
@@ -2656,14 +2764,14 @@ RUN \
   echo 'echo "LABEL linux-0" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux serial" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz"' >> init && \
-  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
   echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft intel_iommu=on amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug --" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL linux-1" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux display" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz"' >> init && \
-  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
   echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug --" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL Memtest86" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Memtest86" >> syslinux.cfg' >> init && \
@@ -2673,7 +2781,33 @@ RUN \
   echo 'echo "  MENU LABEL Memtest86+" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /syslinux/memtest86+" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Hardware detection" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Hardware detection" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 hdt.c32" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Memory information" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Memory information" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 meminfo.c32" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Read-only shell" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Read-only shell" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 rosh.c32" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Reboot" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Reboot" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 reboot.c32" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Power off" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Power off" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 poweroff.c32" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
+ echo 'cat /tmp/syslinux.cfg | tee -a /mnt/EFI/syslinux/syslinux.cfg' >> init && \
+ echo 'mkdir -p -v /mnt/EFI/EFI/BOOT' >> init && \
+ echo 'cp -p -v /mnt/EFI/syslinux/syslinux.cfg /mnt/EFI/EFI/BOOT/syslinux.cfg' >> init && \
+ echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi64/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTx64.EFI' >> init && \
+ echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi32/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTia32.EFI' >> init && \
+ echo 'cp -p -v /usr/lib/syslinux/modules/efi64/* /mnt/EFI/EFI/BOOT/' >> init && \
   echo 'cat syslinux.cfg' >> init && \
   echo 'sync' >> init && \
   echo 'cd /root' >> init && \
