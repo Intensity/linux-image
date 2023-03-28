@@ -476,6 +476,7 @@ RUN \
     libubsan1 \
     libxml2 \
     libzstd1 \
+    liquidprompt \
     lockfile-progs \
     lrzip \
     lsh-client \
@@ -618,8 +619,12 @@ RUN \
     zip \
     zlib1g \
     zoxide \
+    zgen \
     zpaq \
+    zplug \
+    zsh-antigen \
     zsh-autosuggestions \
+    zsh-doc \
     zsh-static \
     zsh-syntax-highlighting \
     zstd \
@@ -817,7 +822,7 @@ RUN \
   mkdir -v /usr/local/etc/boot.d && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "rm -v /init") >> /usr/local/etc/boot.d/00rminit && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "mount -o remount,nodev,nosuid,sync,noatime,nodiratime,dirsync,loud,nouser /") >> /usr/local/etc/boot.d/01remountroot && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in cdebootstrap dar fstype ipconfig minips nfsmount; do ln /stand/"${i}" /usr/local/bin/"${i}"; done; ln /stand/ul_* /usr/local/bin/') >> /usr/local/etc/boot.d/02standlink && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in cdebootstrap fstype ipconfig nfsmount; do ln -v /stand/"${i}" /usr/local/sbin/"${i}"; done; ln -v /stand/minips /usr/local/bin; ln -v /stand/dar /usr/local/bin; ln -v /stand/ul_* /usr/local/sbin/') >> /usr/local/etc/boot.d/02standlink && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "ldconfig") >> /usr/local/etc/boot.d/02ldconfig && \
   (echo '#!/bin/bash-static'; echo "set +e"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; exit 0') >> /usr/local/sbin/init-naive-networking && \
   chmod --verbose 0755 /usr/local/sbin/init-naive-networking && \
@@ -1774,6 +1779,10 @@ RUN \
   rm -v -f /var/lib/dpkg/status-old && \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type l -ls -delete && \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
+  umask 077 && \
+  (echo; echo /usr/bin/uptime; echo echo '$(/bin/date) $HOST $SHLVL $PPID $$ $DISPLAY $PPID $$ $USERNAME $TERM $TTY $COLUMNS $LINES') >> /root/.zlogin && \
+  (echo; echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand') >> /root/.zshrc && \
+  (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'PROMPT="%(1j.<%j> .)%2m%(2L. %L.)%(#.. %n) %(1e.+%e .)%l %4~ [%h]"'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
   cd /root && \
   rm -r .local/ .cache && \
   chown -R root:root /usr/local/etc/cni /usr/local/etc/containers /usr/local/share/man /usr/local/share/doc /usr/local/bin /usr/local/lib && \
@@ -2594,6 +2603,8 @@ RUN \
   ulimit -d unlimited && ulimit -v unlimited && \
   mkdir -p -v /root/drive/mnt/CACHE/overlay /root/drive/mnt/CACHE/lists /root/drive/mnt/EFI/linux /root/drive/root/ && \
   mv -v /root/initramfs-microcode.cpio /root/drive/root/ && \
+  (cd /root/drive/root/ && wget https://downloads.sourceforge.net/project/supergrub2/2.06s2-beta1/super_grub2_disk_2.06s2-beta1/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso) && \
+  (cd /root/drive/root/ && wget https://mfsbsd.vx.sk/files/images/13/amd64/mfsbsd-mini-13.1-RELEASE-amd64.img) && \
   tar -C /root/overlay -cf - usr var lib > /root/drive/mnt/CACHE/overlay/overlay.gtar && \
   mkdir -v -p /root/overlay/usr/local/etc/initramfs-stock.d && \
   cat /root/initramfs-extra.gtar |tar -C /root/overlay/usr/local/etc/initramfs-stock.d -x -p -v -v -f - && \
@@ -2730,10 +2741,13 @@ RUN \
   echo 'rm -r -f dev/disk/' >> init && \
   echo 'umount -v /mnt/dev' >> init && \
   echo 'find . -print0 | sort -z | cpio -0 -H newc --renumber-inodes -o | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > ../initrd.img-post' >> init && \
+  echo 'mkdir -v -p /mnt/STAGING/mnt/EFI/FreeBSD/ /mnt/STAGING/mnt/EFI/syslinux/' >> init && \
+  echo 'mv -v /mnt/STAGING/root/mfsbsd-mini-13.1-RELEASE-amd64.img /mnt/STAGING/mnt/EFI/FreeBSD/' >> init && \
+  echo 'mv -v /mnt/STAGING/root/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso /mnt/STAGING/mnt/EFI/syslinux/' >> init && \
   echo 'cat /mnt/STAGING/root/initramfs-microcode.cpio ../initrd.img-post > ../initrd.img' >> init && \
   echo 'rm -v /mnt/STAGING/root/initramfs-microcode.cpio ../initrd.img-post' >> init && \
-  echo 'rm -r -f -v /mnt/STAGING/root' >> init && \
   echo 'cd ..' >> init && \
+  echo 'rm -r -f -v /mnt/STAGING/root' >> init && \
   echo 'rm -r dir' >> init && \
   echo 'cd /root' >> init && \
   echo 'tar -C /mnt/STAGING/ -c -f - . | tar -C / -x -p -v -v --warning=no-timestamp -f -' >> init && \
@@ -2750,28 +2764,39 @@ RUN \
   echo 'mv -v /boot/memtest86+.bin /boot/memtest86+' >> init && \
   echo 'cp -p -v /boot/memtest* /mnt/EFI/syslinux/' >> init && \
   echo 'sync' >> init && \
- echo 'cd /tmp' >> init && \
+  echo 'cd /tmp' >> init && \
   echo 'for i in "SERIAL 0 115200" "NOHALT 1" "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux serial" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=ttyS0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft intel_iommu=on amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=ttyS0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft intel_iommu=on amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug  apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none   kpti=on nopcid usbcore.nousb  -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL xen-linux-1" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux display" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug  apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none   kpti=on nopcid  -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL linux-0" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux serial" >> syslinux.cfg' >> init && \
-  echo 'echo "  LINUX /linux/vmlinuz"' >> init && \
-  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft intel_iommu=on amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug --" >> syslinux.cfg' >> init && \
-  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
+  echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft intel_iommu=on amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug  apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none   kpti=on nopcid usbcore.nousb  --" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL linux-1" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux display" >> syslinux.cfg' >> init && \
-  echo 'echo "  LINUX /linux/vmlinuz"' >> init && \
-  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug --" >> syslinux.cfg' >> init && \
-  echo 'echo "  INITRD /linux/initrd.img"' >> init && \
+  echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off  iommu=soft amd_iommu=off  waitusb=3 rng_core.default_quality=256 concurrency=none debug  apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none   kpti=on nopcid  --" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL SuperGrubDisk" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL SuperGrubDisk" >> syslinux.cfg' >> init && \
+  echo 'echo "  LINUX /syslinux/memdisk" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /syslinux/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND iso" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL FreeBSD mfsbsd" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL FreeBSD mfsbsd" >> syslinux.cfg' >> init && \
+  echo 'echo "  LINUX /syslinux/memdisk" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /FreeBSD/mfsbsd-mini-13.1-RELEASE-amd64.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL Memtest86" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Memtest86" >> syslinux.cfg' >> init && \
@@ -2802,12 +2827,13 @@ RUN \
   echo 'echo "  COM32 poweroff.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "MENU SEPARATOR" >> syslinux.cfg' >> init && \
- echo 'cat /tmp/syslinux.cfg | tee -a /mnt/EFI/syslinux/syslinux.cfg' >> init && \
- echo 'mkdir -p -v /mnt/EFI/EFI/BOOT' >> init && \
- echo 'cp -p -v /mnt/EFI/syslinux/syslinux.cfg /mnt/EFI/EFI/BOOT/syslinux.cfg' >> init && \
- echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi64/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTx64.EFI' >> init && \
- echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi32/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTia32.EFI' >> init && \
- echo 'cp -p -v /usr/lib/syslinux/modules/efi64/* /mnt/EFI/EFI/BOOT/' >> init && \
+  echo 'cat /tmp/syslinux.cfg | tee -a /mnt/EFI/syslinux/syslinux.cfg' >> init && \
+  echo 'mkdir -p -v /mnt/EFI/EFI/BOOT' >> init && \
+  echo 'cp -p -v /mnt/EFI/syslinux/syslinux.cfg /mnt/EFI/EFI/BOOT/syslinux.cfg' >> init && \
+  echo 'cp -p -v /usr/lib/syslinux/memdisk /mnt/EFI/syslinux/memdisk' >> init && \
+  echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi64/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTx64.EFI' >> init && \
+  echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi32/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTia32.EFI' >> init && \
+  echo 'cp -p -v /usr/lib/syslinux/modules/efi64/* /mnt/EFI/EFI/BOOT/' >> init && \
   echo 'cat syslinux.cfg' >> init && \
   echo 'sync' >> init && \
   echo 'cd /root' >> init && \
