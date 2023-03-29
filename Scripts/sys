@@ -220,7 +220,7 @@ function sys_storage_block_part_mkfs() {
   then
     fs=fat
   elif echo "$@" |grep -iq xfs >/dev/null 2>/dev/null
-  then 
+  then
     fs=xfs
   fi
 
@@ -387,7 +387,7 @@ function sys_storage_block_disk_recency() {
     rmdir "${dir}" || return $?
   done
 
-  echo $0: Ordered times for name ${name}: ${times[@]} 1>&2
+  echo $0: Timestamps for name ${name}: ${times[@]} 1>&2
   echo ${times[@]} | tr ' ' '\n'| sort -nr | cut -f2 -d:
 }
 
@@ -397,46 +397,53 @@ function sys_storage_block_disk_sync() {
   for name in EFI CACHE CONF IDEN
   do
     ordered=($(sys storage block disk recency "${name}"))
+    reversed=($(sys storage block disk recency "${name}" | tr ' ' '\n'|tac | tr '\n' ' '))
     echo $0: Sync name ${name} using ordered chain: ${ordered[@]} 1>&2
 
-    while test ${#ordered[@]} -ge 2
+    for direction in fwd rev
     do
-      origin="${ordered[0]}"
-      odir=/mnt/"${name}"-"$(echo $name $origin |sha256sum |awk '{print $1}' | head -c 12)"
-      mkdir "${odir}"
-      if echo "${name}" |grep -iq "^EFI"
-      then
-        mount -v -t vfat -o ro "${origin}" "${odir}" 1>&2 || return $?
-      else
-        mount -v -t ext4 -o ro,debug "${origin}" "${odir}" 1>&2 || return $?
-      fi
 
-      for rest in "${ordered[@]:1}"
+      while test ${#ordered[@]} -ge 2
       do
-        rdir=/mnt/"${name}"-"$(echo $name $rest |sha256sum |awk '{print $1}' | head -c 12)"
-        mkdir "${rdir}"
+        origin="${ordered[0]}"
+        odir=/mnt/"${name}"-"$(echo $name $origin |sha256sum |awk '{print $1}' | head -c 12)"
+        mkdir "${odir}"
         if echo "${name}" |grep -iq "^EFI"
         then
-          mount -v -t vfat "${rest}" "${rdir}" 1>&2 || return $?
+          mount -v -t vfat -o ro "${origin}" "${odir}" 1>&2 || return $?
         else
-          mount -v -t ext4 -o debug "${rest}" "${rdir}" 1>&2 || return $?
+          mount -v -t ext4 -o ro,debug "${origin}" "${odir}" 1>&2 || return $?
         fi
 
-        if echo "${name}" | grep -qi "^IDEN"
-        then
-          tar -C "${odir}"/ -c -f - . |tar -C "${rdir}"/ -x -p -k -f - || true
-        else
-          rsync --archive --verbose --inplace --update --whole-file --one-file-system --numeric-ids --stats --itemize-changes "${odir}"/ "${rdir}"/ || echo $0: Warning: rsync status $? for origin "${origin}" destination "${rest}" 1>&2
-        fi
+        for rest in "${ordered[@]:1}"
+        do
+          rdir=/mnt/"${name}"-"$(echo $name $rest |sha256sum |awk '{print $1}' | head -c 12)"
+          mkdir "${rdir}"
+          if echo "${name}" |grep -iq "^EFI"
+          then
+            mount -v -t vfat "${rest}" "${rdir}" 1>&2 || return $?
+          else
+            mount -v -t ext4 -o debug "${rest}" "${rdir}" 1>&2 || return $?
+          fi
 
-        umount -v "${rdir}" 1>&2
-        rmdir "${rdir}"
+          if echo "${name}" | grep -qi "^IDEN"
+          then
+            tar -C "${odir}"/ -c -f - . |tar -C "${rdir}"/ -x -p -k -f - || true
+          else
+            rsync --archive --exclude='ldlinux.*' --verbose --inplace --update --whole-file --one-file-system --numeric-ids --stats --itemize-changes "${odir}"/ "${rdir}"/ || echo $0: Warning: rsync status $? for origin "${origin}" destination "${rest}" 1>&2
+          fi
+
+          umount -v "${rdir}" 1>&2
+          rmdir "${rdir}"
+        done
+
+        umount -v "${odir}" 1>&2
+        rmdir "${odir}"
+
+        ordered=("${ordered[@]:1}")
       done
 
-      umount -v "${odir}" 1>&2
-      rmdir "${odir}"
-
-      ordered=("${ordered[@]:1}")
+    ordered=(${reversed[@]})
     done
   done
 
@@ -495,7 +502,7 @@ function sys_directive_complete() {
 }
 
 function sys_platform_bootstrap_packages() {
-  echo age amd64-microcode ca-certificates coreutils cpio curl dc dosfstools e2fsprogs efibootmgr eudev findutils gawk gdisk initramfs-tools-core intel-microcode jq lsb-release mount qemu-system-x86 qemu-user-static qemu-utils rsync sed syslinux syslinux-common syslinux-efi syslinux-utils sysvinit-core tar util-linux wget xz-utils zstd 
+  echo age amd64-microcode ca-certificates coreutils cpio curl dc dosfstools e2fsprogs efibootmgr eudev findutils gawk gdisk initramfs-tools-core intel-microcode jq lsb-release mount qemu-system-x86 qemu-user-static qemu-utils rsync sed syslinux syslinux-common syslinux-efi syslinux-utils sysvinit-core tar util-linux wget xz-utils zstd
 }
 
 function sys_platform() {
