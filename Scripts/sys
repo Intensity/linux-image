@@ -1,0 +1,598 @@
+#!/bin/bash
+
+umask 077
+ulimit -d unlimited
+ulimit -v unlimited
+hash -r
+#set -x
+
+declare -A CMD_HIERARCHY=(
+  ["sys"]="storage network"
+  ["sys_storage"]="zfs"
+  ["sys_storage_zfs"]="pool"
+  ["sys_storage_zfs_pool"]="create destroy"
+  ["sys_network"]="configure status"
+)
+
+function sys() {
+  local cmd args
+  local longest_prefix="sys"
+  local current_prefix="sys"
+
+  for cmd in "${@}"; do
+    local func="${current_prefix}_${cmd}"
+    if declare -f "${func}" >/dev/null; then
+      current_prefix="${func}"
+      longest_prefix="${func}"
+      args=("${cmd}" "${args[@]}")
+    else
+      break
+    fi
+  done
+
+  if echo "${@:${#args[@]}+1}" | sed 's,.* ,,'|grep -q help
+  then
+    if test "${longest_prefix}" '==' sys
+    then
+      true
+    else
+      "${longest_prefix}" "${@:${#args[@]}+1}"
+    fi
+
+    local subcommands="${CMD_HIERARCHY[${longest_prefix}]}"
+    local dynamically="$(declare -F |sed 's,^declare -f ,,' | grep "^${longest_prefix}_" | sed "s,^${longest_prefix}_,,"|sed 's,_.*,,'|sort|uniq|tr '\n' ' ')"
+    local extra=""
+    if test "$( echo ${subcommands} | tr ' ' '\n'|sort|uniq|tr '\n' ' ')" '==' "$( echo ${dynamically} | tr ' ' '\n'|sort|uniq|tr '\n' ' ')"
+    then
+      true
+    else
+      extra=" [$(comm -13 <(echo ${subcommands} |  tr ' ' '\n'|sort|uniq) <(echo ${dynamically} |  tr ' ' '\n'|sort|uniq) | tr -d '\t' | tr ' ' '\n'|sort | uniq|tr '\n' ' ' | sed 's, *$,,')]"
+    fi
+
+    echo "Available sub-commands for ${longest_prefix} are: ${subcommands}${extra}" 1>&2
+  elif echo "${@:${#args[@]}+1}" | sed 's,.* ,,'|grep -q completion; then
+    local additional_completions
+    if test "${longest_prefix}" '==' sys
+    then
+      additional_completions=""
+    else
+      additional_completions=$("${longest_prefix}" "${args[0]}" "${@:${#args[@]}+1}")
+    fi
+
+    compgen -W "${CMD_HIERARCHY[${longest_prefix}]} ${additional_completions}" -- "${args[1]}"
+  else
+    if test "${longest_prefix}" '==' sys
+    then
+      true
+    else
+      "${longest_prefix}" "${@:${#args[@]}+1}"
+    fi
+  fi
+}
+
+function sys_storage_block_disk_partitioning() {
+  disk="$1"
+  shift
+  if echo "$@" |grep -qi zfs
+  then
+    MAIN=ZFS
+  else
+    MAIN=DATA
+  fi
+
+  size=$(echo $(lsblk -n -d -b -o SIZE "${disk}") 1024/ 1024/ 1024/ 2- 5- 4- 3- p |dc)
+
+  for i in \
+    n 1 "" +768m EF00 \
+    n 2 "" +32m EF02 \
+    n 3 "" +32m 8301 \
+    n 4 "" +32m 8301 \
+    n 5 "" +32m 8301 \
+    n 6 "" +5g 8301 \
+    n 7 "" +4g 8301 \
+    n 8 "" +3g 8301 \
+    n 9 "" +"${size}"g 8309 \
+    c 1 EFI \
+    c 2 BIOSGRUB \
+    c 3 IDEN \
+    c 4 CONF \
+    c 5 ENTROPY \
+    c 6 CACHE \
+    c 7 VOLATILE \
+    c 8 LOG \
+    c 9 "${MAIN}" \
+    x a 1 2 "" \
+    p w y
+      do
+        echo "$i"
+      done
+}
+
+
+function sys_storage_block() {
+  true
+}
+
+function sys_storage_block_list() {
+  lsblk -n -l -p
+}
+
+function sys_storage_block_disk_list() {
+  set -o pipefail
+  lsblk -n -l -p -d | awk '{print $1}'
+}
+
+function sys_storage_block_part_list() {
+  device="$1"
+  if test -z "${device}"
+  then
+    echo $0: Device not provided 1>&2
+    return 2
+  fi
+
+  if ! test -e "${device}"
+  then
+    echo $0: Device entry "${device}" not present 1>&2
+    return 1
+  fi
+
+  set -o pipefail
+  lsblk -n -l -p "${device}" |grep -v "^${device} .* disk" |grep " part" | awk '{print $1}'
+}
+
+function sys_storage_block_part() {
+  true
+}
+
+function sys_storage_block_disk() {
+  true
+}
+
+function sys_storage_block_disk_match() {
+  local matches=()
+
+  for disk in $(sys storage block disk list)
+  do
+    if dd if="${disk}" of=/dev/null bs=65536 count=1 2>/dev/null && test $(head -c 65536 < "${disk}" | tr -d '\0' |wc -c) -eq 0
+    then
+      if test $( expr $(lsblk -n -d -b -o SIZE "${disk}") / 1048576) -ge 62464
+      then
+        matches+=("${disk}")
+      fi
+    fi
+  done
+
+  if test $(echo ${matches[@]} | tr -d '\n ' | wc -c) -eq 0
+  then
+    echo $0: No disk match 1>&2
+    return 1
+  fi
+
+  echo -n ${matches[@]}
+}
+
+function sys_storage_block_part_match() {
+  MATCH="$1"
+  shift
+  if test -z "${MATCH}"
+  then
+    echo $0: Prefix to match against not provided 1>&2
+    return 2
+  fi
+
+  if test $(echo "$@" | tr -d '\t\n ' |wc -c) -eq 0
+  then
+    disks="$(sys storage block disk list)"
+  else
+    disks="$@"
+  fi
+
+  local matches=()
+  for disk in ${disks}
+  do
+    for part in $(sys storage block part list "${disk}")
+    do
+      if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q '^'"${MATCH}"
+      then
+        matches+=("${part}")
+      fi
+    done
+  done
+
+  if test $(echo ${matches[@]} | tr -d '\n ' | wc -c) -eq 0
+  then
+    echo $0: No partition match for "${MATCH}" 1>&2
+    return 2
+  fi
+
+  unset MATCH
+  echo -n ${matches[@]}
+}
+
+function sys_storage_block_part_mkfs() {
+  local part="$1"
+  shift
+  local name="$1"
+  shift
+  local fs=ext4
+
+  if echo "$@" |grep -iq fat >/dev/null 2>/dev/null
+  then
+    fs=fat
+  elif echo "$@" |grep -iq xfs >/dev/null 2>/dev/null
+  then 
+    fs=xfs
+  fi
+
+  if test -z "${name}"
+  then
+    echo $0: No name designator given for partition "${part}" 1>&2
+    return 2
+  fi
+
+  if ! test -b "${part}"
+  then
+    echo $0: Block partition "${part}" is not known to be a block device 1>&2
+    return 1
+  fi
+
+  if ! blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q '^'"${name}"
+  then
+    echo $0: Block partition "${part}" does not match name "${name}" 1>&2
+    return 1
+  fi
+
+  local dir=""
+  if test -e /mnt/"${name}"
+  then
+    dir=/mnt/"${name}"-"${RANDOM}"-"${RANDOM}"-"${PPID}"-"$$"
+  else
+    dir=/mnt/"${name}"
+  fi
+
+  echo $0: Prepare to mkfs type ${fs} for name ${name} on partition ${part} 1>&2
+  mkdir "${dir}"
+  if test "${fs}" '==' ext4
+  then
+    mkfs.ext4 -e continue -j -L "${name}" -m 8 -M /mnt/"${name}" -v "${part}" </dev/null || return $?
+    mount -v -t ext4 "${part}" "${dir}" 1>&2 || return $?
+  elif test "${fs}" == fat
+  then
+    mkfs.fat -F 32 -n "${name}" --invariant -v "${part}" </dev/null || return $?
+    mount -v -t vfat "${part}" "${dir}" 1>&2 || return $?
+    mkdir "${dir}"/syslinux || return $?
+  elif test "${fs}" == xfs
+  then
+    echo $0: Unimplemented 1>&2
+    return 1
+  fi
+
+  mkdir "${dir}"/"${name}" || return $?
+
+  if echo "${name}" |grep -qi "^LOG" >/dev/null 2>/dev/null
+  then
+    chmod --verbose 3775 "${dir}"/"${name}"
+    chattr -V +a "${dir}"/"${name}"
+    chattr -V +a "${dir}"
+  fi
+
+  umount -v "${dir}" 1>&2 || return $?
+  rmdir "${dir}" || return $?
+  sync
+  unset dir
+  unset fs
+  unset name
+  unset part
+
+  return 0
+}
+
+function sys_storage_block_disk_mkfs() {
+  local disk="$1"
+  shift
+  local name="$1"
+  shift
+
+  parts="$(sys storage block part match "${name}" "${disk}")"
+
+  echo $0: Set to perform mkfs on partitions \"${parts}\" matching name ${name} on disk ${disk} 1>&2
+  RET=0
+  for part in ${parts}
+  do
+    sys storage block part mkfs "${part}" "${name}" "$@" || RET="$?"
+  done
+
+  return "${RET}"
+}
+
+function sys_storage_block_disk_syslinux() {
+  local disk="$1"
+  shift
+
+  part="$(sys storage block part match EFI "${disk}")"
+  echo $0: Syslinux install on partition ${part} disk ${disk} 1>&2
+  syslinux --install --stupid --raid --directory /syslinux "${part}" || return $?
+  echo $0: Syslinux copy to boot sector on disk ${disk} 1>&2
+  dd if=/usr/lib/syslinux/mbr/gptmbr.bin of="${disk}" bs=440 count=1 conv=notrunc || return $?
+
+  sys storage block disk refresh
+}
+
+function sys_storage_block_disk_refresh() {
+  for opt in "-s" "-d" ""; do partprobe ${opt} 2>/dev/null; sleep 1; sync; done
+  udevadm settle
+  udevadm trigger
+  sync
+  sleep 1
+}
+
+function sys_storage_block_disk_partition() {
+  disk="$1"
+  shift
+  if echo "$@" |grep -qi zfs
+  then
+    MAIN=ZFS
+  else
+    MAIN=DATA
+  fi
+
+  if test $(head -c 65536 < "${disk}" | tr -d '\0' |wc -c) -ne 0 || test $( expr $(lsblk -n -d -b -o SIZE "${disk}") / 1048576) -lt 62464
+  then
+    echo $0: Disk ${disk} is not a candidate for partitioning 1>&2
+    return 1
+  fi
+
+  echo $0: Disk ${disk} is considered a valid candidate. Will repartition 1>&2
+  sleep 3
+  sync
+  echo $0: Disk ${disk}: clearing partition tables 1>&2
+  sgdisk --zap-all "${disk}" || return $?
+  dd if=/dev/zero of="${disk}" bs=65536 count=1 2>/dev/null || return $?
+  sgdisk --zap-all "${disk}" || return $?
+  sys storage block disk refresh
+
+  echo $0: Disk ${disk}: partition ${MAIN} 1>&2
+  sys storage block disk partitioning "${disk}" ${MAIN} |gdisk "${disk}" || return $?
+  sys storage block disk refresh
+
+  for name in "EFI fat" IDEN CONF CACHE LOG
+  do
+    echo $0: mkfs on disk ${disk} name ${name} 1>&2
+    sys storage block disk mkfs "${disk}" ${name} || return $?
+  done
+}
+
+function sys_storage_block_disk_recency() {
+  name="$1"
+  shift
+  local times=()
+
+  for part in $(sys storage block part match "${name}")
+  do
+    dir=/mnt/"${name}"-"${RANDOM}"-"${RANDOM}"-"${PPID}"-"$$"
+    mkdir "${dir}" || return $?
+    if echo "${name}" |grep -qi "^EFI"
+    then
+      mount -v -t vfat -o ro "${part}" "${dir}" 1>&2 || return $?
+    else
+      mount -v -t ext4 -o debug,ro "${part}" "${dir}" 1>&2 || return $?
+    fi
+    if test $(cd "${dir}"/ && find . -type f -print |wc -l) -eq 0
+    then
+      times+=(0:"${part}")
+    else
+      times+=($(cd "${dir}"/ && find . -type f -exec stat -c "%Y %n" -- \{\} \; | sort -n | tail -n 1 | awk '{print $1}'):"${part}")
+    fi
+    umount -v "${dir}" 1>&2 || return $?
+    rmdir "${dir}" || return $?
+  done
+
+  echo $0: Ordered times for name ${name}: ${times[@]} 1>&2
+  echo ${times[@]} | tr ' ' '\n'| sort -nr | cut -f2 -d:
+}
+
+function sys_storage_block_disk_sync() {
+  local ordered=()
+
+  for name in EFI CACHE CONF IDEN
+  do
+    ordered=($(sys storage block disk recency "${name}"))
+    echo $0: Sync name ${name} using ordered chain: ${ordered[@]} 1>&2
+
+    while test ${#ordered[@]} -ge 2
+    do
+      origin="${ordered[0]}"
+      odir=/mnt/"${name}"-"$(echo $name $origin |sha256sum |awk '{print $1}' | head -c 12)"
+      mkdir "${odir}"
+      if echo "${name}" |grep -iq "^EFI"
+      then
+        mount -v -t vfat -o ro "${origin}" "${odir}" 1>&2 || return $?
+      else
+        mount -v -t ext4 -o ro,debug "${origin}" "${odir}" 1>&2 || return $?
+      fi
+
+      for rest in "${ordered[@]:1}"
+      do
+        rdir=/mnt/"${name}"-"$(echo $name $rest |sha256sum |awk '{print $1}' | head -c 12)"
+        mkdir "${rdir}"
+        if echo "${name}" |grep -iq "^EFI"
+        then
+          mount -v -t vfat "${rest}" "${rdir}" 1>&2 || return $?
+        else
+          mount -v -t ext4 -o debug "${rest}" "${rdir}" 1>&2 || return $?
+        fi
+
+        if echo "${name}" | grep -qi "^IDEN"
+        then
+          tar -C "${odir}"/ -c -f - . |tar -C "${rdir}"/ -x -p -k -f - || true
+        else
+          rsync --archive --verbose --inplace --update --whole-file --one-file-system --numeric-ids --stats --itemize-changes "${odir}"/ "${rdir}"/ || echo $0: Warning: rsync status $? for origin "${origin}" destination "${rest}" 1>&2
+        fi
+
+        umount -v "${rdir}" 1>&2
+        rmdir "${rdir}"
+      done
+
+      umount -v "${odir}" 1>&2
+      rmdir "${odir}"
+
+      ordered=("${ordered[@]:1}")
+    done
+  done
+
+  sync
+}
+
+function sys_directive_install() {
+  if test $(sys storage block part match ZFS 2>/dev/null | tr ' ' '\n'|grep . |sort |uniq|wc -l) -ne 0
+  then
+    MAIN=ZFS
+  else
+    MAIN=DATA
+  fi
+
+  echo $0: Considering candidates for installation 1>&2
+  disks="$(sys storage block disk match)"
+  if test $(echo ${disks} | tr -d '\n \t' |wc -c) -ne 0
+  then
+    echo $0: Candidate list: ${disks} 1>&2
+  fi
+
+  for disk in ${disks}
+  do
+    echo $0: Partition disk ${disk} - ${MAIN} 1>&2
+    sys storage block disk partition "${disk}" ${MAIN} || return $?
+    sys storage block disk syslinux "${disk}" || return $?
+  done
+
+  echo $0: Synchronise state 1>&2
+  sys storage block disk sync
+  echo $0: Synchronise state complete 1>&2
+}
+
+function sys_directive() {
+  true
+}
+
+function sys_directive_complete() {
+  cd /
+
+  sync
+  echo System shutting down now. Interrupt to abort 1>&2
+  stty intr '^C' quit '^\' || true
+  sleep 5
+  echo System shutting down now. Interrupt to abort |wall || true
+  sleep 5
+  for i in /mnt/*; do mount -o remount,ro "$i" >/dev/null 2>/dev/null || true; sync; done
+  for i in /mnt/*; do umount -v "$i" >/dev/null 2>/dev/null || true; sync; done
+  for i in /mnt/*; do umount -l -v "$i" >/dev/null 2>/dev/null || true; sync; done
+  mount -o remount,ro / >/dev/null 2>/dev/null || true
+  ((sleep 96 && shutdown -h now) &)
+
+  for i in s s u s o o; do echo $i > /proc/sysrq-trigger; sleep 3; sync; done
+
+  exec halt
+}
+
+function sys_platform_bootstrap_packages() {
+  echo age amd64-microcode ca-certificates coreutils cpio curl dc dosfstools e2fsprogs efibootmgr eudev findutils gawk gdisk initramfs-tools-core intel-microcode jq lsb-release mount qemu-system-x86 qemu-user-static qemu-utils rsync sed syslinux syslinux-common syslinux-efi syslinux-utils sysvinit-core tar util-linux wget xz-utils zstd 
+}
+
+function sys_platform() {
+  true
+}
+
+function sys_platform_bootstrap() {
+  true
+}
+
+function sys_platform_bootstrap_depend() {
+  apt-get -y update || return $?
+  apt-get -y install --verbose-versions $(sys platform bootstrap packages) || return $?
+}
+
+function sys_platform_bootstrap_validate() {
+  if dpkg -s $(sys platform bootstrap packages) >/dev/null 2>/dev/null
+  then
+    echo $0: Conforming platform 1>&2
+    return 0
+  else
+    RET=$?
+    echo $0: Platform may be missing packages. Suggest running: sys platform bootstrap depend 1>&2
+    return "${RET}"
+  fi
+}
+
+function sys_storage_zfs_pool_create() {
+  return 0
+}
+
+function sys_storage_zfs_pool_destroy() {
+  return 0
+}
+
+function sys_network_configure() {
+  return 0
+}
+
+function sys_network_status() {
+  return 0
+}
+
+function sys_storage_zfs() {
+  local cmd="$1"
+  case "$cmd" in
+    help)
+      echo "example additional help" 1>&2
+      ;;
+    completion)
+      echo ""
+      ;;
+    *)
+      true
+      ;;
+  esac
+}
+
+function sys_storage_zfs_pool() {
+  local cmd="$1"
+  case "$cmd" in
+    completion)
+      echo ""
+      ;;
+    *)
+      true
+      ;;
+  esac
+}
+
+function sys_storage() {
+  local cmd="$1"
+  case "$cmd" in
+    completion)
+      echo ""
+      ;;
+    *)
+      true
+      ;;
+  esac
+}
+
+function sys_network() {
+  local cmd="$1"
+  case "$cmd" in
+    completion)
+      echo ""
+      ;;
+    *)
+      true
+      ;;
+  esac
+}
+
+if test "${#@}" -eq 0
+then
+  sys help
+else
+  sys "$@"
+fi
