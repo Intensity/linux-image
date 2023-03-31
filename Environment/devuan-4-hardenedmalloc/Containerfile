@@ -371,6 +371,7 @@ RUN \
     exa \
     exfat-fuse \
     exfat-utils \
+    expect \
     ext3grep \
     ext4magic \
     extlinux \
@@ -510,6 +511,7 @@ RUN \
     mdadm \
     mergerfs \
     metastore \
+    mokutil \
     moreutils \
     net-tools \
     netbase \
@@ -521,6 +523,7 @@ RUN \
     ntpstat \
     nvme-cli \
     nwipe \
+    openntpd \
     openssl \
     ovmf \
     par2 \
@@ -622,6 +625,7 @@ RUN \
     xorriso \
     xxhash \
     xz-utils \
+    yash \
     zip \
     zlib1g \
     zoxide \
@@ -781,7 +785,7 @@ RUN \
   rm -v /etc/lsh_host_key.pub /etc/lsh_host_key && \
   apt-get install -y --verbose-versions podman && \
   rm -v /etc/dropbear/dropbear_ecdsa_host_key /etc/dropbear/dropbear_ed25519_host_key /etc/dropbear/dropbear_rsa_host_key && \
-  for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm rsync sysstat uanytun uuidd lsh-server rsyslog; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
+  for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm openntpd rsync sysstat uanytun uuidd lsh-server rsyslog; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get -y --verbose-versions install ${packages_devuan_xen} python3-dotenv python-is-python3 gdb xfsprogs xfsdump initramfs-tools initramfs-tools-core klibc-utils libklibc libvirt0 libvirt-clients libxml2-utils libvirt-daemon-system distro-info && \
   for i in xendomains xen cron virtlogd libvirtd libvirt-guests; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   sed -i -e "/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand," -e "/^UMASK/s,022,077," -e "/^LOG_OK_LOGINS/s,no,yes," /etc/login.defs && \
@@ -830,10 +834,11 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "mount -o remount,nodev,nosuid,sync,noatime,nodiratime,dirsync,loud,nouser /") >> /usr/local/etc/boot.d/01remountroot && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in cdebootstrap fstype ipconfig nfsmount; do ln -v /stand/"${i}" /usr/local/sbin/"${i}"; done; ln -v /stand/minips /usr/local/bin; ln -v /stand/dar /usr/local/bin; ln -v /stand/ul_* /usr/local/sbin/') >> /usr/local/etc/boot.d/02standlink && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "ldconfig") >> /usr/local/etc/boot.d/02ldconfig && \
-  (echo '#!/bin/bash-static'; echo "set +e"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; exit 0') >> /usr/local/sbin/init-naive-networking && \
+  (echo '#!/bin/bash-static'; echo "set +e"; echo 'netdevs=$( (cd /sys/class/net/ && ls -1d eth*; ifconfig -a|grep "^eth[0-9]*:" | cut -f1 -d:) |sort|uniq | sed "s,^eth,,"); for netdev in ${netdevs}; do ifconfig eth${netdev} up; brctl addbr br${netdev}; ifconfig br${netdev} up; brctl addif br${netdev} eth${netdev}; dhclient -v br${netdev}; done; iptables -v -n -L; iptables -v -n -L -t nat; ifconfig -a; ip a; brctl show; /usr/sbin/ntpdate-debian; exit 0') >> /usr/local/sbin/init-naive-networking && \
   chmod --verbose 0755 /usr/local/sbin/init-naive-networking && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}"; done') >> /usr/local/etc/boot.d/08sysctl && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
@@ -1435,6 +1440,8 @@ RUN \
   rm -v ../linux-image-5.10.*hardened1-5.10-dbg_5.10.*-hardened1-5.10-1_amd64.deb && \
   dpkg -i ../linux*.deb && \
   make all install modules_install headers_install && \
+  mkdir -v -p /opt/artifact/certs/ && \
+  cp -p certs/signing_key.x509 certs/signing_key.pem /opt/artifact/certs/ && \
   \
   cd .. && \
   export KERNEL_VERSION="$(ls -1trd /lib/modules/5.10.*-hardened*-5.10 | tail -n 1 | sed 's,/lib/modules/,,')" && \
@@ -1697,6 +1704,9 @@ RUN \
   find usr/share/doc -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   cd lib/modules && \
   for i in 5.*; do rm -r "$i" && mv /lib/modules/"$i" .; done && \
+  SIGN_FILE=$(ls -1d /usr/src/linux-headers-5.10.*-hardened1-5.10/scripts/sign-file | tail -n 1)" && \
+  find ./5.*/ -type f -name "*.ko" -exec "${SIGN_FILE}" sha512 /root/artifact/certs/signing_key.pem /root/artifact/certs/signing_key.x509 \{\} \; && \
+  unset SIGN_FILE && \
   cd ../.. && \
   tar -cf - boot lib etc usr | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > data.tar.xz && \
   rm -v /root/artifact/deb/"${IMGFILE}" && \
@@ -1787,9 +1797,9 @@ RUN \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   umask 077 && \
   (echo; echo /usr/bin/uptime; echo echo '$(/bin/date) $HOST $SHLVL $PPID $$ $DISPLAY $USER $TERM $TTY $COLUMNS $LINES') >> /root/.zlogin && \
-  (echo; echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand') >> /root/.zshrc && \
+  (echo; echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand') >> /root/.zshenv && \
   (echo; echo 'export USERNAME="${USER}"') >> /root/.zshenv && \
-  (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'PROMPT="%(1j.<%j> .)%2m%(2L. %L.)%(#.. %n) %(1e.+%e .)%l %4~ [%h]"'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
+  (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'PROMPT="%(1j.<%j> .)%2m%(2L. %L.)%(#.. %n) %(1e.+%e .)%l %4~ [%h]"'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'HISTSIZE=16384'; echo 'NULLCMD=more'; echo 'READNULLCMD="${NULLCMD}"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
   cd /root && \
   rm -r .local/ .cache && \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > /etc/hosts || true) && \
@@ -2703,7 +2713,7 @@ RUN \
   echo 'mount -v -t vfat "${EFI}" /mnt/EFI' >> init && \
   echo 'mkdir -v /mnt/EFI/syslinux' >> init && \
   echo 'umount -v /mnt/EFI' >> init && \
-  echo 'syslinux --install --stupid --raid --directory /syslinux "${EFI}"' >> init && \
+  echo 'syslinux --install --stupid --raid --force --directory /syslinux "${EFI}"' >> init && \
   echo 'sync' >> init && \
   echo 'mount -v -t vfat "${EFI}" /mnt/EFI' >> init && \
   echo 'ls -la /mnt/EFI/syslinux' >> init && \
@@ -2829,6 +2839,25 @@ RUN \
   echo 'echo "  MENU LABEL Read-only shell" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 rosh.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Boot current drive" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Boot current drive" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 chain.c32" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND boot" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Boot current filesystem" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Boot current filesystem" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 chain.c32" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND fs" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Boot first drive" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL Boot first drive" >> syslinux.cfg' >> init && \
+  echo 'echo "  COM32 chain.c32" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND hd0" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL Boot fail" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL fail" >> syslinux.cfg' >> init && \
+  echo 'echo "  localboot -1" >> syslinux.cfg' >> init && \
+  echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL Reboot" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Reboot" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 reboot.c32" >> syslinux.cfg' >> init && \
@@ -2878,6 +2907,7 @@ RUN \
   qemu-img snapshot -c Linux-Image-Devuan-4-Xen Linux-Image-Devuan-4-Xen.qcow2 && \
   qemu-img snapshot -l Linux-Image-Devuan-4-Xen.qcow2 && \
   mv -v /root/kernel/deb /opt/artifact/deb && \
+  mv -v /root/kernel/certs /opt/artifact/certs && \
   rm -r /root/kernel /boot && \
   mv -v Linux-Image-Devuan-4-Xen.qcow2 /opt/artifact && \
   cd / && \

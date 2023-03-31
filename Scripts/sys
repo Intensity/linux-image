@@ -118,8 +118,10 @@ function sys_storage_block_list() {
 }
 
 function sys_storage_block_disk_list() {
-  set -o pipefail
-  lsblk -n -l -p -d | awk '{print $1}'
+  (
+    set -o pipefail
+    lsblk -n -l -p -d | awk '{print $1}'
+  )
 }
 
 function sys_storage_block_part_list() {
@@ -136,8 +138,10 @@ function sys_storage_block_part_list() {
     return 1
   fi
 
-  set -o pipefail
-  lsblk -n -l -p "${device}" |grep -v "^${device} .* disk" |grep " part" | awk '{print $1}'
+  (
+    set -o pipefail
+    lsblk -n -l -p "${device}" |grep -v "^${device} .* disk" |grep " part" | awk '{print $1}'
+  )
 }
 
 function sys_storage_block_part() {
@@ -245,7 +249,7 @@ function sys_storage_block_part_mkfs() {
   local dir=""
   if test -e /mnt/"${name}"
   then
-    dir=/mnt/"${name}"-"${RANDOM}"-"${RANDOM}"-"${PPID}"-"$$"
+    dir=/mnt/"${name}"-"${RANDOM}"-"${SRANDOM}"-"${PPID}"-"$$"
   else
     dir=/mnt/"${name}"
   fi
@@ -369,7 +373,7 @@ function sys_storage_block_disk_recency() {
 
   for part in $(sys storage block part match "${name}")
   do
-    dir=/mnt/"${name}"-"${RANDOM}"-"${RANDOM}"-"${PPID}"-"$$"
+    dir=/mnt/"${name}"-"${RANDOM}"-"${SRANDOM}"-"${PPID}"-"$$"
     mkdir "${dir}" || return $?
     if echo "${name}" |grep -qi "^EFI"
     then
@@ -502,7 +506,7 @@ function sys_directive_complete() {
 }
 
 function sys_platform_bootstrap_packages() {
-  echo age amd64-microcode ca-certificates coreutils cpio curl dc dosfstools e2fsprogs efibootmgr eudev findutils gawk gdisk initramfs-tools-core intel-microcode jq lsb-release mount qemu-system-x86 qemu-user-static qemu-utils rsync sed syslinux syslinux-common syslinux-efi syslinux-utils sysvinit-core tar util-linux wget xz-utils zstd
+  echo age amd64-microcode ca-certificates coreutils cpio curl dc dosfstools e2fsprogs efibootmgr eudev findutils gawk gdisk initramfs-tools-core intel-microcode jq lsb-release moreutils mount qemu-system-x86 qemu-user-static qemu-utils rsync seccure sed syslinux syslinux-common syslinux-efi syslinux-utils sysvinit-core tar util-linux wget xz-utils zstd
 }
 
 function sys_platform() {
