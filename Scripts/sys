@@ -832,10 +832,14 @@ ls -la "${wdir}"/self/"${subkey}" ; exit 2
 
       (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp "${wdir}"/self/"${subkey}"/chain2.sig && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) |
         seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/secp.sec |
+        seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/"${subkey}"/brainpoolp.sec |
         seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/brainpoolp.sec |
+        seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/"${subkey}"/secp.sec |
         tee -a "${wdir}"/self/"${subkey}"/master.sig |
         /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/rsa.sec -n file.crypt.key.chain 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master2.sig |
-        (/usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain 2>/dev/null >> "${wdir}"/self/"${subkey}"/master3.sig || rm -f "${wdir}"/self/"${subkey}"/master3.sig) || {
+        /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/rsa.sec -n file.crypt.key.chain 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master3.sig |
+        (/usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master4.sig || rm -f "${wdir}"/self/"${subkey}"/master4.sig) |
+        (/usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/dilithium5.sec -n file.crypt.key.chain 2>/dev/null >> "${wdir}"/self/"${subkey}"/master5.sig || rm -f "${wdir}"/self/"${subkey}"/master5.sig) || {
           RET="$?"
           echo "$(basename "$0"):${LINENO}": Key creation failure 1>&2
           return "${RET}"
@@ -867,15 +871,33 @@ ls -la "${wdir}"/self/"${subkey}" ; exit 2
         return "${RET}"
       fi
 
-      if test -s "${wdir}"/self/"${subkey}"/master3.sig
+      if test -s "${wdir}"/self/"${subkey}"/master5.sig
       then
-        if ! /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/dilithium5.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master3.sig < "${wdir}"/self/"${subkey}"/master2.sig >/dev/null
+        if ! /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master5.sig < "${wdir}"/self/"${subkey}"/master4.sig >/dev/null
+        then
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+          exit "${RET}"
+        fi
+      fi
+
+      if test -s "${wdir}"/self/"${subkey}"/master4.sig
+      then
+        if ! /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/dilithium5.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master4.sig < "${wdir}"/self/"${subkey}"/master3.sig >/dev/null
         then
           RET="$?"
           echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
           return "${RET}"
         fi
       fi
+
+      if ! /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/rsa.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master3.sig < "${wdir}"/self/"${subkey}"/master2.sig >/dev/null
+      then
+        RET="$?"
+        echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+        return "${RET}"
+      fi
+
 
       if ! /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/rsa.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master2.sig < "${wdir}"/self/"${subkey}"/master.sig >/dev/null
       then
@@ -894,7 +916,9 @@ ls -la "${wdir}"/self/"${subkey}" ; exit 2
         }
 
       cat "${wdir}"/self/"${subkey}"/master.sig |
+        seccure-verify -b -f -a -c secp521r1 "$(cat "${wdir}"/self/"${subkey}"/secp.pub)" 2>/dev/null |
         seccure-verify -b -f -a -c brainpoolp512r1 "$(cat "${wdir}"/self/brainpoolp.pub)" 2>/dev/null |
+        seccure-verify -b -f -a -c brainpoolp512r1 "$(cat "${wdir}"/self/"${subkey}"/brainpoolp.pub)" 2>/dev/null |
         seccure-verify -b -f -a -c secp521r1 "$(cat "${wdir}"/self/secp.pub)" 2>/dev/null |
         cmp - <(cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp "${wdir}"/self/"${subkey}"/chain2.sig && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
           RET="$?"
@@ -1462,9 +1486,6 @@ sys_crypt_import() {
 
   if test "$#" -eq 0
   then
-    echo "$(basename "$0"):${LINENO}": Key status 1>&2
-    echo 1>&2
-
     (
       export max=24
       cd "${wdir}"/. || return $?
@@ -1473,6 +1494,7 @@ sys_crypt_import() {
 
       printf "%-${width}s %-30s%-20s %s\n" "Key" "Genesis" "Checksum" "Ref" 1>&2
       printf "%-${width}s %-30s%-20s %s\n" "---" "-------" "--------" "---" 1>&2
+      sync
 
       refs=""
       find . -type f -name genesis.stamp -exec grep . -- \{\} /dev/null \; | sed 's,^\./,,' | sed 's,/genesis.stamp:, ,' | sed 's,^self,_self,' | sort | sed 's,^_self,self,'| while read entry
