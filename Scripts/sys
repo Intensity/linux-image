@@ -3,6 +3,7 @@
 umask 077
 ulimit -d unlimited
 ulimit -v unlimited
+export LANG=C
 hash -r
 #set -x
 
@@ -128,13 +129,13 @@ function sys_storage_block_part_list() {
   device="$1"
   if test -z "${device}"
   then
-    echo $0: Device not provided 1>&2
+    echo "$(basename "$0"):${LINENO}": Device not provided 1>&2
     return 2
   fi
 
   if ! test -e "${device}"
   then
-    echo $0: Device entry "${device}" not present 1>&2
+    echo "$(basename "$0"):${LINENO}": Device entry "${device}" not present 1>&2
     return 1
   fi
 
@@ -168,7 +169,7 @@ function sys_storage_block_disk_match() {
 
   if test $(echo ${matches[@]} | tr -d '\n ' | wc -c) -eq 0
   then
-    echo $0: No disk match 1>&2
+    echo "$(basename "$0"):${LINENO}": No disk match 1>&2
     return 1
   fi
 
@@ -180,7 +181,7 @@ function sys_storage_block_part_match() {
   shift
   if test -z "${MATCH}"
   then
-    echo $0: Prefix to match against not provided 1>&2
+    echo "$(basename "$0"):${LINENO}": Prefix to match against not provided 1>&2
     return 2
   fi
 
@@ -205,7 +206,7 @@ function sys_storage_block_part_match() {
 
   if test $(echo ${matches[@]} | tr -d '\n ' | wc -c) -eq 0
   then
-    echo $0: No partition match for "${MATCH}" 1>&2
+    echo "$(basename "$0"):${LINENO}": No partition match for "${MATCH}" 1>&2
     return 2
   fi
 
@@ -230,19 +231,19 @@ function sys_storage_block_part_mkfs() {
 
   if test -z "${name}"
   then
-    echo $0: No name designator given for partition "${part}" 1>&2
+    echo "$(basename "$0"):${LINENO}": No name designator given for partition "${part}" 1>&2
     return 2
   fi
 
   if ! test -b "${part}"
   then
-    echo $0: Block partition "${part}" is not known to be a block device 1>&2
+    echo "$(basename "$0"):${LINENO}": Block partition "${part}" is not known to be a block device 1>&2
     return 1
   fi
 
   if ! blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q '^'"${name}"
   then
-    echo $0: Block partition "${part}" does not match name "${name}" 1>&2
+    echo "$(basename "$0"):${LINENO}": Block partition "${part}" does not match name "${name}" 1>&2
     return 1
   fi
 
@@ -254,7 +255,7 @@ function sys_storage_block_part_mkfs() {
     dir=/mnt/"${name}"
   fi
 
-  echo $0: Prepare to mkfs type ${fs} for name ${name} on partition ${part} 1>&2
+  echo "$(basename "$0"):${LINENO}": Prepare to mkfs type ${fs} for name ${name} on partition ${part} 1>&2
   mkdir "${dir}"
   if test "${fs}" '==' ext4
   then
@@ -267,7 +268,7 @@ function sys_storage_block_part_mkfs() {
     mkdir "${dir}"/syslinux || return $?
   elif test "${fs}" == xfs
   then
-    echo $0: Unimplemented 1>&2
+    echo "$(basename "$0"):${LINENO}": Unimplemented 1>&2
     return 1
   fi
 
@@ -299,7 +300,7 @@ function sys_storage_block_disk_mkfs() {
 
   parts="$(sys storage block part match "${name}" "${disk}")"
 
-  echo $0: Set to perform mkfs on partitions \"${parts}\" matching name ${name} on disk ${disk} 1>&2
+  echo "$(basename "$0"):${LINENO}": Set to perform mkfs on partitions \"${parts}\" matching name ${name} on disk ${disk} 1>&2
   RET=0
   for part in ${parts}
   do
@@ -314,9 +315,9 @@ function sys_storage_block_disk_syslinux() {
   shift
 
   part="$(sys storage block part match EFI "${disk}")"
-  echo $0: Syslinux install on partition ${part} disk ${disk} 1>&2
+  echo "$(basename "$0"):${LINENO}": Syslinux install on partition ${part} disk ${disk} 1>&2
   syslinux --install --stupid --raid --directory /syslinux "${part}" || return $?
-  echo $0: Syslinux copy to boot sector on disk ${disk} 1>&2
+  echo "$(basename "$0"):${LINENO}": Syslinux copy to boot sector on disk ${disk} 1>&2
   dd if=/usr/lib/syslinux/mbr/gptmbr.bin of="${disk}" bs=440 count=1 conv=notrunc || return $?
 
   sys storage block disk refresh
@@ -342,28 +343,1182 @@ function sys_storage_block_disk_partition() {
 
   if test $(head -c 65536 < "${disk}" | tr -d '\0' |wc -c) -ne 0 || test $( expr $(lsblk -n -d -b -o SIZE "${disk}") / 1048576) -lt 62464
   then
-    echo $0: Disk ${disk} is not a candidate for partitioning 1>&2
+    echo "$(basename "$0"):${LINENO}": Disk ${disk} is not a candidate for partitioning 1>&2
     return 1
   fi
 
-  echo $0: Disk ${disk} is considered a valid candidate. Will repartition 1>&2
+  echo "$(basename "$0"):${LINENO}": Disk ${disk} is considered a valid candidate. Will repartition 1>&2
   sleep 3
   sync
-  echo $0: Disk ${disk}: clearing partition tables 1>&2
+  echo "$(basename "$0"):${LINENO}": Disk ${disk}: clearing partition tables 1>&2
   sgdisk --zap-all "${disk}" || return $?
   dd if=/dev/zero of="${disk}" bs=65536 count=1 2>/dev/null || return $?
   sgdisk --zap-all "${disk}" || return $?
   sys storage block disk refresh
 
-  echo $0: Disk ${disk}: partition ${MAIN} 1>&2
+  echo "$(basename "$0"):${LINENO}": Disk ${disk}: partition ${MAIN} 1>&2
   sys storage block disk partitioning "${disk}" ${MAIN} |gdisk "${disk}" || return $?
   sys storage block disk refresh
 
   for name in "EFI fat" IDEN CONF CACHE LOG
   do
-    echo $0: mkfs on disk ${disk} name ${name} 1>&2
+    echo "$(basename "$0"):${LINENO}": mkfs on disk ${disk} name ${name} 1>&2
     sys storage block disk mkfs "${disk}" ${name} || return $?
   done
+}
+
+sys_date() {
+  LANG=C LC_ALL=C TZ=Universal date +"%Y.%m.%d-%H.%M.%S-%N" | LANG=C LC_ALL=C head -c 30
+}
+
+sys_crypt() {
+  true
+}
+
+sys_crypt_tmpdir() {
+  if ! opts="$(getopt -o "h" -l "help,delete:" -n "${0##*/}" -- "$@")"
+  then
+    echo "$(basename "$0"):${LINENO}": Parse error: "$@" 1>&2
+    return 2
+  fi
+
+  delete=0
+  eval "set -- ${opts}"
+  while [ $# -gt 0 ]
+  do
+    case "$1" in
+      -h|--help)
+        echo "$(basename "$0"):${LINENO}": Omit argument to create, or else provide --delete='[DIR]' 1>&2
+        return 3
+        ;;
+      --delete)
+        dir="$2"
+        delete=1
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+    esac
+  done
+
+  if test "${delete}" -eq 0
+  then
+    (
+      umask 077
+      mktemp --directory "$(mktemp --directory /dev/shm/tmp.XXXXXXXXXX)"/tmp."${SRANDOM}"."${RANDOM}".XXXXXXXXXX
+    )
+  else
+    if ! test -e "${dir}"
+    then
+      echo "$(basename "$0"):${LINENO}": Directory to delete \""${dir}"\" does not exist 1>&2
+      return 1
+    fi
+    if ! test -d "${dir}"
+    then
+      echo "$(basename "$0"):${LINENO}": Entry to delete \""${dir}"\" is not a directory 1>&2
+      return 1
+    fi
+    if ! test -O "${dir}"
+    then
+      echo "$(basename "$0"):${LINENO}": Directory \""${dir}"\" not owned by user 1>&2
+      return 1
+    fi
+
+    if echo X"${dir}" |grep -q '^X/dev/shm/tmp\.[^/]*/tmp\.'
+    then
+      chmod -R go-rwx "${dir}" >/dev/null 2>/dev/null || true
+      rm -r "${dir}"
+      rmdir "$(echo "${dir}" |sed 's,^\(/dev/shm/tmp\.[^/]*\)/.*,\1,')"
+    else
+      echo "$(basename "$0"):${LINENO}": Directory \""${dir}"\" does not conform to expected pattern 1>&2
+      return 1
+    fi
+  fi
+}
+
+sys_crypt_dir() {
+  if test "$(id -u)" -eq 0
+  then
+    if test -d "/dev/shm/crypt/root"
+    then
+      if ! test -O /dev/shm/crypt/root
+      then
+        echo "$(basename "$0"):${LINENO}": Improper ownership on /dev/shm/crypt/root 1>&2
+        return 1
+      fi
+
+      chmod go-rwx "/dev/shm/crypt/root" >/dev/null 2>/dev/null || true
+      (umask 077 && mkdir --mode=700 -p /dev/shm/crypt/root/self /dev/shm/crypt/root/upstream /dev/shm/crypt/root/extern >/dev/null 2>/dev/null || true)
+      echo "/dev/shm/crypt/root"
+    else
+      (umask 0 && mkdir --mode=1777 -p /dev/shm/crypt >/dev/null 2>/dev/null || true)
+      (umask 077 && mkdir --mode=700 -p /dev/shm/crypt/root >/dev/null 2>/dev/null || true)
+      (umask 077 && mkdir --mode=700 -p /dev/shm/crypt/root/self /dev/shm/crypt/root/upstream /dev/shm/crypt/root/extern >/dev/null 2>/dev/null || true)
+      echo "/dev/shm/crypt/root"
+    fi
+  else
+    true
+
+    if ! test -d "${HOME}"/.local/.
+    then
+      (umask 027 && mkdir --mode=0750 -p "${HOME}"/.local >/dev/null 2>/dev/null)
+    fi
+
+    if ! test -d "${HOME}"/.local/crypt/.
+    then
+      (umask 077 && mkdir --mode=0700 -p "${HOME}"/.local/crypt >/dev/null 2>/dev/null)
+    fi
+
+    (umask 077 && mkdir --mode=0700 -p "${HOME}"/.local/crypt/self "${HOME}"/.local/crypt/upstream "${HOME}"/.local/crypt/extern >/dev/null 2>/dev/null)
+
+    chmod go-rwx "${HOME}"/.local/crypt/. >/dev/null 2>/dev/null || true
+    FSTYPE="$(df --local --no-sync --output=fstype "${HOME}"/.local/crypt/. 2>/dev/null | tail -n 1)"
+    if test "${FSTYPE}" '==' rootfs || test "${FSTYPE}" '==' tmpfs # ...fuse
+    then
+      echo "${HOME}"/.local/crypt
+    elif test "${FSTYPE}" '==' zfs && zfs get encryption "$(df --local --no-sync --output=source | tail -n 1)" |grep -q " encryption  *aes" >/dev/null 2>/dev/null
+    then
+      echo "${HOME}"/.local/crypt
+    else
+      mkdir --mode=0700 -p /dev/shm/crypt/"${USER}" >/dev/null 2>/dev/null || true
+      mkdir --mode=0700 -p /dev/shm/crypt/"${USER}"/local /dev/shm/crypt/"${USER}"/upstream /dev/shm/crypt/"${USER}"/extern  >/dev/null 2>/dev/null || true
+      chmod go-rwx /dev/shm/crypt/"${USER}" >/dev/null 2>/dev/null || true
+      if ! test -d /dev/shm/crypt/"${USER}"/.
+      then
+        echo /bin/false/false
+        return 1
+      elif ! test -O /dev/shm/crypt/"${USER}"/.
+      then
+        echo /bin/false/false
+        return 1
+      else
+        echo /dev/shm/crypt/"${USER}"
+      fi
+    fi
+
+    unset FSTYPE
+  fi
+}
+
+sys_crypt_entropy() {
+  true
+}
+
+sys_crypt_entropy_ingest() {
+  (
+    set +e
+    set +o pipefail
+
+    (
+      set -x
+      umask 077
+      export LANG=C
+      export LC_ALL=C
+      export TERM=dumb
+      export TTY=/dev/null
+      export TMP=/dev/shm
+      export TEMP="${TMP}"
+      export TMPDIR="${TMP}"
+      vmstat -d -t -w
+      time sync
+      vmstat -D -t -w
+      vmstat -s -t -w
+      vmstat -a -t -w
+      env
+      ipcs -a
+      dd if=/dev/urandom bs=37 count=1
+      echo "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${RANDOM}"
+      sysctl -a
+      date +%s.%N
+      netstat -vWn --numeric-hosts --numeric-ports --numeric-users --extend --timers --program --all
+      time sync
+      lsblk -O
+      lsblk -l -p | grep disk | cut -f1 -d" " | while read disk; do udevadm info --query=all --name="${disk}"; done
+      unset disk
+      dd if=/dev/hwrng bs=1024 count=6 || true
+      hostname
+      ifconfig -a
+      ip a
+      dpkg -l
+      date +%s.%N
+      mpstat -A
+      iostat  -x -t
+      arp -a -n
+      date +%s.%N
+      netstat -rn
+      time ps axufwwwwwwwwe
+      /usr/bin/time -v curl -v https://etherscan.io
+      lsusb -vv
+      lspci -vv
+      lscpu
+      lshw
+      lsdev
+      date +%s.%N
+      lsmod
+      lsscsi
+      dmesg
+      vmstat -s
+      iostat
+      mpstat
+      vmstat -f
+      uptime
+      vmstat
+      date +%s.%N
+      lsof
+      lsof -n -i
+      /usr/bin/time -v curl -v 'https://www.random.org/cgi-bin/randbyte?nbytes=4096&format=h'
+    ) 2>&1 |
+  gzip -1qf |
+  seccure-encrypt -m 0 "$(seccure-key -F /dev/null 2>/dev/null | sed 's,^The public key is: ,,')" 2>/dev/null |
+  age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
+  openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null
+  )
+}
+
+sys_crypt_entropy_evolve () {
+  (
+    set -e
+    set +x
+    set +o pipefail
+    umask 077
+    export LANG=C
+    export LC_ALL=C
+    export TERM=dumb
+    export TTY=/dev/null
+    export TMP=/dev/shm
+    export TEMP="${TMP}"
+    export TMPDIR="${TMP}"
+
+    openssl enc -camellia-256-cfb8 -kfile /dev/urandom -e 2>/dev/null |
+      age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
+      openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null |
+      pee sha512sum b2sum cksum md5sum md5sum.textutils sha1sum sha256sum tigerdeep whirlpooldeep gost12sum gostsum xxh128sum "nettle-hash --algorithm=streebog512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=sha3_512" "openssl shake256" "rhash -a --verbose -" "edonr512-hash -" "gost12-512-hash -" "has160-hash -" "whirlpool-hash -" "openssl shake256" 2>/dev/null |
+      pee sha512sum xxh128sum gostsum gost12sum whirlpooldeep tigerdeep sha256sum sha1sum md5sum.textutils md5sum cksum b2sum "openssl shake256" "whirlpool-hash -" "has160-hash -" "gost12-512-hash -" "edonr512-hash -" "rhash -a --verbose -" "openssl shake256" "nettle-hash --algorithm=sha3_512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=streebog512" 2>/dev/null |
+      pee "openssl enc -aes-256-ctr -kfile /dev/urandom -e || true" "openssl enc -aria-256-ofb -kfile /dev/urandom -e || true" "openssl enc -camellia-256-cfb8 -kfile /dev/urandom -e || true" "openssl enc -cast5-ofb -kfile /dev/urandom -e || true" 2>/dev/null |
+      ccrypt -k /dev/urandom 2>/dev/null |
+      age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
+      openssl enc -camellia-256-cfb8 -kfile /dev/urandom -e 2>/dev/null
+  )
+}
+
+sys_crypt_generate() {
+  true
+}
+
+sys_crypt_generate_seed() {
+  (
+    set +o pipefail
+
+    sys crypt entropy ingest |
+      sys crypt entropy evolve |
+      sys crypt entropy evolve |
+      dd bs=228 count=1 status=none |
+      base64 |
+      tr '\n' ' ' |
+      sed 's, *$,,'
+  )
+}
+
+sys_crypt_key() {
+  wdir="$(sys crypt dir)"
+  exists=0
+
+  if test -e "${wdir}"/self/brainpoolp.sec || test -e "${wdir}"/self/secp.sec || test -e "${wdir}"/self/rsa.sec || test -e "${wdir}"/self/mceqcmdpc256fo.sec
+  then
+    if test -f "${wdir}"/self/brainpoolp.sec && test -f "${wdir}"/self/secp.sec && test -f "${wdir}"/self/rsa.sec && test -f "${wdir}"/self/mceqcmdpc256fo.sec
+    then
+      exists=1
+    else
+      echo "$(basename "$0"):${LINENO}": Pre-existing secret keys are not a complete set 1>&2
+      return 1
+    fi
+  fi
+
+  if test -e "${wdir}"/self/brainpoolp.pub || test -e "${wdir}"/self/secp.pub || test -e "${wdir}"/self/rsa.pub || test -e "${wdir}"/self/mceqcmdpc256fo.pub
+  then
+    if test -f "${wdir}"/self/brainpoolp.pub && test -f "${wdir}"/self/secp.pub && test -f "${wdir}"/self/rsa.pub && test -f "${wdir}"/self/mceqcmdpc256fo.pub
+    then
+      exists=1
+    else
+      echo "$(basename "$0"):${LINENO}": Pre-existing public keys are not a complete set 1>&2
+      return 1
+    fi
+  fi
+
+  if test "${exists}" -eq 0
+  then
+  (
+    umask 077
+    export TMP="${wdir}"
+    export TEMP="${TMP}"
+    export TMPDIR="${TMP}"
+    set -o pipefail
+    GENESIS="$(sys date)"
+    sys crypt generate seed > "${wdir}"/self/brainpoolp.sec || return $?
+    /usr/bin/ssh-keygen -t rsa -b 10240 -N "" -f "${wdir}"/self/rsa >/dev/null 2>/dev/null || return $?
+    sys crypt generate seed > "${wdir}"/self/secp.sec || return $?
+    /usr/local/bin/ssh-keygen -t dilithium5 -N "" -f "${wdir}"/self/dilithium5 >/dev/null 2>/dev/null || rm -f "${wdir}"/self/dilithium5 "${wdir}"/self/dilithium5.pub >/dev/null 2>/dev/null
+
+    mkdir -p "${wdir}"/self/.ccr >/dev/null 2>/dev/null || true
+    HOME="${wdir}"/self ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 --name self 2>/dev/null || return $?
+    HOME="${wdir}"/self ccr -p -a -F self -N other |sed 's, publickeys [^-]*, publickeys canon,' > "${wdir}"/self/mceqcmdpc256fo.pub || return $?
+    mv -f "${wdir}"/self/.ccr/secrets "${wdir}"/self/mceqcmdpc256fo.sec >/dev/null 2>/dev/null || return $?
+    rm -f "${wdir}"/self/.ccr/secrets "${wdir}"/self/.ccr/pubkeys "${wdir}"/self/.ccr/secrets\~ "${wdir}"/self/.ccr/pubkeys\~ "${wdir}"/self/.ccr/lock >/dev/null 2>/dev/null || true
+    rmdir "${wdir}"/self/.ccr || return $?
+
+    seccure-key -c brainpoolp512r1 -F "${wdir}"/self/brainpoolp.sec | sed "s,^The public key is: ,," > "${wdir}"/self/brainpoolp.pub || return $?
+    seccure-key -c secp521r1 -F "${wdir}"/self/secp.sec | sed "s,^The public key is: ,," > "${wdir}"/self/secp.pub || return $?
+    mv "${wdir}"/self/rsa "${wdir}"/self/rsa.sec || return $?
+    mv -f "${wdir}"/self/dilithium5 "${wdir}"/self/dilithium5.sec >/dev/null 2>/dev/null || true
+
+    echo "${GENESIS}" >> "${wdir}"/self/genesis.stamp
+    unset GENESIS
+    rm -f "${wdir}"/self/chain.sig "${wdir}"/self/chain2.sig "${wdir}"/self/chain3.sig >/dev/null 2>/dev/null || true
+    (cat "${wdir}"/self/genesis.stamp &&
+      for pub in brainpoolp rsa secp mceqcmdpc256fo dilithium5; do if test -e "${wdir}"/self/"${pub}".pub; then sha256sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done) |
+        seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/secp.sec |
+        seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/brainpoolp.sec |
+        tee -a "${wdir}"/self/chain.sig |
+        /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/rsa.sec -n file.crypt.key.chain 2>/dev/null | tee -a "${wdir}"/self/chain2.sig |
+        (/usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain 2>/dev/null >> "${wdir}"/self/chain3.sig || rm -f "${wdir}"/self/chain3.sig) || {
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key creation failure 1>&2
+          return "${RET}"
+        }
+  )
+  fi
+
+  (
+    umask 077
+    export TMP="${wdir}"
+    export TEMP="${TMP}"
+    export TMPDIR="${TMP}"
+    set -o pipefail
+
+    if test -s "${wdir}"/self/chain3.sig
+    then
+      if ! /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/dilithium5.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/chain3.sig < "${wdir}"/self/chain2.sig >/dev/null
+      then
+        RET="$?"
+        echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+        return "${RET}"
+      fi
+    fi
+
+    if ! /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/rsa.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/chain2.sig < "${wdir}"/self/chain.sig >/dev/null
+    then
+      RET="$?"
+      echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+      return "${RET}"
+    fi
+
+    cat "${wdir}"/self/chain.sig |
+      seccure-verify -b -f -a -c brainpoolp512r1 "$(cat "${wdir}"/self/brainpoolp.pub)" 2>/dev/null |
+      seccure-verify -b -f -a -c secp521r1 "$(cat "${wdir}"/self/secp.pub)" 2>/dev/null |
+      cmp - <(cat "${wdir}"/self/genesis.stamp && for pub in brainpoolp rsa secp mceqcmdpc256fo dilithium5; do if test -e "${wdir}"/self/"${pub}".pub; then sha256sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done) || {
+        RET="$?"
+        echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+        return "${RET}"
+      }
+  )
+
+  first=0
+  subkeys=("$@")
+  potential=( $(cd "${wdir}"/self/./ && find . -maxdepth 1 -type d -print | fgrep / | sed 's,^\./,,' | tr '\n' ' ' | sed 's, *$,,') )
+  rest="$(comm -23 <(echo "${potential[@]}" | tr ' ' '\n' |sort | uniq) <(echo "${subkeys[@]}" | tr ' ' '\n' |sort | uniq) | sed 's,^,<,' | sed 's,$,>,' | grep -v '^<>$' | tr '\n' ' '|sed 's, *$,,')"
+
+  for subkey in "$@"
+  do
+    if echo X"${subkey}" | grep -q '^X\.$'
+    then
+      continue
+    fi
+
+    if test "${first}" -eq 0
+    then
+      echo -n "$(basename "$0"):${LINENO}: Generating or validating subkeys:" 1>&2
+      first=1
+    fi
+
+    if test "$(echo X"${subkey}" | sed 's,^X,,' | tr -d '\n' | wc -c)" -eq 0
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid null length subkey 1>&2
+    fi
+
+    if echo X"${subkey}" | grep -q "^X-" >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid subkey name: "${subkey}" 1>&2
+      return 2
+    fi
+
+    if test "$(echo X"${subkey}" | tr -d A-Za-z0-9_@'\n\-' | wc -c)" -ne 0
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid subkey name: "${subkey}" 1>&2
+      return 2
+    fi
+
+    mkdir -p "${wdir}"/self/"${subkey}" >/dev/null 2>/dev/null || true
+    if ! test -d "${wdir}"/self/"${subkey}"/.
+    then
+      echo "$(basename "$0"):${LINENO}": Could not resolve subkey path for \""${subkey}"\" 1>&2
+      return 1
+    fi
+
+    subexists=0
+    if test -e "${wdir}"/self/"${subkey}"/brainpoolp.sec || test -e "${wdir}"/self/"${subkey}"/secp.sec || test -e "${wdir}"/self/"${subkey}"/rsa.sec || test -e "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec
+    then
+      if test -f "${wdir}"/self/"${subkey}"/brainpoolp.sec && test -f "${wdir}"/self/"${subkey}"/secp.sec && test -f "${wdir}"/self/"${subkey}"/rsa.sec && test -f "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec
+      then
+        subexists=1
+      else
+        echo "$(basename "$0"):${LINENO}": Pre-existing private subkeys for \""${subkey}"\" are not a complete set 1>&2
+ls -la "${wdir}"/self/"${subkey}" ; exit 2
+        return 1
+      fi
+    fi
+
+    if test -e "${wdir}"/self/"${subkey}"/brainpoolp.pub || test -e "${wdir}"/self/"${subkey}"/secp.pub || test -e "${wdir}"/self/"${subkey}"/rsa.pub || test -e "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub
+    then
+      if test -f "${wdir}"/self/"${subkey}"/brainpoolp.pub && test -f "${wdir}"/self/"${subkey}"/secp.pub && test -f "${wdir}"/self/"${subkey}"/rsa.pub && test -f "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub
+      then
+        subexists=1
+      else
+        echo "$(basename "$0"):${LINENO}": Pre-existing public subkeys for \""${subkey}"\" are not a complete set 1>&2
+        return 1
+      fi
+    fi
+
+    if test "${subexists}" -eq 0
+    then
+    (
+      umask 077
+      export TMP="${wdir}"
+      export TEMP="${TMP}"
+      export TMPDIR="${TMP}"
+      set -o pipefail
+      GENESIS="$(sys date)"
+      sys crypt generate seed > "${wdir}"/self/"${subkey}"/brainpoolp.sec || return $?
+      /usr/bin/ssh-keygen -t rsa -b 10240 -N "" -f "${wdir}"/self/"${subkey}"/rsa >/dev/null 2>/dev/null || return $?
+      sys crypt generate seed > "${wdir}"/self/"${subkey}"/secp.sec || return $?
+      /usr/local/bin/ssh-keygen -t dilithium5 -N "" -f "${wdir}"/self/"${subkey}"/dilithium5 >/dev/null 2>/dev/null || rm -f "${wdir}"/self/"${subkey}"/dilithium5 "${wdir}"/self/"${subkey}"/dilithium5.pub >/dev/null 2>/dev/null
+
+      mkdir -p "${wdir}"/self/"${subkey}"/.ccr >/dev/null 2>/dev/null || true
+      HOME="${wdir}"/self/"${subkey}" ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 --name self 2>/dev/null || return $?
+      HOME="${wdir}"/self/"${subkey}" ccr -p -a -F self -N other |sed 's, publickeys [^-]*, publickeys canon,' > "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub || return $?
+      mv -f "${wdir}"/self/"${subkey}"/.ccr/secrets "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec >/dev/null 2>/dev/null || return $?
+      rm -f "${wdir}"/self/"${subkey}"/.ccr/secrets "${wdir}"/self/"${subkey}"/.ccr/pubkeys  "${wdir}"/self/"${subkey}"/.ccr/secrets\~ "${wdir}"/self/"${subkey}"/.ccr/pubkeys\~ "${wdir}"/self/"${subkey}"/.ccr/lock >/dev/null 2>/dev/null || true
+      rmdir "${wdir}"/self/"${subkey}"/.ccr || return $?
+
+      seccure-key -c brainpoolp512r1 -F "${wdir}"/self/"${subkey}"/brainpoolp.sec | sed "s,^The public key is: ,," > "${wdir}"/self/"${subkey}"/brainpoolp.pub || return $?
+      seccure-key -c secp521r1 -F "${wdir}"/self/"${subkey}"/secp.sec | sed "s,^The public key is: ,," > "${wdir}"/self/"${subkey}"/secp.pub || return $?
+      mv "${wdir}"/self/"${subkey}"/rsa "${wdir}"/self/"${subkey}"/rsa.sec || return $?
+      mv "${wdir}"/self/"${subkey}"/dilithium5 "${wdir}"/self/"${subkey}"/dilithium5.sec >/dev/null 2>/dev/null || true
+
+      echo "${GENESIS}" >> "${wdir}"/self/"${subkey}"/genesis.stamp
+      unset GENESIS
+      rm -f "${wdir}"/self/"${subkey}"/chain.sig "${wdir}"/self/"${subkey}"/chain2.sig "${wdir}"/self/"${subkey}"/chain3.sig "${wdir}"/self/"${subkey}"/master.sig "${wdir}"/self/"${subkey}"/master2.sig "${wdir}"/self/"${subkey}"/master3.sig >/dev/null 2>/dev/null || true
+      (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa dilithium5; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) |
+        seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/"${subkey}"/secp.sec |
+        seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/"${subkey}"/brainpoolp.sec |
+        tee -a "${wdir}"/self/"${subkey}"/chain.sig |
+        /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/rsa.sec -n file.crypt.key.chain 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/chain2.sig |
+        (/usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/dilithium5.sec -n file.crypt.key.chain 2>/dev/null >> "${wdir}"/self/"${subkey}"/chain3.sig || rm -f "${wdir}"/self/"${subkey}"/chain3.sig) || {
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key creation failure 1>&2
+          return "${RET}"
+        }
+
+      (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp "${wdir}"/self/"${subkey}"/chain2.sig && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) |
+        seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/secp.sec |
+        seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/brainpoolp.sec |
+        tee -a "${wdir}"/self/"${subkey}"/master.sig |
+        /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/rsa.sec -n file.crypt.key.chain 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master2.sig |
+        (/usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain 2>/dev/null >> "${wdir}"/self/"${subkey}"/master3.sig || rm -f "${wdir}"/self/"${subkey}"/master3.sig) || {
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key creation failure 1>&2
+          return "${RET}"
+        }
+    )
+    fi
+
+    (
+      umask 077
+      export TMP="${wdir}"
+      export TEMP="${TMP}"
+      export TMPDIR="${TMP}"
+      set -o pipefail
+
+      if test -s "${wdir}"/self/"${subkey}"/chain3.sig
+      then
+        if ! /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/chain3.sig < "${wdir}"/self/"${subkey}"/chain2.sig >/dev/null
+        then
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+          return "${RET}"
+        fi
+      fi
+
+      if ! /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/rsa.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/chain2.sig < "${wdir}"/self/"${subkey}"/chain.sig >/dev/null
+      then
+        RET="$?"
+        echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+        return "${RET}"
+      fi
+
+      if test -s "${wdir}"/self/"${subkey}"/master3.sig
+      then
+        if ! /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/dilithium5.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master3.sig < "${wdir}"/self/"${subkey}"/master2.sig >/dev/null
+        then
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+          return "${RET}"
+        fi
+      fi
+
+      if ! /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/rsa.pub) -I root@localhost -n file.crypt.key.chain -s "${wdir}"/self/"${subkey}"/master2.sig < "${wdir}"/self/"${subkey}"/master.sig >/dev/null
+      then
+        RET="$?"
+        echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+        return "${RET}"
+      fi
+
+      cat "${wdir}"/self/"${subkey}"/chain.sig |
+        seccure-verify -b -f -a -c brainpoolp512r1 "$(cat "${wdir}"/self/"${subkey}"/brainpoolp.pub)" 2>/dev/null |
+        seccure-verify -b -f -a -c secp521r1 "$(cat "${wdir}"/self/"${subkey}"/secp.pub)" 2>/dev/null |
+        cmp - <(cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa dilithium5; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+          return "${RET}"
+        }
+
+      cat "${wdir}"/self/"${subkey}"/master.sig |
+        seccure-verify -b -f -a -c brainpoolp512r1 "$(cat "${wdir}"/self/brainpoolp.pub)" 2>/dev/null |
+        seccure-verify -b -f -a -c secp521r1 "$(cat "${wdir}"/self/secp.pub)" 2>/dev/null |
+        cmp - <(cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp "${wdir}"/self/"${subkey}"/chain2.sig && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Key validation failure 1>&2
+          return "${RET}"
+        }
+
+      if test "${subexists}" -eq 0
+      then
+        echo -n " ${subkey}" 1>&2
+      else
+        echo -n " [${subkey}]" 1>&2
+      fi
+    )
+  done
+
+  if test "${first}" -ne 0
+  then
+    if test $(echo "${rest}" | tr -d ' \n\t<>' | wc -c) -eq 0
+    then
+      echo 1>&2
+    else
+      echo " | ${rest}" 1>&2
+    fi
+  else
+    if test $(echo "${rest}" | tr -d ' \n\t<>' | wc -c) -ne 0
+    then
+      echo "$(basename "$0"):${LINENO}": Available subkeys: "${rest}" 1>&2
+    fi
+  fi
+}
+
+
+sys_crypt_send() {
+  wdir="$(sys crypt dir)"
+
+  rec=0
+  sender=""
+  recipient=""
+  spreamble=""
+  rpreamble=""
+
+  if test "$#" -gt 1
+  then
+    rec=1
+  fi
+
+  if test "$#" -eq 0
+  then
+    sender=.
+    recipient=..
+  else
+    pair="$1"
+    if echo X"${pair}" |fgrep -q : >/dev/null 2>/dev/null
+    then
+      if echo X"${pair}" | grep -q ':.*:' >/dev/null 2>/dev/null
+      then
+        echo "$(basename "$0"):${LINENO}": Only one delimiter possible 1>&2
+        return 2
+      fi
+
+      if echo X"${pair}" | grep -q '^-' >/dev/null 2>/dev/null
+      then
+        echo "$(basename "$0"):${LINENO}": Invalid sender prefix 1>&2
+        return 2
+      fi
+
+      sender="$(echo "${pair}" | cut -f1 -d:)"
+      recipient="$(echo "${pair}" | cut -f2 -d:)"
+
+      if test X"$(echo -n "${sender}" | tr -d '\t\n ')" '==' X
+      then
+        sender=.
+      fi
+
+      if test X"$(echo -n "${recipient}" | tr -d '\t\n ')" '==' X
+      then
+        recipient=..
+      fi
+    else
+      sender=.
+      recipient="${pair}"
+    fi
+
+    unset pair
+    shift
+  fi
+
+  if echo X"${sender}" |grep -q "^X\.\." >/dev/null 2>/dev/null
+  then
+    echo "$(basename "$0"):${LINENO}": Invalid sender name: \""${sender}"\" 1>&2
+    return 2
+  elif test "${sender}" '==' .
+  then
+    spreamble=self
+  elif echo X"${sender}" |grep -q "^X\./" >/dev/null 2>/dev/null
+  then
+    if echo X"${sender}" | sed 's,^X\./,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming sender name: \""${sender}"\" 1>&2
+      return 2
+    fi
+
+    spreamble="$(echo X"${sender}" |sed "s,^X\./,self/,")"
+  elif echo X"${sender}" |grep -q "/" >/dev/null 2>/dev/null
+  then
+    echo "$(basename "$0"):${LINENO}": Invalid sender name: \""${sender}"\" 1>&2
+    return 2
+  else
+    if test X"${sender}" == X
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid null sender length 1>&2
+      return 2
+    fi
+
+    if echo X"${sender}" |grep -q '\.' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming sender name: \""${sender}"\" 1>&2
+    fi
+
+    spreamble=self/"${sender}"
+  fi
+  unset sender
+
+  if test "${recipient}" '==' ..
+  then
+    rpreamble=upstream
+  elif echo X"${recipient}" |grep -q "^X\.\./" >/dev/null 2>/dev/null
+  then
+    if echo X"${recipient}" | sed 's,^X\.\./,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming recipient name: \""${recipient}"\" 1>&2
+      return 2
+    fi
+    rpreamble="$(echo X"${recipient}" |sed "s,^X\.\./,upstream/,")"
+  elif test "${recipient}" '==' .
+  then
+    rpreamble=self
+  elif echo X"${recipient}" |grep -q "^X\./" >/dev/null 2>/dev/null
+  then
+    if echo X"${recipient}" | sed 's,^X\./,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming recipient name: \""${recipient}"\" 1>&2
+      return 2
+    fi
+
+    rpreamble="$(echo X"${recipient}" |sed "s,^X\./,self/,")"
+  elif echo X"${recipient}" |grep -q "/" >/dev/null 2>/dev/null
+  then
+    if echo X"${recipient}" | sed 's,^X[^/]*/,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming recipient name: \""${recipient}"\" 1>&2
+      return 2
+    fi
+
+    rpreamble=extern/"${recipient}"
+  else
+    if test X"${recipient}" == X
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid null recipient length 1>&2
+      return 2
+    fi
+
+    if echo X"${recipient}" |grep -q '\.' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming recipient name: \""${recipient}"\" 1>&2
+    fi
+    rpreamble=extern/"${recipient}"
+  fi
+  unset recipient
+
+  if test -f "${wdir}"/"${rpreamble}"/secp.pub && test -f "${wdir}"/"${rpreamble}"/brainpoolp.pub && test -f "${wdir}"/"${rpreamble}"/rsa.pub && test -f "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.pub
+  then
+    true
+  else
+    echo "$(basename "$0"):${LINENO}": Public keys are not known to be available. May need to import 1>&2
+    return 2
+  fi
+
+  if test -f "${wdir}"/"${spreamble}"/secp.sec && test -f "${wdir}"/"${spreamble}"/brainpoolp.sec && test -f "${wdir}"/"${spreamble}"/rsa.sec && test -f "${wdir}"/"${spreamble}"/mceqcmdpc256fo.sec
+  then
+    true
+  else
+    echo "$(basename "$0"):${LINENO}": Secret keys are not known to be available 1>&2
+    return 2
+  fi
+
+  (
+    set -o pipefail
+    umask 077
+
+    if test -t 0
+    then
+      echo "$(basename "$0"):${LINENO}": Not expecting tty input: "${TTY}" 1>&2
+      return 2
+    fi
+
+    if test -t 1 || tty -s <&1
+    then
+      echo "$(basename "$0"):${LINENO}": Refusing to output to a tty: "${TTY}" 1>&2
+      return 2
+    fi
+
+    (
+      TDIR="$(mktemp --directory "${wdir}"/tmp."${SRANDOM}"."${RANDOM}".XXXXXXXXXX)"
+      export TMP="${TDIR}"
+      export TEMP="${TMP}"
+      export TMPDIR="${TMP}"
+
+      mkdir -p "${TDIR}"/.ccr
+      HOME="${TDIR}" ccr -y -i -a -N other < "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.pub || return $?
+
+      (sys date && cat) |
+        age -r "$(cat "${wdir}"/"${rpreamble}"/rsa.pub)" |
+        seccure-signcrypt -c secp521r1 -c brainpoolp512r1 -m 256 -F "${wdir}"/"${spreamble}"/secp.sec "$(cat "${wdir}"/"${rpreamble}"/brainpoolp.pub)" |
+        HOME="${TDIR}" ccr -y -e -r other |
+        seccure-signcrypt -c brainpoolp512r1 -c secp521r1 -m 256 -F "${wdir}"/"${spreamble}"/brainpoolp.sec "$(cat "${wdir}"/"${rpreamble}"/secp.pub)"
+
+      RET="$?"
+      if test "${RET}" -ne 0
+      then
+        echo "$(basename "$0"):${LINENO}": Send fails with exit status "${RET}" 1>&2
+        return "${RET}"
+      fi
+
+      rm -f "${TDIR}"/.ccr/pubkeys "${TDIR}"/.ccr/secrets "${TDIR}"/.ccr/pubkeys\~ "${TDIR}"/.ccr/secrets\~ "${TDIR}"/.ccr/lock || true
+      rmdir "${TDIR}"/.ccr || return $?
+      rmdir "${TDIR}" || return $?
+
+      unset TDIR
+    ) |
+    (
+      if test "${rec}" -eq 0
+      then
+        cat
+      else
+        if ! sys crypt send "$@"
+        then
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Send chain fails at: "$@" 1>&2
+          return "${RET}"
+        fi
+      fi
+    )
+  )
+
+  RET="$?"
+  if test "${RET}" -ne 0
+  then
+    echo "$(basename "$0"):${LINENO}": Send fails with exit status "${RET}" 1>&2
+    return "${RET}"
+  fi
+}
+
+sys_crypt_receive() {
+  wdir="$(sys crypt dir)"
+
+  rec=0
+  sender=""
+  recipient=""
+  spreamble=""
+  rpreamble=""
+
+  if test "$#" -gt 1
+  then
+    rec=1
+  fi
+
+  if test "$#" -eq 0
+  then
+    sender=.
+    recipient=.
+  else
+    pair="$1"
+    if echo X"${pair}" |fgrep -q : >/dev/null 2>/dev/null
+    then
+      if echo X"${pair}" | grep -q ':.*:' >/dev/null 2>/dev/null
+      then
+        echo "$(basename "$0"):${LINENO}": Only one delimiter possible 1>&2
+        return 2
+      fi
+
+      if echo X"${pair}" | grep -q '^-' >/dev/null 2>/dev/null
+      then
+        echo "$(basename "$0"):${LINENO}": Invalid sender prefix 1>&2
+        return 2
+      fi
+
+      sender="$(echo "${pair}" | cut -f1 -d:)"
+      recipient="$(echo "${pair}" | cut -f2 -d:)"
+
+      if test X"$(echo -n "${sender}" | tr -d '\t\n ')" '==' X
+      then
+        sender=.
+      fi
+
+      if test X"$(echo -n "${recipient}" | tr -d '\t\n ')" '==' X
+      then
+        recipient=.
+      fi
+    else
+      sender="${pair}"
+      recipient=.
+    fi
+
+    unset pair
+    shift
+  fi
+
+  if echo X"${recipient}" |grep -q "^X\.\." >/dev/null 2>/dev/null
+  then
+    echo "$(basename "$0"):${LINENO}": Invalid recipient name: \""${recipient}"\" 1>&2
+    return 2
+  elif test "${recipient}" '==' .
+  then
+    rpreamble=self
+  elif echo X"${recipient}" |grep -q "^X\./" >/dev/null 2>/dev/null
+  then
+    if echo X"${recipient}" | sed 's,^X\./,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming recipient name: \""${recipient}"\" 1>&2
+      return 2
+    fi
+
+    rpreamble="$(echo X"${recipient}" |sed "s,^X\./,self/,")"
+  elif echo X"${recipient}" |grep -q "/" >/dev/null 2>/dev/null
+  then
+    echo "$(basename "$0"):${LINENO}": Invalid recipient name: \""${recipient}"\" 1>&2
+    return 2
+  else
+    if test X"${recipient}" == X
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid null recipient length 1>&2
+      return 2
+    fi
+
+    if echo X"${recipient}" |grep -q '\.' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming recipient name: \""${recipient}"\" 1>&2
+    fi
+
+    rpreamble=self/"${recipient}"
+  fi
+  unset recipient
+
+  if test "${sender}" '==' ..
+  then
+    spreamble=upstream
+  elif echo X"${sender}" |grep -q "^X\.\./" >/dev/null 2>/dev/null
+  then
+    if echo X"${sender}" | sed 's,^X\.\./,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming sender name: \""${sender}"\" 1>&2
+      return 2
+    fi
+    spreamble="$(echo X"${sender}" |sed "s,^X\.\./,upstream/,")"
+  elif test "${sender}" '==' .
+  then
+    spreamble=self
+  elif echo X"${sender}" |grep -q "^X\./" >/dev/null 2>/dev/null
+  then
+    if echo X"${sender}" | sed 's,^X\./,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming sender name: \""${sender}"\" 1>&2
+      return 2
+    fi
+
+    spreamble="$(echo X"${sender}" |sed "s,^X\./,self/,")"
+  elif echo X"${sender}" |grep -q "/" >/dev/null 2>/dev/null
+  then
+    if echo X"${sender}" | sed 's,^X[^/]*/,,' |grep -q '[/\.]' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming sender name: \""${sender}"\" 1>&2
+      return 2
+    fi
+
+    spreamble=extern/"${sender}"
+  else
+    if test X"${sender}" == X
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid null sender length 1>&2
+      return 2
+    fi
+
+    if echo X"${sender}" |grep -q '\.' >/dev/null 2>/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Non-conforming sender name: \""${sender}"\" 1>&2
+    fi
+    spreamble=extern/"${sender}"
+  fi
+  unset sender
+
+  if test -f "${wdir}"/"${rpreamble}"/secp.sec && test -f "${wdir}"/"${rpreamble}"/brainpoolp.sec && test -f "${wdir}"/"${rpreamble}"/rsa.sec && test -f "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.sec
+  then
+    true
+  else
+    echo "$(basename "$0"):${LINENO}": Secret keys are not known to be available 1>&2
+    return 2
+  fi
+
+  if test -f "${wdir}"/"${spreamble}"/secp.pub && test -f "${wdir}"/"${spreamble}"/brainpoolp.pub && test -f "${wdir}"/"${spreamble}"/rsa.pub && test -f "${wdir}"/"${spreamble}"/mceqcmdpc256fo.pub
+  then
+    true
+  else
+    echo "$(basename "$0"):${LINENO}": Public keys are not known to be available. May need to import 1>&2
+    return 2
+  fi
+
+  (
+    set -o pipefail
+    umask 077
+
+    if test -t 0
+    then
+      echo "$(basename "$0"):${LINENO}": Not expecting tty input: "${TTY}" 1>&2
+      return 2
+    fi
+
+    if test -t 1 || tty -s <&1
+    then
+      echo "$(basename "$0"):${LINENO}": Refusing to output to a tty: "${TTY}" 1>&2
+      return 2
+    fi
+
+    (
+      TDIR="$(mktemp --directory "${wdir}"/tmp."${SRANDOM}"."${RANDOM}".XXXXXXXXXX)"
+      export TMP="${TDIR}"
+      export TEMP="${TMP}"
+      export TMPDIR="${TMP}"
+
+      mkdir -p "${TDIR}"/.ccr
+      echo -n "s11:CCR-PUBKEYSe" > "${TDIR}"/.ccr/pubkeys
+      cp -p "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.sec "${TDIR}"/.ccr/secrets
+
+      seccure-veridec -c secp521r1 -c brainpoolp512r1 -F "${wdir}"/"${rpreamble}"/secp.sec "$(cat "${wdir}"/"${spreamble}"/brainpoolp.pub)" 2>/dev/null |
+        HOME="${TDIR}" ccr -y -d -u self 2>/dev/null |
+        seccure-veridec -c brainpoolp512r1 -c secp521r1 -F "${wdir}"/"${rpreamble}"/brainpoolp.sec "$(cat "${wdir}"/"${spreamble}"/secp.pub)" 2>/dev/null |
+        age -d -i "${wdir}"/"${rpreamble}"/rsa.sec 2>/dev/null |
+        (dd bs=30 count=1 status=none | cat -v | sed -e 's,^,Timestamp: ,' 1>&2 && cat)
+
+      RET="$?"
+
+      rm -f "${TDIR}"/.ccr/pubkeys "${TDIR}"/.ccr/secrets "${TDIR}"/.ccr/pubkeys\~ "${TDIR}"/.ccr/secrets\~ "${TDIR}"/.ccr/lock || true
+      rmdir "${TDIR}"/.ccr || return $?
+      rmdir "${TDIR}" || return $?
+
+      unset TDIR
+
+      if test "${RET}" -ne 0
+      then
+        echo "$(basename "$0"):${LINENO}": Receive fails with exit status "${RET}" 1>&2
+        return "${RET}"
+      fi
+    ) |
+    (
+      if test "${rec}" -eq 0
+      then
+        cat
+      else
+        if ! sys crypt receive "$@"
+        then
+          RET="$?"
+          echo "$(basename "$0"):${LINENO}": Receive chain fails at: "$@" 1>&2
+          return "${RET}"
+        fi
+      fi
+    )
+  )
+
+  RET="$?"
+  if test "${RET}" -ne 0
+  then
+    echo "$(basename "$0"):${LINENO}": Receive fails with exit status "${RET}" 1>&2
+    return "${RET}"
+  fi
+}
+
+sys_crypt_export() {
+  wdir="$(sys crypt dir)"
+
+  if ! sys crypt key "$@"
+  then
+    echo "$(basename "$0"):${LINENO}": Unable to generate or validate "$@" 1>&2
+  fi
+
+  TIMESTAMP="$(cat -- "${wdir}"/self/genesis.stamp)"
+  addendum=
+  if test "$#" -ne 0
+  then
+    addendum=-"$(echo " " "$@" | tr ' ' '\n'|sort|uniq|grep .|grep -v '^\.$' |tr '\n' , | sed 's/,$//')"
+    if test X"${addendum}" '==' X-
+    then
+      if echo " " "$@" |tr ' ' '\n' |grep -q '^\.$'
+      then
+        addendum=-Shallow
+      else
+        addendum=
+      fi
+    fi
+  fi
+
+  if test "$#" -eq 0
+  then
+    rec=2
+  else
+    rec=1
+  fi
+
+  for i in "$@"
+  do
+    if echo -- "${i}" |fgrep -q / >/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid subkey \""${i}"\" 1>&2
+      return 2
+    fi
+
+    if echo X"${i}" |grep -q '^X\.\.' >/dev/null
+    then
+      echo "$(basename "$0"):${LINENO}": Invalid subkey \""${i}"\" 1>&2
+      return 2
+    fi
+
+    if ! test -d "${wdir}"/self/"${i}"/.
+    then
+      echo "$(basename "$0"):${LINENO}": Subkey \""${i}"\" not known to exist 1>&2
+      return 2
+    fi
+  done
+
+  (
+    set -o pipefail
+
+    (
+      cd "${wdir}"/self/. || return $?
+
+      find . "$@" -maxdepth "${rec}" -type f \( -name \*.sig -or -name \*.pub -or -name \*.stamp \) -print0 |
+        sort -z |
+        uniq -z |
+        cpio -0 -H newc -o --renumber-inodes --quiet |
+        gzip -1 -q -f |
+        uuencode "${TIMESTAMP}${addendum}"-Key-Export.cpio.gz
+    ) | if test -t 1 || tty -s <&1
+      then
+        if test -e "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode
+        then
+          mv -f "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode-"${SRANDOM}"-"${RANDOM}"-Backup >/dev/null 2>/dev/null
+        fi
+
+        cat >> "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode
+
+        if test -s "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode
+        then
+          echo "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode 1>&2
+        else
+          rm -f "${TIMESTAMP}${addendum}"-Keys.cpio.gz.uuencode >/dev/null 2>/dev/null || true
+        fi
+      else
+        cat
+      fi
+  )
+}
+
+sys_crypt_import() {
+  wdir="$(sys crypt dir)"
+
+  if test "$#" -eq 0
+  then
+    echo "$(basename "$0"):${LINENO}": Key status 1>&2
+    echo 1>&2
+
+    (
+      export max=24
+      cd "${wdir}"/. || return $?
+
+      export width="$(find . -type f -name genesis.stamp -exec sh -c 'expr $(echo {} | wc -c) - 15' \; | sort -n | tail -n 1)"
+
+      printf "%-${width}s %-30s%-20s %s\n" "Key" "Genesis" "Checksum" "Ref" 1>&2
+      printf "%-${width}s %-30s%-20s %s\n" "---" "-------" "--------" "---" 1>&2
+
+      refs=""
+      find . -type f -name genesis.stamp -exec grep . -- \{\} /dev/null \; | sed 's,^\./,,' | sed 's,/genesis.stamp:, ,' | sed 's,^self,_self,' | sort | sed 's,^_self,self,'| while read entry
+      do
+        set -- ${entry}
+        SUM=$(cd "${wdir}"/"$1" && sha256sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub dilithium5.pub mceqcmdpc256fo.pub rsa.pub secp.pub | sha256sum | awk '{print $1}' | head -c 20)
+        if echo "${refs}" | fgrep -q "${SUM}"
+        then
+          ref="$(expr $(echo "${refs}" | tr ' ' '\n' |grep -n "${SUM}" | cut -f1 -d:) - 1)"
+        else
+          ref="$(expr $(echo ${refs} | tr ' ' '\n'|sort|uniq | wc -w) + 1)"
+          refs="${refs} ${SUM}"
+        fi
+
+        printf "%-${width}s %s %s %s\n" ${entry} "${SUM}" "${ref}"
+      done
+    )
+
+    return 0
+  fi
+
+  dest="$1"
+
+  if test $(echo X"${dest}" |head -n 1 |sed 's,^X,,' | tr -d ' \n' | wc -c) -eq 0
+  then
+    echo "$(basename "$0"):${LINENO}": Invalid import destination \""${dest}"\" 1>&2
+    return 2
+  fi
+
+  if test $(echo X"${dest}" |head -n 1 |sed 's,^X,,'| tr -d '\n' | tr -d A-Za-z0-9_@'\-' | wc -c) -ne 0
+  then
+    echo "$(basename "$0"):${LINENO}": Invalid import destination \""${dest}"\" 1>&2
+    return 2
+  fi
+
+  if test -d "${wdir}"/extern/"${dest}"/.
+  then
+    echo "$(basename "$0"):${LINENO}": Warning: destination \""${dest}"\" already exists 1>&2
+  fi
+  mkdir -p -- "${wdir}"/extern/"${dest}" >/dev/null 2>/dev/null || true
+
+  (
+    cd "${wdir}"/extern/"${dest}"/. || return $?
+    umask 027
+    uudecode -o- | gunzip -q -f | cpio -i -m -d --force-local --no-absolute-filenames --sparse
+  )
 }
 
 function sys_storage_block_disk_recency() {
@@ -391,7 +1546,7 @@ function sys_storage_block_disk_recency() {
     rmdir "${dir}" || return $?
   done
 
-  echo $0: Timestamps for name ${name}: ${times[@]} 1>&2
+  echo "$(basename "$0"):${LINENO}": Timestamps for name ${name}: ${times[@]} 1>&2
   echo ${times[@]} | tr ' ' '\n'| sort -nr | cut -f2 -d:
 }
 
@@ -402,7 +1557,7 @@ function sys_storage_block_disk_sync() {
   do
     ordered=($(sys storage block disk recency "${name}"))
     reversed=($(sys storage block disk recency "${name}" | tr ' ' '\n'|tac | tr '\n' ' '))
-    echo $0: Sync name ${name} using ordered chain: ${ordered[@]} 1>&2
+    echo "$(basename "$0"):${LINENO}": Sync name ${name} using ordered chain: ${ordered[@]} 1>&2
 
     for direction in fwd rev
     do
@@ -434,7 +1589,7 @@ function sys_storage_block_disk_sync() {
           then
             tar -C "${odir}"/ -c -f - . |tar -C "${rdir}"/ -x -p -k -f - || true
           else
-            rsync --archive --exclude='ldlinux.*' --verbose --inplace --update --whole-file --one-file-system --numeric-ids --stats --itemize-changes "${odir}"/ "${rdir}"/ || echo $0: Warning: rsync status $? for origin "${origin}" destination "${rest}" 1>&2
+            rsync --archive --exclude='ldlinux.*' --verbose --inplace --update --whole-file --one-file-system --numeric-ids --stats --itemize-changes "${odir}"/ "${rdir}"/ || echo "$(basename "$0"):${LINENO}": Warning: rsync status $? for origin "${origin}" destination "${rest}" 1>&2
           fi
 
           umount -v "${rdir}" 1>&2
@@ -462,23 +1617,23 @@ function sys_directive_install() {
     MAIN=DATA
   fi
 
-  echo $0: Considering candidates for installation 1>&2
+  echo "$(basename "$0"):${LINENO}": Considering candidates for installation 1>&2
   disks="$(sys storage block disk match)"
   if test $(echo ${disks} | tr -d '\n \t' |wc -c) -ne 0
   then
-    echo $0: Candidate list: ${disks} 1>&2
+    echo "$(basename "$0"):${LINENO}": Candidate list: ${disks} 1>&2
   fi
 
   for disk in ${disks}
   do
-    echo $0: Partition disk ${disk} - ${MAIN} 1>&2
+    echo "$(basename "$0"):${LINENO}": Partition disk ${disk} - ${MAIN} 1>&2
     sys storage block disk partition "${disk}" ${MAIN} || return $?
     sys storage block disk syslinux "${disk}" || return $?
   done
 
-  echo $0: Synchronise state 1>&2
+  echo "$(basename "$0"):${LINENO}": Synchronise state 1>&2
   sys storage block disk sync
-  echo $0: Synchronise state complete 1>&2
+  echo "$(basename "$0"):${LINENO}": Synchronise state complete 1>&2
 }
 
 function sys_directive() {
@@ -506,7 +1661,7 @@ function sys_directive_complete() {
 }
 
 function sys_platform_bootstrap_packages() {
-  echo age amd64-microcode ca-certificates coreutils cpio curl dc dosfstools e2fsprogs efibootmgr eudev findutils gawk gdisk initramfs-tools-core intel-microcode jq lsb-release moreutils mount qemu-system-x86 qemu-user-static qemu-utils rsync seccure sed syslinux syslinux-common syslinux-efi syslinux-utils sysvinit-core tar util-linux wget xz-utils zstd
+  echo age amd64-microcode brotli bzip2 ca-certificates ccrypt codecrypt coreutils cpio curl dc dosfstools dpkg e2fsprogs efibootmgr eudev findutils gawk gdisk gnupg1 gostsum gzip hashdeep hostname initramfs-tools-core intel-microcode iproute2 jq kmod lsb-release lshw lsof lsscsi lz4 lzip lzop moreutils mount net-tools nettle-bin pciutils procinfo procps qemu-system-x86 qemu-user-static qemu-utils rhash rsync seccure sed sharutils sq syslinux syslinux-common syslinux-efi syslinux-utils sysstat sysvinit-core tar usbutils util-linux wget xxhash xz-utils zstd
 }
 
 function sys_platform() {
@@ -525,11 +1680,11 @@ function sys_platform_bootstrap_depend() {
 function sys_platform_bootstrap_validate() {
   if dpkg -s $(sys platform bootstrap packages) >/dev/null 2>/dev/null
   then
-    echo $0: Conforming platform 1>&2
+    echo "$(basename "$0"):${LINENO}": Conforming platform 1>&2
     return 0
   else
     RET=$?
-    echo $0: Platform may be missing packages. Suggest running: sys platform bootstrap depend 1>&2
+    echo "$(basename "$0"):${LINENO}": Platform may be missing packages. Suggest running: sys platform bootstrap depend 1>&2
     return "${RET}"
   fi
 }
