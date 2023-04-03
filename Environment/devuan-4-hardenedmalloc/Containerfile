@@ -328,6 +328,7 @@ RUN \
     chromium-sandbox \
     chrootuid \
     chrpath \
+    codecrypt \
     conmon \
     containernetworking-plugins \
     containers-storage \
@@ -574,6 +575,7 @@ RUN \
     slirp \
     slirp4netns \
     socat \
+    sq \
     squashfs-tools \
     squashfs-tools-ng \
     squashfuse \
@@ -1643,11 +1645,12 @@ RUN \
   (echo deb http://deb.devuan.org/merged daedalus main contrib non-free && echo deb-src http://deb.devuan.org/merged daedalus main contrib non-free) > /etc/apt/sources.list && \
   apt-get -y update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  apt-get -y --verbose-versions install apt-transport-https autoconf automake bash bc bear bindgen binutils binutils-common binutils-x86-64-linux-gnu bison build-essential ca-certificates cbindgen clang cmake coccinelle cpio cpp cpp-10 curl dc dpkg-dev dkms ed file flex gcc gcc-10 git git-man gpg-agent iptables kmod less libaio-dev libasan6 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcbor-dev libcc1-0 libclang-dev libcrypt-dev libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libedit2 libelf-dev libeudev-dev libexpat1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgit2-1.5 libgomp1 libhttp-parser2.9 libisl23 libitm1 libldap-common libldap-2.5-0 liblsan0 libmbedcrypto7 libmbedtls14 libmbedx509-1 libmpc3 libmpfr6 libncurses-dev libnghttp2-14 libnsl-dev libomp-dev libpcap-dev libpsl5 libquadmath0 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl-dev libtirpc-dev libtool libtsan0 libubsan1 libudev-dev libvdeplug-dev libz3-4 linux-base linux-libc-dev linux-perf llvm llvm-dev lsb-release make mandoc musl-tools nasm ninja-build openssl perf-tools-unstable pkgconf python3-pip python3-setuptools python3-wheel rsync software-properties-common sudo uuid-dev valgrind vim-common vim-tiny wget xxd zlib1g-dev zstd && \
-  apt-get -y --verbose-versions install autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 ca-certificates cpio cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism distro-info-data docutils-common dpkg-dev dwz eudev file g++ g++-10 gcc gcc-10 gettext gettext-base groff-base html2text initramfs-tools initramfs-tools-core intltool-debian kernel-wedge klibc-utils kmod libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libexpat1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu72 libisl23 libitm1 libjs-jquery libjs-sphinxdoc libjs-underscore libklibc libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libperl5.36 libpipeline1 libpopt0 libpython3-stdlib libpython3.11-minimal libpython3.11-stdlib libquadmath0 libreadline8 libsigsegv2 libsqlite3-0 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 linux-base linux-kbuild-6.1 linux-libc-dev linux-support-6.1.0-6 lsb-release m4 make man-db media-types openssl patch perl perl-modules-5.36 po-debconf procps python-babel-localedata python3 python3-alabaster python3-babel python3-certifi python3-chardet python3-distutils python3-docutils python3-idna python3-imagesize python3-jinja2 python3-lib2to3 python3-markupsafe python3-minimal python3-packaging python3-pkg-resources python3-pygments python3-pyparsing python3-requests python3-roman python3-six python3-snowballstemmer python3-sphinx python3-tz python3-urllib3 python3.11 python3.11-minimal readline-common rsync sbsigntool sensible-utils sgml-base sphinx-common udev xml-core xz-utils && \
-  apt-get -y --verbose-versions install coccinelle wget git-core python3 python3-dev libeudev-dev libxen-dev pkgconf gcc-10 asciidoctor && \
+  apt-get -y --verbose-versions install apt-transport-https autoconf automake bash bc bear bindgen binutils binutils-common binutils-x86-64-linux-gnu bison build-essential ca-certificates cbindgen clang cmake coccinelle cpio cpp cpp-11 curl dc dpkg-dev dkms ed file flex gcc gcc-11 git git-man gpg-agent iptables kmod less libaio-dev libasan6 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcbor-dev libcc1-0 libclang-dev libcrypt-dev libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libedit2 libelf-dev libeudev-dev libexpat1 libgcc-11-dev libgdbm-compat4 libgdbm6 libgit2-1.5 libgomp1 libhttp-parser2.9 libisl23 libitm1 libldap-common libldap-2.5-0 liblsan0 libmbedcrypto7 libmbedtls14 libmbedx509-1 libmpc3 libmpfr6 libncurses-dev libnghttp2-14 libnsl-dev libomp-dev libpcap-dev libpsl5 libquadmath0 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl-dev libtirpc-dev libtool libtsan0 libubsan1 libudev-dev libvdeplug-dev libz3-4 linux-base linux-libc-dev linux-perf llvm llvm-dev lsb-release make mandoc musl-tools nasm ninja-build openssl perf-tools-unstable pkgconf python3-pip python3-setuptools python3-wheel rsync software-properties-common sudo uuid-dev valgrind vim-common vim-tiny wget xxd zlib1g-dev zstd && \
+  apt-get -y --verbose-versions install autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 ca-certificates cpio cpp cpp-11 debhelper dh-autoreconf dh-strip-nondeterminism distro-info-data docutils-common dpkg-dev dwz eudev file g++ g++-11 gcc gcc-11 gettext gettext-base groff-base html2text initramfs-tools initramfs-tools-core intltool-debian kernel-wedge klibc-utils kmod libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libexpat1 libfile-stripnondeterminism-perl libgcc-11-dev libgdbm-compat4 libgdbm6 libgomp1 libicu72 libisl23 libitm1 libjs-jquery libjs-sphinxdoc libjs-underscore libklibc libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libperl5.36 libpipeline1 libpopt0 libpython3-stdlib libpython3.11-minimal libpython3.11-stdlib libquadmath0 libreadline8 libsigsegv2 libsqlite3-0 libstdc++-11-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 linux-base linux-kbuild-6.1 linux-libc-dev lsb-release m4 make man-db media-types openssl patch perl perl-modules-5.36 po-debconf procps python-babel-localedata python3 python3-alabaster python3-babel python3-certifi python3-chardet python3-distutils python3-docutils python3-idna python3-imagesize python3-jinja2 python3-lib2to3 python3-markupsafe python3-minimal python3-packaging python3-pkg-resources python3-pygments python3-pyparsing python3-requests python3-roman python3-six python3-snowballstemmer python3-sphinx python3-tz python3-urllib3 python3.11 python3.11-minimal readline-common rsync sbsigntool sensible-utils sgml-base sphinx-common udev xml-core xz-utils && \
+  apt-get -y --verbose-versions install coccinelle wget git-core python3 python3-dev libeudev-dev libxen-dev pkgconf gcc-11 asciidoctor && \
+  apt-get -y build-dep linux-image-amd64 && \
   dpkg -i /root/artifact/deb/*.deb && \
-  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 200 && \
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 200 && \
   \
   cd /usr/local/src && \
   export KERNEL_VERSION="$(ls -1d /lib/modules/5.10.*-hardened*-5.10 | tail -n 1 | sed 's,/lib/modules/,,')" && \
@@ -1704,8 +1707,65 @@ RUN \
   find usr/share/doc -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   cd lib/modules && \
   for i in 5.*; do rm -r "$i" && mv /lib/modules/"$i" .; done && \
-  SIGN_FILE=$(ls -1d /usr/src/linux-headers-5.10.*-hardened1-5.10/scripts/sign-file | tail -n 1)" && \
+  cd ../.. && \
+  tar -cf - boot lib etc usr | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > data.tar.xz && \
+  rm -v /root/artifact/deb/"${IMGFILE}" && \
+  ar rcv /root/artifact/deb/"${IMGFILE}" debian-binary control.tar.xz data.tar.xz && \
+  unset IMGFILE && \
+  cd /usr/local/ && \
+  rm -r src/ && \
+  rm -f /boot/* && \
+  mv /root/artifact /opt/artifact && \
+  true
+
+
+FROM docker://devuan/devuan:chimaera AS kernelsign
+COPY --from=kernelbuild5 /opt/artifact /root/artifact
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 02 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  export V=1 && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  apt-get -y --verbose-versions install apt-transport-https autoconf automake bash bc bear bindgen binutils binutils-common binutils-x86-64-linux-gnu bison build-essential ca-certificates cbindgen clang cmake coccinelle cpio cpp cpp-10 curl dc dpkg-dev dkms ed file flex gcc gcc-10 git git-man gpg-agent iptables kmod less libaio-dev libasan6 libatomic1 libbinutils libbrotli1 libc-dev-bin libc6-dev libcbor-dev libcc1-0 libclang-dev libcrypt-dev libctf-nobfd0 libctf0 libcurl3-gnutls libcurl4 libedit2 libelf-dev libeudev-dev libexpat1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libhttp-parser2.9 libisl23 libitm1 libldap-common liblsan0 libmpc3 libmpfr6 libncurses-dev libnghttp2-14 libnsl-dev libomp-dev libpcap-dev libpsl5 libquadmath0 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl-dev libtirpc-dev libtool libtsan0 libubsan1 libudev-dev libvdeplug-dev libz3-4 linux-base linux-libc-dev linux-perf llvm llvm-dev lsb-release make mandoc musl-tools nasm ninja-build openssl perf-tools-unstable pkgconf python3-pip python3-setuptools python3-wheel rsync software-properties-common sudo uuid-dev valgrind vim-common vim-tiny wget xxd zlib1g-dev zstd && \
+  apt-get -y --verbose-versions install autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 ca-certificates cpio cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism distro-info-data docutils-common dpkg-dev dwz eudev file g++ g++-10 gcc gcc-10 gettext gettext-base groff-base html2text initramfs-tools initramfs-tools-core intltool-debian kernel-wedge klibc-utils kmod libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libexpat1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libisl23 libitm1 libjs-jquery libjs-sphinxdoc libjs-underscore libklibc libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libpipeline1 libpopt0 libpython3-stdlib libquadmath0 libreadline8 libsigsegv2 libsqlite3-0 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 linux-base linux-libc-dev lsb-release m4 make man-db media-types openssl patch perl po-debconf procps python-babel-localedata python3 python3-alabaster python3-babel python3-certifi python3-chardet python3-distutils python3-docutils python3-idna python3-imagesize python3-jinja2 python3-lib2to3 python3-markupsafe python3-minimal python3-packaging python3-pkg-resources python3-pygments python3-pyparsing python3-requests python3-roman python3-six python3-snowballstemmer python3-sphinx python3-tz python3-urllib3 readline-common rsync sbsigntool sensible-utils sgml-base sphinx-common udev xml-core xz-utils && \
+  apt-get -y --verbose-versions install coccinelle wget git-core python3 python3-dev libeudev-dev libxen-dev pkgconf gcc-10 asciidoctor && \
+  apt-get -y build-dep linux-image-amd64 && \
+  dpkg -i /root/artifact/deb/*.deb && \
+  rm -r -f /lib/modules/5.* && \
+  dpkg -i /root/artifact/deb/*.deb && \
+  \
+  cd /usr/local/src && \
+  export KERNEL_VERSION="$(ls -1d /lib/modules/5.10.*-hardened*-5.10 | tail -n 1 | sed 's,/lib/modules/,,')" && \
+  depmod -a "${KERNEL_VERSION}" && \
+  rm -f -v /boot/*.old && \
+  rm -f -v /lib/modules/*/build && \
+  rm -f -v /lib/modules/*/source && \
+  find /lib/modules/5.*/*/ -type f -name '*.so' -exec strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- \{\} \; && \
+  find /lib/modules/5.*/*/ -type f -name '*.ko' -exec strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- \{\} \; && \
+  IMGFILE="$(cd /root/artifact/deb && ls -1d linux-image-5.10.*-hardened1-5.10_5.10.*-hardened1-5.10-1_amd64.deb | tail -n 1)" && \
+  mkdir ephemeral && \
+  cd ephemeral && \
+  ar x /root/artifact/deb/"${IMGFILE}" && \
+  xz -d -v -v < data.tar.xz |tar -x -p -k -f - && \
+  find usr/share/doc -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
+  cd lib/modules && \
+  for i in 5.*; do rm -r "$i" && mv /lib/modules/"$i" .; done && \
+  SIGN_FILE="$(ls -1d /usr/src/linux-headers-5.10.*-hardened1-5.10/scripts/sign-file | tail -n 1)" && \
   find ./5.*/ -type f -name "*.ko" -exec "${SIGN_FILE}" sha512 /root/artifact/certs/signing_key.pem /root/artifact/certs/signing_key.x509 \{\} \; && \
+  find ./5.*/ -type f -name "*.so" -exec "${SIGN_FILE}" sha512 /root/artifact/certs/signing_key.pem /root/artifact/certs/signing_key.x509 \{\} \; && \
   unset SIGN_FILE && \
   cd ../.. && \
   tar -cf - boot lib etc usr | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > data.tar.xz && \
@@ -1718,10 +1778,11 @@ RUN \
   mv /root/artifact /opt/artifact && \
   true
 
+
 FROM devuan-4 AS devuan-4-local
 COPY --from=devuan-4-builder /opt/artifact /root/artifact
 COPY --from=alpine-builder /usr/local /root/local
-COPY --from=kernelbuild5 /opt/artifact /root/kernel
+COPY --from=kernelsign /opt/artifact /root/kernel
 COPY --from=ascii-builder /usr/local/bin/pcompress /root/artifact/local/bin/pcompress
 
 RUN \
@@ -2325,7 +2386,7 @@ FROM docker://devuan/devuan:chimaera AS devuan-4-hardenedmalloc
 COPY --from=devuan-4-kicksecure /usr/lib/libhardened_malloc.so/ /usr/lib/libhardened_malloc.so/
 COPY --from=devuan-4-kicksecure /root/dpkg-l /root/dpkg-l-kicksecure
 COPY --from=devuan-4-local / /root/initrd/
-COPY --from=kernelbuild5 /opt/artifact /root/kernel
+COPY --from=kernelsign /opt/artifact /root/kernel
 COPY Scripts/05entropy /root/
 COPY --from=devuan-archive-pool /opt/artifact/archives.gtar.gz /root/archives-devuan.gtar.gz
 COPY --from=devuan-archive-pool /opt/artifact/extended.gtar.gz /root/extended-devuan.gtar.gz
@@ -2583,7 +2644,7 @@ RUN \
   chmod --verbose go-rwx init && \
   mkdir -p -v opt/bootstrap/lib/x86_64-linux-gnu/ && \
   cd /root/initrd/usr/lib/x86_64-linux-gnu && \
-  tar -c --remove-files -v -f - $(ls -1d libacl.so* libaio.so* libargon2.so* libattr.so* libblkid.so* libbsd.so* libcrypto.so* libedit.so* libgcrypt* libgmp.so* libjson-c.so* libkmod.so* liblz4.so* libmd.so* libmount.so* libmpfr.so* libpcre2*so* libpopt.so* libsigsegv.so* libsmartcols.so* libsodium.so* libstdc++*.so* libsystemd.so* liburcu.so* libuuid.so* libzstd.so*) | tar -C /root/initrd/opt/bootstrap/lib/x86_64-linux-gnu/ -x -p -k -v -v --warning=no-timestamp -f - && \
+  tar -c --remove-files -v -f - $(ls -1d libacl.so* libaio.so* libargon2.so* libattr.so* libblkid.so* libbsd.so* libcrypto.so* libedit.so* libfftw3.so* libgcrypt* libgmp.so* libhogweed.so* libjson-c.so* libkmod.so* liblz4.so* libmd.so* libmount.so* libmpfr.so* libnettle.so* libpcre2*so* libpopt.so* libsigsegv.so* libsmartcols.so* libsodium.so* libstdc++*.so* libsystemd.so* liburcu.so* libuuid.so* libzstd.so*) | tar -C /root/initrd/opt/bootstrap/lib/x86_64-linux-gnu/ -x -p -k -v -v --warning=no-timestamp -f - && \
   cd /root/initrd/usr/lib && \
   tar -c --remove-files -v -f - $(ls -1d libscrypt.so*) | tar -C /root/initrd/opt/bootstrap/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
   cd /root/initrd/usr && \
