@@ -494,17 +494,18 @@ sys_crypt_entropy() {
 
 sys_crypt_entropy_ingest() {
   (
+    wdir="$(sys crypt dir)"
     set +e
     set +o pipefail
+    umask 077
 
     (
       set -x
-      umask 077
       export LANG=C
       export LC_ALL=C
       export TERM=dumb
       export TTY=/dev/null
-      export TMP=/dev/shm
+      export TMP="${wdir}"
       export TEMP="${TMP}"
       export TMPDIR="${TMP}"
       vmstat -d -t -w
@@ -512,6 +513,7 @@ sys_crypt_entropy_ingest() {
       vmstat -D -t -w
       vmstat -s -t -w
       vmstat -a -t -w
+      zdb -lll || true
       env
       ipcs -a
       dd if=/dev/urandom bs=37 count=1
@@ -526,6 +528,7 @@ sys_crypt_entropy_ingest() {
       dd if=/dev/hwrng bs=1024 count=6 || true
       hostname
       ifconfig -a
+      zpool status -v || true
       ip a
       dpkg -l
       date +%s.%N
@@ -538,33 +541,40 @@ sys_crypt_entropy_ingest() {
       /usr/bin/time -v curl -v https://etherscan.io
       lsusb -vv
       lspci -vv
+      zpool iostat -v || true
       lscpu
       lshw
+      sha256sum < "${wdir}"/entropy.seed || true
       lsdev
       date +%s.%N
       lsmod
       lsscsi
       dmesg
       vmstat -s
+      uname -a
       iostat
+      whirlpool-hash - < "${wdir}"/entropy.seed || true
       mpstat
       vmstat -f
       uptime
       vmstat
+      sha512sum < "${wdir}"/entropy.seed || true
       date +%s.%N
       lsof
       lsof -n -i
       /usr/bin/time -v curl -v 'https://www.random.org/cgi-bin/randbyte?nbytes=4096&format=h'
     ) 2>&1 |
-  gzip -1qf |
-  seccure-encrypt -m 0 "$(seccure-key -F /dev/null 2>/dev/null | sed 's,^The public key is: ,,')" 2>/dev/null |
-  age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
-  openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null
+      gzip -1qf |
+      seccure-encrypt -m 0 "$(seccure-key -F /dev/null 2>/dev/null | sed 's,^The public key is: ,,')" 2>/dev/null |
+      age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
+      tee -a >(rm -f "${wdir}"/entropy.seed || true; ( (tee -a >(sha512sum 1>&2) >(whirlpool-hash - 1>&2) >(sha256sum 1>&2)) >/dev/null ) 2>&1 | dd of="${wdir}"/entropy.seed status=none || true; true) |
+      openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null
   )
 }
 
 sys_crypt_entropy_evolve () {
   (
+    wdir="$(sys crypt dir)"
     set -e
     set +x
     set +o pipefail
@@ -573,17 +583,18 @@ sys_crypt_entropy_evolve () {
     export LC_ALL=C
     export TERM=dumb
     export TTY=/dev/null
-    export TMP=/dev/shm
+    export TMP="${wdir}"
     export TEMP="${TMP}"
     export TMPDIR="${TMP}"
 
     openssl enc -camellia-256-cfb8 -kfile /dev/urandom -e 2>/dev/null |
       age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
       openssl enc -aes-256-ctr -kfile /dev/urandom -e 2>/dev/null |
-      pee sha512sum b2sum cksum md5sum md5sum.textutils sha1sum sha256sum tigerdeep whirlpooldeep gost12sum gostsum xxh128sum "nettle-hash --algorithm=streebog512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=sha3_512" "openssl shake256" "rhash -a --verbose -" "edonr512-hash -" "gost12-512-hash -" "has160-hash -" "whirlpool-hash -" "openssl shake256" 2>/dev/null |
-      pee sha512sum xxh128sum gostsum gost12sum whirlpooldeep tigerdeep sha256sum sha1sum md5sum.textutils md5sum cksum b2sum "openssl shake256" "whirlpool-hash -" "has160-hash -" "gost12-512-hash -" "edonr512-hash -" "rhash -a --verbose -" "openssl shake256" "nettle-hash --algorithm=sha3_512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=streebog512" 2>/dev/null |
+      pee sha512sum b2sum cksum "sha256sum ${wdir}/entropy.seed 2>&1 || true" md5sum md5sum.textutils sha1sum sha256sum tigerdeep whirlpooldeep gost12sum gostsum xxh128sum "nettle-hash --algorithm=streebog512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=sha3_512" "openssl shake256" "rhash -a --verbose -" "edonr512-hash -" "gost12-512-hash -" "has160-hash -" "whirlpool-hash -" "openssl shake256" 2>/dev/null |
+      pee sha512sum xxh128sum gostsum gost12sum whirlpooldeep "sha512sum ${wdir}/entropy.seed 2>&1 || true" tigerdeep sha256sum sha1sum md5sum.textutils md5sum cksum b2sum "openssl shake256" "whirlpool-hash -" "has160-hash -" "gost12-512-hash -" "edonr512-hash -" "rhash -a --verbose -" "openssl shake256" "nettle-hash --algorithm=sha3_512" "nettle-hash --algorithm=sha512" "nettle-hash --algorithm=streebog512" 2>/dev/null |
       pee "openssl enc -aes-256-ctr -kfile /dev/urandom -e || true" "openssl enc -aria-256-ofb -kfile /dev/urandom -e || true" "openssl enc -camellia-256-cfb8 -kfile /dev/urandom -e || true" "openssl enc -cast5-ofb -kfile /dev/urandom -e || true" 2>/dev/null |
       ccrypt -k /dev/urandom 2>/dev/null |
+      tee -a >(rm -f "${wdir}"/entropy.seed || true; ( (tee -a >(sha256sum 1>&2) >(sha512sum 1>&2) >(whirlpool-hash - 1>&2) ) >/dev/null ) 2>&1 | dd of="${wdir}"/entropy.seed status=none || true; true) |
       age -r $( (age-keygen >/dev/null) 2>&1 | awk '{print $3}') 2>/dev/null |
       openssl enc -camellia-256-cfb8 -kfile /dev/urandom -e 2>/dev/null
   )
