@@ -618,6 +618,218 @@ sys_crypt_generate_seed() {
   )
 }
 
+sys_crypt_validate() {
+  wdir="$(sys crypt dir)"
+  for arg in "$@"
+  do
+    preamble="${arg}"
+
+    if echo X"${preamble}" | grep -q "\.\." >/dev/null
+    then
+      sys debug exit 2 "Invalid reference for key"
+    fi
+
+    if echo X"${preamble}" | grep -q "/[^/]*/[^/]*/" >/dev/null
+    then
+      sys debug exit 2 "Invalid reference for key"
+    fi
+
+    if echo X"${preamble}" | grep -q '/\.' >/dev/null
+    then
+      sys debug exit 2 "Invalid reference for key"
+    fi
+
+    if echo X"${preamble}" | grep -q '^X\.'
+    then
+      preamble="$(echo X"${preamble}" | sed 's,^X\.,self,')"
+    fi
+
+    if ! test -d "${wdir}"/"${preamble}"/.
+    then
+      sys debug exit 1 "Cannot confirm presence of key \"${preamble}\""
+    fi
+
+    if ! echo X"${preamble}" | grep -q "^X[seu][exp][lts][fet]" >/dev/null 2>/dev/null
+    then
+      sys debug exit 2 "Invalid prefix for key"
+    fi
+
+    if echo X"${preamble}" |grep -q '^Xextern'
+    then
+      if ! echo X"${preamble}" | grep -q '/[^/\.]'
+      then
+        sys debug exit 2 "Invalid reference for key"
+      fi
+    fi
+
+    if echo X"${preamble}" |grep -q '^Xself'
+    then
+      if echo X"{preamble}" |grep -q '^self/[^/]*/'
+      then
+        sys debug exit 2 "Invalid reference for key"
+      fi
+    fi
+
+    if echo X"${preamble}" |grep -q '^Xupstream'
+    then
+      if echo X"{preamble}" |grep -q '^upstream/[^/]*/'
+      then
+        sys debug exit 2 "Invalid reference for key"
+      fi
+    fi
+
+    if echo X"${preamble}" | grep -q '/$'
+    then
+      first="$(echo X"${preamble}" | sed 's,^X,,' | sed 's,/$,,')"
+      preambles=( "${first}" $(cd "${wdir}"/"${first}"/./ && find . -mindepth 2 -maxdepth 2 -type f -name genesis.stamp -print | sed 's,^\./,,' |grep / | sed 's,/genesis.stamp$,,' | sed 's:^:'"${first}"/':' |sort|uniq|grep .) )
+    else
+      preambles=( "${preamble}" )
+    fi
+
+    for entry in "${preambles[@]}"
+    do
+    (
+      umask 077
+      export TMP="${wdir}"
+      export TEMP="${TMP}"
+      export TMPDIR="${TMP}"
+      set -o pipefail
+
+      entrytype=root
+      if test "$(echo X"${entry}")" '==' Xself || test "$(echo X"${entry}")" '==' Xupstream
+      then
+        if echo X"${entry}"|grep -q /.
+        then
+          entrytype=subkey
+        fi
+      else
+        if echo X"${entry}"| sed 's,Xextern/,,' | grep -q /.
+        then
+          entrytype=subkey
+        fi
+      fi
+
+      if test "${entrytype}" '==' root
+      then
+
+        if test -s "${wdir}"/"${entry}"/chain4.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.top -s "${wdir}"/"${entry}"/chain4.sig < "${wdir}"/"${entry}"/chain3.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure for \"${entry}\""
+          fi
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.top -s "${wdir}"/"${entry}"/chain3.sig < "${wdir}"/"${entry}"/chain2.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure for \"${entry}\""
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.top -s "${wdir}"/"${entry}"/chain2.sig < "${wdir}"/"${entry}"/chain.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure for \"${entry}\""
+        fi
+
+        cat "${wdir}"/"${entry}"/chain.sig |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/brainpoolp.pub)" 2>/dev/null |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/secp.pub)" 2>/dev/null |
+          cmp - <(cat "${wdir}"/"${entry}"/genesis.stamp && for pub in brainpoolp rsa secp mceqcmdpc256fo dilithium5 ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha256sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure for \"${entry}\""
+          }
+
+      else
+
+        if test -s "${wdir}"/"${entry}"/chain3.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.chain4 -s "${wdir}"/"${entry}"/chain4.sig < "${wdir}"/"${entry}"/chain3.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.subkey.chain3 -s "${wdir}"/"${entry}"/chain3.sig < "${wdir}"/"${entry}"/chain2.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure"
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.subkey.chain2 -s "${wdir}"/"${entry}"/chain2.sig < "${wdir}"/"${entry}"/chain.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure"
+        fi
+
+        if test -s "${wdir}"/"${entry}"/master7.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.master7 -s "${wdir}"/"${entry}"/master7.sig < "${wdir}"/"${entry}"/master6.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/master6.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/../dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.master6 -s "${wdir}"/"${entry}"/master6.sig < "${wdir}"/"${entry}"/master5.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.subkey.master5 -s "${wdir}"/"${entry}"/master5.sig < "${wdir}"/"${entry}"/master4.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure"
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/../ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.subkey.master4 -s "${wdir}"/"${entry}"/master4.sig < "${wdir}"/"${entry}"/master3.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure"
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.subkey.master3 -s "${wdir}"/"${entry}"/master3.sig < "${wdir}"/"${entry}"/master2.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure"
+        fi
+
+        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/../rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.subkey.master2 -s "${wdir}"/"${entry}"/master2.sig < "${wdir}"/"${entry}"/master.sig >/dev/null
+        then
+          RET="$?"
+          sys debug exit "${RET}" "Key validation failure"
+        fi
+
+        cat "${wdir}"/"${entry}"/chain.sig |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/brainpoolp.pub)" 2>/dev/null |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/secp.pub)" 2>/dev/null |
+          cmp - <(cat "${wdir}"/"${entry}"/../genesis.stamp "${wdir}"/"${entry}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa dilithium5 ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha256sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          }
+
+        cat "${wdir}"/"${entry}"/master.sig |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/secp.pub)" 2>/dev/null |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/../brainpoolp.pub)" 2>/dev/null |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/brainpoolp.pub)" 2>/dev/null |
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/../secp.pub)" 2>/dev/null |
+          cmp - <(cat "${wdir}"/"${entry}"/../genesis.stamp "${wdir}"/"${entry}"/genesis.stamp "${wdir}"/"${entry}"/chain2.sig && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha256sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          }
+
+      fi
+    ) || sys debug exit "$?" "Key validation failure for \"${entry}\""
+    done
+  done
+}
+
 sys_crypt_key() {
   wdir="$(sys crypt dir)"
   exists=0
@@ -698,42 +910,10 @@ sys_crypt_key() {
   )
   fi
 
-  (
-    umask 077
-    export TMP="${wdir}"
-    export TEMP="${TMP}"
-    export TMPDIR="${TMP}"
-    set -o pipefail
-
-    if test -s "${wdir}"/self/chain4.sig
-    then
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.top -s "${wdir}"/self/chain4.sig < "${wdir}"/self/chain3.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-    fi
-
-    if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.top -s "${wdir}"/self/chain3.sig < "${wdir}"/self/chain2.sig >/dev/null
-    then
-      RET="$?"
-      sys debug exit "${RET}" "Key validation failure"
-    fi
-
-    if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.top -s "${wdir}"/self/chain2.sig < "${wdir}"/self/chain.sig >/dev/null
-    then
-      RET="$?"
-      sys debug exit "${RET}" "Key validation failure"
-    fi
-
-    cat "${wdir}"/self/chain.sig |
-      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/self/brainpoolp.pub)" 2>/dev/null |
-      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/self/secp.pub)" 2>/dev/null |
-      cmp - <(cat "${wdir}"/self/genesis.stamp && for pub in brainpoolp rsa secp mceqcmdpc256fo dilithium5 ed25519 agent; do if test -e "${wdir}"/self/"${pub}".pub; then sha256sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done) || {
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      }
-  )
+  if ! sys crypt validate self
+  then
+    sys debug exit "$?" "Cannot validate key"
+  fi
 
   first=0
   subkeys=("$@")
@@ -869,101 +1049,17 @@ sys_crypt_key() {
     )
     fi
 
-    (
-      umask 077
-      export TMP="${wdir}"
-      export TEMP="${TMP}"
-      export TMPDIR="${TMP}"
-      set -o pipefail
+    if ! sys crypt validate self/"${subkey}"
+    then
+      sys debug exit "$?" "Cannot validate subkey self/${subkey}"
+    fi
 
-      if test -s "${wdir}"/self/"${subkey}"/chain3.sig
-      then
-        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.chain4 -s "${wdir}"/self/"${subkey}"/chain4.sig < "${wdir}"/self/"${subkey}"/chain3.sig >/dev/null
-        then
-          RET="$?"
-          sys debug exit "${RET}" "Key validation failure"
-        fi
-      fi
-
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.subkey.chain3 -s "${wdir}"/self/"${subkey}"/chain3.sig < "${wdir}"/self/"${subkey}"/chain2.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.subkey.chain2 -s "${wdir}"/self/"${subkey}"/chain2.sig < "${wdir}"/self/"${subkey}"/chain.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-
-      if test -s "${wdir}"/self/"${subkey}"/master7.sig
-      then
-        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.master7 -s "${wdir}"/self/"${subkey}"/master7.sig < "${wdir}"/self/"${subkey}"/master6.sig >/dev/null
-        then
-          RET="$?"
-          sys debug exit "${RET}" "Key validation failure"
-        fi
-      fi
-
-      if test -s "${wdir}"/self/"${subkey}"/master6.sig
-      then
-        if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.master6 -s "${wdir}"/self/"${subkey}"/master6.sig < "${wdir}"/self/"${subkey}"/master5.sig >/dev/null
-        then
-          RET="$?"
-          sys debug exit "${RET}" "Key validation failure"
-        fi
-      fi
-
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.subkey.master5 -s "${wdir}"/self/"${subkey}"/master5.sig < "${wdir}"/self/"${subkey}"/master4.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/ed25519.pub) -I root@localhost -n file.crypt.key.chain.ed25519.subkey.master4 -s "${wdir}"/self/"${subkey}"/master4.sig < "${wdir}"/self/"${subkey}"/master3.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/"${subkey}"/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.subkey.master3 -s "${wdir}"/self/"${subkey}"/master3.sig < "${wdir}"/self/"${subkey}"/master2.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-
-      if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/self/rsa.pub) -I root@localhost -n file.crypt.key.chain.rsa.subkey.master2 -s "${wdir}"/self/"${subkey}"/master2.sig < "${wdir}"/self/"${subkey}"/master.sig >/dev/null
-      then
-        RET="$?"
-        sys debug exit "${RET}" "Key validation failure"
-      fi
-
-      cat "${wdir}"/self/"${subkey}"/chain.sig |
-        /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/self/"${subkey}"/brainpoolp.pub)" 2>/dev/null |
-        /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/self/"${subkey}"/secp.pub)" 2>/dev/null |
-        cmp - <(cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa dilithium5 ed25519 agent; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
-          RET="$?"
-          sys debug exit "${RET}" "Key validation failure"
-        }
-
-      cat "${wdir}"/self/"${subkey}"/master.sig |
-        /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/self/"${subkey}"/secp.pub)" 2>/dev/null |
-        /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/self/brainpoolp.pub)" 2>/dev/null |
-        /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/self/"${subkey}"/brainpoolp.pub)" 2>/dev/null |
-        /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/self/secp.pub)" 2>/dev/null |
-        cmp - <(cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp "${wdir}"/self/"${subkey}"/chain2.sig && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp ed25519 agent; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha256sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
-          RET="$?"
-          sys debug exit "${RET}" "Key validation failure"
-        }
-
-      if test "${subexists}" -eq 0
-      then
-        echo -n " ${subkey}" 1>&2
-      else
-        echo -n " [${subkey}]" 1>&2
-      fi
-    )
+    if test "${subexists}" -eq 0
+    then
+      echo -n " ${subkey}" 1>&2
+    else
+      echo -n " [${subkey}]" 1>&2
+    fi
   done
 
   if test "${first}" -ne 0
@@ -1409,6 +1505,11 @@ sys_crypt_export() {
     sys debug exit "${RET}" "Unable to generate or validate \"$@\": status ${RET}"
   fi
 
+  if test "$(echo " " "$@" | tr ' \t' '\n\n'| grep . | tr -d '\n' | wc -c)" -eq 0
+  then
+    sys crypt validate self/ || sys debug exit "$?" "Cannot validate"
+  fi
+
   TIMESTAMP="$(cat -- "${wdir}"/self/genesis.stamp)"
   addendum=
   if test "$#" -ne 0
@@ -1558,7 +1659,9 @@ sys_crypt_import() {
     cd "${wdir}"/extern/"${dest}"/. || return $?
     umask 027
     uudecode -o- | gunzip -q -f | cpio -i -m -d --force-local --no-absolute-filenames --sparse
-  )
+  ) || sys debug exit "$?" "Could not import"
+
+  sys crypt validate extern/"${dest}" || sys debug exit "$?" "Validation fails for: extern/${dest}"
 }
 
 function sys_storage_block_disk_recency() {
