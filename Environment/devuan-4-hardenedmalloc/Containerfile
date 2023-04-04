@@ -1160,7 +1160,7 @@ RUN \
   rm -v /usr/include/drm && \
   \
   cd /usr/local/src/ && \
-  apt-get -y install --verbose-versions autoconf automake autopoint autotools-dev bash-completion binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism docbook-xml docbook-xsl dpkg-dev dwz eudev file flex g++ g++-10 gcc gcc-10 gettext gettext-base groff-base intltool-debian libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu67 libisl23 libitm1 libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libosp5 libperl5.32 libpipeline1 libpod-parser-perl libprocps8 libquadmath0 libsgmls-perl libsigsegv2 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 libxslt1.1 libyaml-tiny-perl linux-libc-dev m4 make man-db opensp patch perl perl-modules-5.32 po-debconf po4a procps sensible-utils sgml-base sgml-data udev xml-core xsltproc xz-utils && \
+  apt-get -y install --verbose-versions autoconf automake autopoint autotools-dev bash-completion binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism docbook-xml docbook-xsl dpkg-dev dwz eudev file flex g++ g++-10 gcc gcc-10 gettext gettext-base groff-base intltool-debian libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu67 libisl23 libitm1 libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libosp5 libperl5.32 libpipeline1 libpod-parser-perl libprocps8 libquadmath0 libsgmls-perl libsigsegv2 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 libxslt1.1 libyaml-tiny-perl linux-libc-dev m4 make man-db opensp patch perl perl-modules-5.32 po-debconf po4a procps sensible-utils sgml-base sgml-data udev xml-core xsltproc xz-utils iproute2 python3-docutils cmake gcc libtool libssl-dev make ninja-build git bc libc6-dev && \
   git clone --recursive -b 9.23.1 https://github.com/LINBIT/drbd-utils && \
   cd drbd-utils/ && \
   ./autogen.sh && \
@@ -1169,27 +1169,14 @@ RUN \
   make install && \
   \
   cd /usr/local/src/ && \
-  wget https://openvpn.fox-it.com/repos/source/2.4.12/openvpn-nl-src-2.4.12.tar.gz && \
-  tar xzpkf openvpn-nl-src-2.4.12.tar.gz && \
+  wget https://openvpn.fox-it.com/repos/source/2.5.6nl1/openvpn-nl-src-2.5.6nl1.tar.gz && \
+  tar xzpkf openvpn-nl-src-2.5.6nl1.tar.gz && \
   cd openvpn-nl && \
+  sed -i -e "/--enable-systemd/s/--enable-systemd/ --disable-systemd --disable-plugins /" configure-openvpn.sh && \
+  sed -i -e "/SYSTEMD_FILES='build-openvpn-nl/s,'[^']*',''," archive.sh && \
   ./build-openvpn-nl.sh && \
-  cp -p build-openvpn-nl/src/openvpn/openvpn /usr/local/sbin/ && \
-  cp -p openvpn/doc/openvpn.8 /usr/local/share/man/man8/ && \
-  mkdir -p /usr/local/share/doc/openvpn && \
-  cp -a ./openvpn/sample /usr/local/share/doc/openvpn/sample/ && \
-  \
-  mkdir --verbose -p -m 0755 /var/empty && \
-  groupadd sshd && \
-  useradd -g sshd -c "sshd privsep" -d /var/empty -s /bin/false sshd && \
-  cd /usr/local/src && \
-  git clone --recursive https://github.com/open-quantum-safe/openssh && \
-  cd openssh && \
-  ./oqs-scripts/clone_liboqs.sh && \
-  ./oqs-scripts/build_liboqs.sh  && \
-  ./oqs-scripts/build_openssh.sh  && \
-  echo ./oqs-test/run_tests.sh  && \
-  make install prefix=/usr/local && \
-  chmod --verbose a-s /usr/local/libexec/ssh-keysign 2>&1 | tee -a /usr/local/etc/permissions && \
+  cd build-openvpn-nl && \
+  make prefix=/usr/local install && \
   \
   cd /usr/local/src && \
   git clone --recursive https://github.com/openzfs/zfs && \
@@ -1281,6 +1268,81 @@ RUN \
   rm -v /usr/local/lib/lib*.a /usr/local/lib/x86_64-linux-gnu/lib*.a && \
   mv local /opt/artifact/local/ && \
   rm -r /root/.cargo /root/.rustup && \
+  true
+
+FROM docker://devuan/devuan:chimaera AS devuan-4-builder2
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand && \
+  set -x && \
+  set -e && \
+  umask 022 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export HOME=/root && \
+  export TMP=/tmp && \
+  export TEMP="${TMP}" && \
+  export TMPDIR="${TMP}" && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  exec </dev/null && \
+  \
+  export CFLAGS=" -O -ggdb3 -fverbose-asm -mtune=generic " && \
+  export CXXFLAGS=" ${CFLAGS} " && \
+  for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '"0";' | tee -a /etc/apt/apt.conf.d/42disable; done && \
+  chmod --verbose go+r /etc/apt/apt.conf.d/42disable && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get -y dist-upgrade && \
+  \
+  apt-get install -y --verbose-versions asciidoc asciidoctor autoconf automake binutils-dev bison build-essential cargo ccache cdbs clang cmake devscripts dh-autoreconf dh-exec dh-make dh-python docbook-xml docbook-xsl doxygen dpkg-dev flex fuse3 g++ golang-go help2man libacl1-dev libaio-dev libarchive-dev libarchive13 libaudit-dev libboost-context-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-regex-dev libboost-system-dev libboost-thread-dev libbsd-dev libbz2-dev libcap-dev libcap-ng-dev libdevmapper-dev libdivsufsort-dev libdouble-conversion-dev libdrm-dev libdwarf-dev libelf-dev libevent-dev libfido2-dev libfmt-dev libfuse3-dev libgcrypt20-dev libglib2.0-dev libgnutls28-dev libgoogle-glog-dev libiberty-dev libjemalloc-dev liblz4-dev liblzma-dev liblzo2-dev libncurses-dev libncursesw5-dev libnet1-dev libnettle8 libnftables-dev libnl-3-dev libnl-route-3-dev libpam0g-dev libpkcs11-helper1-dev libprotobuf-c-dev libprotobuf-dev libprotoc-dev libsodium-dev libssl-dev libunwind-dev libwolfssl-dev libxxhash-dev libzstd-dev make musl-dev musl-tools nettle-dev ninja-build p7zip-full pandoc pkg-config protobuf-c-compiler protobuf-compiler python3-all python3-fuse python3-llfuse python3-pyfuse3 python3-setuptools ronn texinfo unrar xmlto yasm zlib1g-dev && \
+  apt-get install -y --verbose-versions adwaita-icon-theme autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 comerr-dev cpp cpp-10 dbus dbus-x11 dconf-gsettings-backend dconf-service debhelper dh-autoreconf dh-exec dh-runit dh-strip-nondeterminism dpkg-dev dwz file fontconfig fontconfig-config fonts-dejavu-core g++ g++-10 gcc gcc-10 gettext gettext-base gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-freedesktop gir1.2-gdkpixbuf-2.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-harfbuzz-0.0 gir1.2-pango-1.0 glib-networking glib-networking-common glib-networking-services groff-base gsettings-desktop-schemas gtk-update-icon-cache hicolor-icon-theme icu-devtools intltool-debian krb5-multidev libapparmor1 libarchive-zip-perl libasan6 libatk-bridge2.0-0 libatk-bridge2.0-dev libatk1.0-0 libatk1.0-data libatk1.0-dev libatomic1 libatspi2.0-0 libatspi2.0-dev libaudit-dev libavahi-client3 libavahi-common-data libavahi-common3 libbinutils libblkid-dev libbrotli-dev libbrotli1 libbsd-dev libbsd0 libc-dev-bin libc6-dev libcairo-gobject2 libcairo-script-interpreter2 libcairo2 libcairo2-dev libcap-ng-dev libcbor0 libcc1-0 libclone-perl libcolord2 libcrypt-dev libctf-nobfd0 libctf0 libcups2 libdatrie-dev libdatrie1 libdbus-1-3 libdbus-1-dev libdconf1 libdebhelper-perl libdeflate0 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit-dev libedit2 libegl-dev libegl-mesa0 libegl1 libegl1-mesa-dev libelf1 libepoxy-dev libepoxy0 libexpat1 libexpat1-dev libffi-dev libfido2-1 libfido2-dev libfile-copy-recursive-perl libfile-slurp-perl libfile-stripnondeterminism-perl libfontconfig-dev libfontconfig1 libfontconfig1-dev libfreetype-dev libfreetype6 libfreetype6-dev libfribidi-dev libfribidi0 libgbm1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgdk-pixbuf-2.0-0 libgdk-pixbuf-2.0-dev libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgirepository-1.0-1 libgl-dev libgl1 libgl1-mesa-dri libglapi-mesa libgles-dev libgles1 libgles2 libglib2.0-0 libglib2.0-bin libglib2.0-data libglib2.0-dev libglib2.0-dev-bin libglvnd-dev libglvnd0 libglx-dev libglx-mesa0 libglx0 libgomp1 libgraphite2-3 libgraphite2-dev libgssrpc4 libgtk-3-0 libgtk-3-common libgtk-3-dev libharfbuzz-dev libharfbuzz-gobject0 libharfbuzz-icu0 libharfbuzz0b libice-dev libice6 libicu-dev libicu67 libisl23 libitm1 libjbig0 libjpeg62-turbo libjson-glib-1.0-0 libjson-glib-1.0-common libkadm5clnt-mit12 libkadm5srv-mit12 libkdb5-10 libkrb5-dev liblcms2-2 libllvm11 liblsan0 liblzo2-2 libmagic-mgc libmagic1 libmd-dev libmd0 libmount-dev libmpc3 libmpdec3 libmpfr6 libncurses-dev libncurses6 libncursesw6 libnsl-dev libopengl-dev libopengl0 libpam0g-dev libpango-1.0-0 libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 libpangoxft-1.0-0 libpciaccess0 libpcre16-3 libpcre2-16-0 libpcre2-32-0 libpcre2-dev libpcre2-posix2 libpcre3-dev libpcre32-3 libpcrecpp0v5 libperl5.32 libpipeline1 libpixman-1-0 libpixman-1-dev libpng-dev libpng16-16 libproxy1v5 libpsl5 libpthread-stubs0-dev libpython3-stdlib libpython3.9-minimal libpython3.9-stdlib libquadmath0 libreadline8 libref-util-perl librest-0.7-0 libselinux1-dev libsensors-config libsensors5 libsepol1-dev libsigsegv2 libsm-dev libsm6 libsoup-gnome2.4-1 libsoup2.4-1 libsqlite3-0 libssl-dev libstdc++-10-dev libsub-override-perl libsystemd-dev libsystemd0 libtext-hogan-perl libtext-trim-perl libthai-data libthai-dev libthai0 libtiff5 libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libvulkan1 libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-dev libwayland-egl1 libwayland-server0 libwebp6 libwrap0 libwrap0-dev libx11-6 libx11-data libx11-dev libx11-xcb1 libxau-dev libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-render0 libxcb-render0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync1 libxcb-xfixes0 libxcb1 libxcb1-dev libxcomposite-dev libxcomposite1 libxcursor-dev libxcursor1 libxdamage-dev libxdamage1 libxdmcp-dev libxdmcp6 libxext-dev libxext6 libxfixes-dev libxfixes3 libxft-dev libxft2 libxi-dev libxi6 libxinerama-dev libxinerama1 libxkbcommon-dev libxkbcommon0 libxml2 libxrandr-dev libxrandr2 libxrender-dev libxrender1 libxshmfence1 libxtst-dev libxtst6 libxxf86vm1 libz3-4 linux-libc-dev m4 make man-db media-types pango1.0-tools patch perl perl-modules-5.32 pkg-config po-debconf python3 python3-distutils python3-lib2to3 python3-minimal python3.9 python3.9-minimal readline-common sensible-utils shared-mime-info ucf uuid-dev wayland-protocols x11-common x11proto-dev x11proto-input-dev x11proto-randr-dev x11proto-record-dev x11proto-xext-dev x11proto-xinerama-dev xkb-data xorg-sgml-doctools xtrans-dev xz-utils zlib1g-dev libcap2 libprocps8 procps psmisc runit-helper && \
+  apt-get install -y --verbose-versions bsd-mailx diffstat exim4-base exim4-config exim4-daemon-light gir1.2-rsvg-2.0 imagemagick imagemagick-6-common imagemagick-6.q16 libacl1-dev libaom0 libasound2-dev libattr1-dev libbz2-dev libdav1d4 libde265-0 libdeflate-dev libdjvulibre-dev libdjvulibre-text libdjvulibre21 libexif-dev libexif12 libfftw3-double3 libgd3 libgif-dev libgif7 libgmp-dev libgmpxx4ldbl libgnutls-dane0 libgnutls-openssl27 libgnutls28-dev libgnutlsxx28 libgpm-dev libheif1 libidn2-dev libilmbase-dev libilmbase25 libjansson-dev libjbig-dev libjpeg-dev libjpeg62-turbo-dev liblcms2-dev liblockfile-dev liblqr-1-0 liblqr-1-0-dev libltdl-dev libltdl7 liblzma-dev libm17n-0 libm17n-dev libmagick++-6-headers libmagick++-6.q16-8 libmagick++-6.q16-dev libmagickcore-6-arch-config libmagickcore-6-headers libmagickcore-6.q16-6 libmagickcore-6.q16-6-extra libmagickcore-6.q16-dev libmagickwand-6-headers libmagickwand-6.q16-6 libmagickwand-6.q16-dev libopenexr-dev libopenexr25 libopenjp2-7 libopenjp2-7-dev libotf-dev libotf0 libp11-kit-dev librsvg2-2 librsvg2-common librsvg2-dev libtasn1-6-dev libtext-unidecode-perl libtiff-dev libtiffxx5 libunbound8 libwebpdemux2 libwebpmux3 libwmf-dev libwmf0.2-7 libx265-192 libxaw7 libxaw7-dev libxml-libxml-perl libxml-namespacesupport-perl libxml-sax-base-perl libxml-sax-perl libxml2-dev libxmu-dev libxmu-headers libxmu6 libxpm-dev libxpm4 libxt-dev libxt6 m17n-db nettle-dev quilt tex-common texinfo xaw3dg xaw3dg-dev xutils-dev  gnupg-agent libgccjit-10-dev libgccjit0 libncurses5-dev   emacsen-common install-info  libtinfo6 zlib1g libgccjit0 libgmp10 libisl23 libmpc3 libmpfr6 libzstd1 && \
+  apt-get -y install --verbose-versions autoconf automake autopoint autotools-dev bash-completion binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism docbook-xml docbook-xsl dpkg-dev dwz eudev file flex g++ g++-10 gcc gcc-10 gettext gettext-base groff-base intltool-debian libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu67 libisl23 libitm1 libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libosp5 libperl5.32 libpipeline1 libpod-parser-perl libprocps8 libquadmath0 libsgmls-perl libsigsegv2 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 libxslt1.1 libyaml-tiny-perl linux-libc-dev m4 make man-db opensp patch perl perl-modules-5.32 po-debconf po4a procps sensible-utils sgml-base sgml-data udev xml-core xsltproc xz-utils iproute2 python3-docutils cmake gcc libtool libssl-dev make ninja-build git bc libc6-dev && \
+  \
+  mkdir -p -v /opt/artifact && \
+  \
+  cd /usr/local/src && \
+  mkdir --verbose -p -m 0755 /var/empty && \
+  groupadd sshd && \
+ echo SKIP useradd -g sshd -c "sshd privsep" -d /var/empty -s /bin/false sshd && \
+  git clone --recursive https://github.com/open-quantum-safe/openssh && \
+  cd openssh && \
+  ./oqs-scripts/clone_liboqs.sh && \
+  ./oqs-scripts/build_liboqs.sh  && \
+  ./oqs-scripts/build_openssh.sh  && \
+  echo ./oqs-test/run_tests.sh  && \
+  make install prefix=/usr/local && \
+  chmod --verbose a-s /usr/local/libexec/ssh-keysign 2>&1 | tee -a /usr/local/etc/permissions && \
+  \
+  cd /usr/local/src && \
+  git clone --recursive https://github.com/open-quantum-safe/openssl && \
+  cd openssl && \
+  git checkout 613d1bea7afa23dc11f340e75990cb47d77711e9 && \
+  git submodule init && \
+  git submodule update && \
+  cd .. && \
+  git clone --branch main https://github.com/open-quantum-safe/liboqs.git && \
+  cd liboqs && \
+  mkdir build && \
+  cd build && \
+  cmake -GNinja -DCMAKE_INSTALL_PREFIX=/usr/local/src/openssl/oqs .. && \
+  ninja && \
+  ninja install && \
+  cd ../../openssl && \
+  ./Configure no-shared linux-x86_64 -lm && \
+  make && \
+  make test && \
+  make install prefix=/usr/local && \
+  \
+  cd /usr/ && \
+  rm -r -f local/src && \
+  rm -v -f /usr/local/lib/lib*.a /usr/local/lib/x86_64-linux-gnu/lib*.a && \
+  mv local /opt/artifact/local/ && \
   true
 
 FROM docker://devuan/devuan:ascii AS ascii-builder
@@ -1781,6 +1843,7 @@ RUN \
 
 FROM devuan-4 AS devuan-4-local
 COPY --from=devuan-4-builder /opt/artifact /root/artifact
+COPY --from=devuan-4-builder2 /opt/artifact /root/artifact2
 COPY --from=alpine-builder /usr/local /root/local
 COPY --from=kernelsign /opt/artifact /root/kernel
 COPY --from=ascii-builder /usr/local/bin/pcompress /root/artifact/local/bin/pcompress
@@ -1804,6 +1867,8 @@ RUN \
   exec </dev/null && \
   cat /root/artifact/local/etc/permissions >> /usr/local/etc/permissions && \
   rm -v /root/artifact/local/etc/permissions && \
+  tar -C /root/artifact2 -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
+  rm -r /root/artifact2/local && \
   tar -C /root/artifact -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
   tar -C /root/ -c -v -f - local|tar -C /usr -x -p -v --warning=no-timestamp -f - && \
   dpkg -i /root/artifact/deb/podman-compose*.deb /root/artifact/deb/vdmfec*.deb && \
@@ -2850,23 +2915,23 @@ RUN \
   echo 'for i in "SERIAL 0 115200" "NOHALT 1" "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux serial" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=ttyS0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft intel_iommu=on amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid usbcore.nousb -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=ttyS0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft intel_iommu=on amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid usbcore.nousb lockdown=confidentiality -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL xen-linux-1" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux display" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND /xen/xen-4.14-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality -- --- /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL linux-0" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux serial" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft intel_iommu=on amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid usbcore.nousb --" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyUSB0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft intel_iommu=on amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid usbcore.nousb lockdown=confidentiality --" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL linux-1" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux display" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
-  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid --" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 splash=off cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft amd_iommu=off waitusb=3 rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 eagerfpu=on elevator=noop ipv6.disable=0 no_timer_check nofb nohibernate noresume nosoftlockup nosplash nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma gfxpayload=vga=current l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on random.trust_cpu=off slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality --" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL SuperGrubDisk" >> syslinux.cfg' >> init && \
