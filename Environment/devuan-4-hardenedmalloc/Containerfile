@@ -1204,7 +1204,7 @@ RUN \
   cd /usr/local/src && \
   apt-get source openssh-server && \
   cd ./openssh-9.?p?/ && \
-  sed -i -e '/confflags .*with-default-path/s,confflags.*,confflags += --with-cppflags=" -UWITH_XMSS -DWITH_XMSS ${CPPFLAGS} " --with-ldns --without-libedit --without-security-key-builtin --with-ssl-engine --without-kerberos5 --with-default-path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand --with-superuser-path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand  --disable-strip --disable-security-key --disable-pkcs11 ' -e "/^cflags.*CFLAGS/s,$, -UWITH_XMSS -DWITH_XMSS -Og -ggdb3 -fverbose-asm -mtune=generic ," debian/rules && \
+  sed -i -e '/confflags .*with-default-path/s,confflags.*,confflags += --with-cppflags=" -UWITH_XMSS -DWITH_XMSS ${CPPFLAGS} " --with-ldns --without-libedit --without-security-key-builtin --with-ssl-engine --without-kerberos5 --with-default-path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand --with-superuser-path=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand  --disable-strip --disable-security-key --disable-pkcs11 ,' -e "/^cflags.*CFLAGS/s,$, -UWITH_XMSS -DWITH_XMSS -Og -ggdb3 -fverbose-asm -mtune=generic ," debian/rules && \
   ./debian/rules binary && \
   mkdir -p -v /opt/artifact/deb && \
   cd ../ && \
