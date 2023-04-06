@@ -2365,8 +2365,6 @@ RUN \
   apt-get -y --verbose-versions --allow-change-held-packages install ${packages_kicksecure_dep} && \
   curl --tlsv1.3 --proto =https --max-time 180 --output /usr/share/keyrings/derivative.asc https://www.kicksecure.com/keys/derivative.asc && \
   chmod --verbose go+r /usr/share/keyrings/derivative.asc && \
-  adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Administrator && \
-  adduser --disabled-password --gecos "" --shell /bin/bash-static user && \
   adduser Administrator sudo && \
   addgroup --system console && \
   adduser Administrator console && \
