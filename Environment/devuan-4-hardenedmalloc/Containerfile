@@ -1892,6 +1892,7 @@ RUN \
   echo linux-libc-dev hold | dpkg --set-selections && \
   unset STDIMG && \
   cd /root/artifact/deb/ && \
+  apt-get -f install --verbose-versions libldns3 && \
   packages="$(ls -1d openssh-client_9.?p*_amd64.deb openssh-server_9.?p*_amd64.deb openssh-sftp-server_9.?p*_amd64.deb ssh_9.?p*_all.deb emacs-nox_28.?+*_amd64.deb emacs-el_28.?+*_all.deb emacs-common_28.?+*_all.deb emacs-bin-common_28.?+*_amd64.deb emacs_28.*_all.deb)" && \
   dpkg -i ${packages} && \
   unset packages && \
