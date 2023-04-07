@@ -713,6 +713,23 @@ sys_crypt_validate() {
 
       if test "${entrytype}" '==' root
       then
+        if test -s "${wdir}"/"${entry}"/chain6.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/xmss.pub) -I root@localhost -n file.crypt.key.chain.xmss.top -s "${wdir}"/"${entry}"/chain6.sig < "${wdir}"/"${entry}"/chain5.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure for \"${entry}\""
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/chain5.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/falcon.pub) -I root@localhost -n file.crypt.key.chain.falcon.top -s "${wdir}"/"${entry}"/chain5.sig < "${wdir}"/"${entry}"/chain4.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure for \"${entry}\""
+          fi
+        fi
 
         if test -s "${wdir}"/"${entry}"/chain4.sig
         then
@@ -738,12 +755,12 @@ sys_crypt_validate() {
         cat "${wdir}"/"${entry}"/chain.sig |
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/brainpoolp.pub)" 2>/dev/null |
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/secp.pub)" 2>/dev/null |
-          cmp - <(cat "${wdir}"/"${entry}"/genesis.stamp && for pub in brainpoolp rsa secp mceqcmdpc256fo dilithium5 ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+          cmp - <(cat "${wdir}"/"${entry}"/genesis.stamp && for pub in brainpoolp rsa fmtseq secp mceqcmdpc256fo dilithium5 falcon xmss ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
             RET="$?"
             sys debug exit "${RET}" "Key validation failure for \"${entry}\""
           }
 
-        SUM=$(cd "${wdir}"/"${entry}"/. && optional=$(for i in chain4.sig; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub dilithium5.pub mceqcmdpc256fo.pub rsa.pub secp.pub ed25519.pub ${optional} | sha512sum | awk '{print $1}' | head -c 128)
+        SUM=$(cd "${wdir}"/"${entry}"/. && optional=$(for i in chain4.sig chain5.sig chain6.sig dilithium5.pub falcon.pub xmss.pub; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub mceqcmdpc256fo.pub rsa.pub fmtseq.pub secp.pub ed25519.pub agent.pub ${optional} | sha512sum | awk '{print $1}' | head -c 128)
 
         if test -e "${wdir}"/"${entry}"/footprint.sig
         then
@@ -756,6 +773,23 @@ sys_crypt_validate() {
         fi
 
       else
+        if test -s "${wdir}"/"${entry}"/chain6.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/xmss.pub) -I root@localhost -n file.crypt.key.chain.xmss.subkey.chain6 -s "${wdir}"/"${entry}"/chain6.sig < "${wdir}"/"${entry}"/chain5.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/chain5.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/falcon.pub) -I root@localhost -n file.crypt.key.chain.falcon.subkey.chain5 -s "${wdir}"/"${entry}"/chain5.sig < "${wdir}"/"${entry}"/chain4.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
 
         if test -s "${wdir}"/"${entry}"/chain4.sig
         then
@@ -778,7 +812,43 @@ sys_crypt_validate() {
           sys debug exit "${RET}" "Key validation failure"
         fi
 
-        if test -s "${wdir}"/"${entry}"/master7.sig
+        if test -s "${wdir}"/"${entry}"/master11.sig && test -s "${wdir}"/"${entry}"/master10.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/xmss.pub) -I root@localhost -n file.crypt.key.chain.xmss.subkey.master11 -s "${wdir}"/"${entry}"/master11.sig < "${wdir}"/"${entry}"/master10.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/master10.sig && test -s "${wdir}"/"${entry}"/master9.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/../xmss.pub) -I root@localhost -n file.crypt.key.chain.xmss.subkey.master10 -s "${wdir}"/"${entry}"/master10.sig < "${wdir}"/"${entry}"/master9.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/master9.sig && test -s "${wdir}"/"${entry}"/master8.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/falcon.pub) -I root@localhost -n file.crypt.key.chain.falcon.subkey.master9 -s "${wdir}"/"${entry}"/master9.sig < "${wdir}"/"${entry}"/master8.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/master8.sig && test -s "${wdir}"/"${entry}"/master7.sig
+        then
+          if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/../falcon.pub) -I root@localhost -n file.crypt.key.chain.falcon.subkey.master8 -s "${wdir}"/"${entry}"/master8.sig < "${wdir}"/"${entry}"/master7.sig >/dev/null
+          then
+            RET="$?"
+            sys debug exit "${RET}" "Key validation failure"
+          fi
+        fi
+
+        if test -s "${wdir}"/"${entry}"/master7.sig && test -s "${wdir}"/"${entry}"/master6.sig
         then
           if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.master7 -s "${wdir}"/"${entry}"/master7.sig < "${wdir}"/"${entry}"/master6.sig >/dev/null
           then
@@ -787,7 +857,7 @@ sys_crypt_validate() {
           fi
         fi
 
-        if test -s "${wdir}"/"${entry}"/master6.sig
+        if test -s "${wdir}"/"${entry}"/master6.sig && test -s "${wdir}"/"${entry}"/master5.sig
         then
           if ! /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y verify -f <(echo -n root@localhost" " && cat "${wdir}"/"${entry}"/../dilithium5.pub) -I root@localhost -n file.crypt.key.chain.dilithium5.subkey.master6 -s "${wdir}"/"${entry}"/master6.sig < "${wdir}"/"${entry}"/master5.sig >/dev/null
           then
@@ -823,7 +893,7 @@ sys_crypt_validate() {
         cat "${wdir}"/"${entry}"/chain.sig |
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/brainpoolp.pub)" 2>/dev/null |
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/secp.pub)" 2>/dev/null |
-          cmp - <(cat "${wdir}"/"${entry}"/../genesis.stamp "${wdir}"/"${entry}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa dilithium5 ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+          cmp - <(cat "${wdir}"/"${entry}"/../genesis.stamp "${wdir}"/"${entry}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa fmtseq dilithium5 falcon xmss ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; if test -e "${wdir}"/"${entry}"/../"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/../"${pub}".pub | awk '{print $1}'; fi; done) || {
             RET="$?"
             sys debug exit "${RET}" "Key validation failure"
           }
@@ -833,12 +903,12 @@ sys_crypt_validate() {
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/../brainpoolp.pub)" 2>/dev/null |
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c brainpoolp512r1 -- "$(cat "${wdir}"/"${entry}"/brainpoolp.pub)" 2>/dev/null |
           /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-verify -b -f -a -c secp521r1 -- "$(cat "${wdir}"/"${entry}"/../secp.pub)" 2>/dev/null |
-          cmp - <(cat "${wdir}"/"${entry}"/../genesis.stamp "${wdir}"/"${entry}"/../chain.sig "${wdir}"/"${entry}"/chain.sig "${wdir}"/"${entry}"/../chain2.sig "${wdir}"/"${entry}"/chain2.sig "${wdir}"/"${entry}"/../chain3.sig "${wdir}"/"${entry}"/chain3.sig "${wdir}"/"${entry}"/genesis.stamp && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp ed25519 agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; done) || {
+          cmp - <(cat "${wdir}"/"${entry}"/../genesis.stamp "${wdir}"/"${entry}"/../chain.sig "${wdir}"/"${entry}"/chain.sig "${wdir}"/"${entry}"/../chain2.sig "${wdir}"/"${entry}"/chain2.sig "${wdir}"/"${entry}"/../chain3.sig "${wdir}"/"${entry}"/chain3.sig "${wdir}"/"${entry}"/genesis.stamp && for i in "${wdir}"/"${entry}"/../chain4.sig "${wdir}"/"${entry}"/chain4.sig "${wdir}"/"${entry}"/../chain5.sig "${wdir}"/"${entry}"/chain5.sig "${wdir}"/"${entry}"/../chain6.sig "${wdir}"/"${entry}"/chain6.sig; do if test -e "${i}"; then sha512sum < "$i" | awk '{print $1}'; fi; done && for pub in dilithium5 falcon xmss agent; do if test -e "${wdir}"/"${entry}"/"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; fi; if test -e "${wdir}"/"${entry}"/../"${pub}".pub; then sha512sum < "${wdir}"/"${entry}"/../"${pub}".pub | awk '{print $1}'; fi; done && for pub in rsa fmtseq mceqcmdpc256fo secp brainpoolp ed25519; do sha512sum < "${wdir}"/"${entry}"/"${pub}".pub | awk '{print $1}'; sha512sum < "${wdir}"/"${entry}"/../"${pub}".pub | awk '{print $1}'; done) || {
             RET="$?"
             sys debug exit "${RET}" "Key validation failure"
           }
 
-        SUM=$(cd "${wdir}"/"${entry}"/. && optional=$(for i in chain4.sig master6.sig master7.sig; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub dilithium5.pub mceqcmdpc256fo.pub rsa.pub secp.pub ed25519.pub master.sig master2.sig master3.sig master4.sig master5.sig ${optional} | sha512sum | awk '{print $1}' | head -c 128)
+        SUM=$(cd "${wdir}"/"${entry}"/. && optional=$(for i in chain4.sig chain5.sig chain6.sig master6.sig master7.sig master8.sig master9.sig master10.sig master11.sig dilithium5.pub falcon.pub xmss.pub agent.pub; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub mceqcmdpc256fo.pub rsa.pub fmtseq.pub secp.pub ed25519.pub master.sig master2.sig master3.sig master4.sig master5.sig ${optional} | sha512sum | awk '{print $1}' | head -c 128)
 
         if test -e "${wdir}"/"${entry}"/footprint.sig
         then
@@ -862,7 +932,7 @@ sys_crypt_key() {
 
   if test -e "${wdir}"/self/brainpoolp.sec || test -e "${wdir}"/self/secp.sec || test -e "${wdir}"/self/rsa.sec || test -e "${wdir}"/self/mceqcmdpc256fo.sec || test -e "${wdir}"/self/ed25519.sec -o -e "${wdir}"/self/ed25519.enc
   then
-    if test -f "${wdir}"/self/brainpoolp.sec && test -f "${wdir}"/self/secp.sec && test -f "${wdir}"/self/rsa.sec && test -f "${wdir}"/self/mceqcmdpc256fo.sec && test -f "${wdir}"/self/ed25519.sec -o -f "${wdir}"/self/ed25519.enc
+    if test -e "${wdir}"/self/brainpoolp.sec && test -e "${wdir}"/self/secp.sec && test -e "${wdir}"/self/rsa.sec && test -e "${wdir}"/self/mceqcmdpc256fo.sec && test -e "${wdir}"/self/ed25519.sec -o -e "${wdir}"/self/ed25519.enc
     then
       exists=1
     else
@@ -872,7 +942,7 @@ sys_crypt_key() {
 
   if test -e "${wdir}"/self/brainpoolp.pub || test -e "${wdir}"/self/secp.pub || test -e "${wdir}"/self/rsa.pub || test -e "${wdir}"/self/mceqcmdpc256fo.pub || test -e "${wdir}"/self/ed25519.pub
   then
-    if test -f "${wdir}"/self/brainpoolp.pub && test -f "${wdir}"/self/secp.pub && test -f "${wdir}"/self/rsa.pub && test -f "${wdir}"/self/mceqcmdpc256fo.pub && test -f "${wdir}"/self/ed25519.pub
+    if test -e "${wdir}"/self/brainpoolp.pub && test -e "${wdir}"/self/secp.pub && test -e "${wdir}"/self/rsa.pub && test -e "${wdir}"/self/mceqcmdpc256fo.pub && test -e "${wdir}"/self/ed25519.pub
     then
       exists=1
     else
@@ -891,6 +961,7 @@ sys_crypt_key() {
     GENESIS="$(sys date)"
     sys crypt generate seed > "${wdir}"/self/brainpoolp.sec || return $?
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t rsa -b 10240 -N "" -C user -f "${wdir}"/self/rsa >/dev/null 2>/dev/null || return $?
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t xmss -b 16 -N "" -C user -f "${wdir}"/self/xmss >/dev/null 2>/dev/null || true
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t ed25519 -N "" -C agent -f "${wdir}"/self/agent >/dev/null 2>/dev/null || return $?
     mv "${wdir}"/self/agent "${wdir}"/self/agent.sec || return $?
     dd if=/dev/urandom bs=2048 count=1 status=none | sha512sum | awk '{print $1}' > "${wdir}"/self/agent.seed || return $?
@@ -901,6 +972,12 @@ sys_crypt_key() {
     rm -f "${wdir}"/self/ed25519.sec || return $?
     sys crypt generate seed > "${wdir}"/self/secp.sec || return $?
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -t dilithium5 -N "" -C user -f "${wdir}"/self/dilithium5 >/dev/null 2>/dev/null || rm -f "${wdir}"/self/dilithium5 "${wdir}"/self/dilithium5.pub >/dev/null 2>/dev/null
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -t falcon1024 -N "" -C user -f "${wdir}"/self/falcon >/dev/null 2>/dev/null || rm -f "${wdir}"/self/falcon "${wdir}"/self/falcon.pub >/dev/null 2>/dev/null
+    mkdir -p "${wdir}"/self/ccr.d >/dev/null 2>/dev/null
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/ccr.d ccr -g FMTSEQ256C-SHA512-SHA256 -y --name self 2>/dev/null || return $?
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/ccr.d ccr -y -p -a -F self -N other > "${wdir}"/self/fmtseq.pub
+    mv -f "${wdir}"/self/ccr.d/.ccr/secrets "${wdir}"/self/fmtseq.sec
+    rm -r -f "${wdir}"/self/ccr.d/ || true
 
     mkdir -p "${wdir}"/self/.ccr >/dev/null 2>/dev/null || true
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 --name self 2>/dev/null || return $?
@@ -913,28 +990,33 @@ sys_crypt_key() {
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-key -c secp521r1 -F "${wdir}"/self/secp.sec | sed "s,^The public key is: ,," > "${wdir}"/self/secp.pub || return $?
     mv "${wdir}"/self/rsa "${wdir}"/self/rsa.sec || return $?
     mv -f "${wdir}"/self/dilithium5 "${wdir}"/self/dilithium5.sec >/dev/null 2>/dev/null || true
+    mv -f "${wdir}"/self/falcon "${wdir}"/self/falcon.sec >/dev/null 2>/dev/null || true
+    mv -f "${wdir}"/self/xmss "${wdir}"/self/xmss.sec >/dev/null 2>/dev/null || true
 
     echo "${GENESIS}" >> "${wdir}"/self/genesis.stamp
     unset GENESIS
     rm -f "${wdir}"/self/chain.sig "${wdir}"/self/chain2.sig "${wdir}"/self/chain3.sig "${wdir}"/self/chain4.sig >/dev/null 2>/dev/null || true
     (cat "${wdir}"/self/genesis.stamp &&
-      for pub in brainpoolp rsa secp mceqcmdpc256fo dilithium5 ed25519 agent; do if test -e "${wdir}"/self/"${pub}".pub; then sha512sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done) |
+      for pub in brainpoolp rsa fmtseq secp mceqcmdpc256fo dilithium5 falcon xmss ed25519 agent; do if test -e "${wdir}"/self/"${pub}".pub; then sha512sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done) |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/secp.sec |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/brainpoolp.sec |
         tee -a "${wdir}"/self/chain.sig |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/rsa.sec -n file.crypt.key.chain.rsa.top 2>/dev/null | tee -a "${wdir}"/self/chain2.sig |
         {
-          cp -f -p "${wdir}"/self/ed25519.enc "${wdir}"/self/ed25519.sec.cpt || return $?
-          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/ed25519.sec.cpt || return $?
-          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/ed25519.sec -n file.crypt.key.chain.ed25519.top 2>/dev/null
-          rm -f "${wdir}"/self/ed25519.sec
+          EPHEMERAL="${SRANDOM}"-"${RANDOM}"-"$$"-"$PPID"
+          cp -f -p "${wdir}"/self/ed25519.enc "${wdir}"/self/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/ed25519-"${EPHEMERAL}".sec -n file.crypt.key.chain.ed25519.top 2>/dev/null
+          rm -f "${wdir}"/self/ed25519-"${EPHEMERAL}".sec
         } | tee -a "${wdir}"/self/chain3.sig |
-        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain.dilithium5.top 2>/dev/null >> "${wdir}"/self/chain4.sig || rm -f "${wdir}"/self/chain4.sig) || {
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain.dilithium5.top 2>/dev/null |tee -a "${wdir}"/self/chain4.sig || rm -f "${wdir}"/self/chain4.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/falcon.sec -n file.crypt.key.chain.falcon.top 2>/dev/null |tee -a "${wdir}"/self/chain5.sig || rm -f "${wdir}"/self/chain5.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/xmss.sec -n file.crypt.key.chain.xmss.top 2>/dev/null >> "${wdir}"/self/chain6.sig || rm -f "${wdir}"/self/chain6.sig) || {
           RET="$?"
           sys debug exit "${RET}" "Key creation failure"
         }
 
-    SUM=$(cd "${wdir}"/self/. && optional=$(for i in chain4.sig; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub dilithium5.pub mceqcmdpc256fo.pub rsa.pub secp.pub ed25519.pub ${optional} | sha512sum | awk '{print $1}' | head -c 128)
+    SUM=$(cd "${wdir}"/self/. && optional=$(for i in chain4.sig chain5.sig chain6.sig dilithium5.pub falcon.pub xmss.pub; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub mceqcmdpc256fo.pub rsa.pub fmtseq.pub secp.pub ed25519.pub agent.pub ${optional} | sha512sum | awk '{print $1}' | head -c 128)
 
     if test -e "${wdir}"/self/footprint.sig
     then
@@ -995,7 +1077,7 @@ sys_crypt_key() {
     subexists=0
     if test -e "${wdir}"/self/"${subkey}"/brainpoolp.sec || test -e "${wdir}"/self/"${subkey}"/secp.sec || test -e "${wdir}"/self/"${subkey}"/rsa.sec || test -e "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec || test -e "${wdir}"/self/"${subkey}"/ed25519.sec -o -e "${wdir}"/self/"${subkey}"/ed25519.enc
     then
-      if test -f "${wdir}"/self/"${subkey}"/brainpoolp.sec && test -f "${wdir}"/self/"${subkey}"/secp.sec && test -f "${wdir}"/self/"${subkey}"/rsa.sec && test -f "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec && test -f "${wdir}"/self/"${subkey}"/ed25519.sec -o -f "${wdir}"/self/"${subkey}"/ed25519.enc
+      if test -e "${wdir}"/self/"${subkey}"/brainpoolp.sec && test -e "${wdir}"/self/"${subkey}"/secp.sec && test -e "${wdir}"/self/"${subkey}"/rsa.sec && test -e "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec && test -e "${wdir}"/self/"${subkey}"/ed25519.sec -o -e "${wdir}"/self/"${subkey}"/ed25519.enc
       then
         subexists=1
       else
@@ -1005,7 +1087,7 @@ sys_crypt_key() {
 
     if test -e "${wdir}"/self/"${subkey}"/brainpoolp.pub || test -e "${wdir}"/self/"${subkey}"/secp.pub || test -e "${wdir}"/self/"${subkey}"/rsa.pub || test -e "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub || test -e "${wdir}"/self/"${subkey}"/ed25519.pub
     then
-      if test -f "${wdir}"/self/"${subkey}"/brainpoolp.pub && test -f "${wdir}"/self/"${subkey}"/secp.pub && test -f "${wdir}"/self/"${subkey}"/rsa.pub && test -f "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub && test -f "${wdir}"/self/"${subkey}"/ed25519.pub
+      if test -e "${wdir}"/self/"${subkey}"/brainpoolp.pub && test -e "${wdir}"/self/"${subkey}"/secp.pub && test -e "${wdir}"/self/"${subkey}"/rsa.pub && test -e "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub && test -e "${wdir}"/self/"${subkey}"/ed25519.pub
       then
         subexists=1
       else
@@ -1023,7 +1105,8 @@ sys_crypt_key() {
       set -o pipefail
       GENESIS="$(sys date)"
       sys crypt generate seed > "${wdir}"/self/"${subkey}"/brainpoolp.sec || return $?
-      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t rsa -b 10240 -N "" -C user -f "${wdir}"/self/"${subkey}"/rsa >/dev/null 2>/dev/null || return $?
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t rsa -b 8192 -N "" -C user -f "${wdir}"/self/"${subkey}"/rsa >/dev/null 2>/dev/null || return $?
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t xmss -b 10 -N "" -C user -f "${wdir}"/self/"${subkey}"/xmss >/dev/null 2>/dev/null || true
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -t ed25519 -N "" -C user -f "${wdir}"/self/"${subkey}"/ed25519 >/dev/null 2>/dev/null || return $?
       mv "${wdir}"/self/"${subkey}"/ed25519 "${wdir}"/self/"${subkey}"/ed25519.sec || return $?
       /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --encrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/"${subkey}"/ed25519.sec || return $?
@@ -1031,6 +1114,12 @@ sys_crypt_key() {
       rm -f "${wdir}"/self/"${subkey}"/ed25519.sec || return $?
       sys crypt generate seed > "${wdir}"/self/"${subkey}"/secp.sec || return $?
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -t dilithium5 -N "" -C user -f "${wdir}"/self/"${subkey}"/dilithium5 >/dev/null 2>/dev/null || rm -f "${wdir}"/self/"${subkey}"/dilithium5 "${wdir}"/self/"${subkey}"/dilithium5.pub >/dev/null 2>/dev/null
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -t falcon1024 -N "" -C user -f "${wdir}"/self/"${subkey}"/falcon >/dev/null 2>/dev/null || rm -f "${wdir}"/self/"${subkey}"/falcon "${wdir}"/self/"${subkey}"/falcon.pub >/dev/null 2>/dev/null
+      mkdir -p "${wdir}"/self/"${subkey}"/ccr.d >/dev/null 2>/dev/null
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}"/ccr.d ccr -g FMTSEQ256C-SHA512-SHA256 -y --name self 2>/dev/null || return $?
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}"/ccr.d ccr -y -p -a -F self -N other > "${wdir}"/self/"${subkey}"/fmtseq.pub
+      mv -f "${wdir}"/self/"${subkey}"/ccr.d/.ccr/secrets "${wdir}"/self/"${subkey}"/fmtseq.sec
+      rm -r -f "${wdir}"/self/"${subkey}"/ccr.d/ || true
 
       mkdir -p "${wdir}"/self/"${subkey}"/.ccr >/dev/null 2>/dev/null || true
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}" ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 --name self 2>/dev/null || return $?
@@ -1043,27 +1132,32 @@ sys_crypt_key() {
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-key -c secp521r1 -F "${wdir}"/self/"${subkey}"/secp.sec | sed "s,^The public key is: ,," > "${wdir}"/self/"${subkey}"/secp.pub || return $?
       mv "${wdir}"/self/"${subkey}"/rsa "${wdir}"/self/"${subkey}"/rsa.sec || return $?
       mv "${wdir}"/self/"${subkey}"/dilithium5 "${wdir}"/self/"${subkey}"/dilithium5.sec >/dev/null 2>/dev/null || true
+      mv "${wdir}"/self/"${subkey}"/falcon "${wdir}"/self/"${subkey}"/falcon.sec >/dev/null 2>/dev/null || true
+      mv "${wdir}"/self/"${subkey}"/xmss "${wdir}"/self/"${subkey}"/xmss.sec >/dev/null 2>/dev/null || true
 
       echo "${GENESIS}" >> "${wdir}"/self/"${subkey}"/genesis.stamp
       unset GENESIS
       rm -f "${wdir}"/self/"${subkey}"/chain.sig "${wdir}"/self/"${subkey}"/chain2.sig "${wdir}"/self/"${subkey}"/chain3.sig "${wdir}"/self/"${subkey}"/chain4.sig "${wdir}"/self/"${subkey}"/master.sig "${wdir}"/self/"${subkey}"/master2.sig "${wdir}"/self/"${subkey}"/master3.sig "${wdir}"/self/"${subkey}"/master4.sig "${wdir}"/self/"${subkey}"/master5.sig "${wdir}"/self/"${subkey}"/master6.sig "${wdir}"/self/"${subkey}"/master7.sig >/dev/null 2>/dev/null || true
-      (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa dilithium5 ed25519 agent; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha512sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) |
+      (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/"${subkey}"/genesis.stamp && for pub in brainpoolp mceqcmdpc256fo secp rsa fmtseq dilithium5 falcon xmss ed25519 agent; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha512sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; if test -e "${wdir}"/self/"${pub}".pub; then sha512sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done) |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/"${subkey}"/secp.sec |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/"${subkey}"/brainpoolp.sec |
         tee -a "${wdir}"/self/"${subkey}"/chain.sig |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/rsa.sec -n file.crypt.key.chain.rsa.subkey.chain2 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/chain2.sig |
         {
-          cp -f -p "${wdir}"/self/"${subkey}"/ed25519.enc "${wdir}"/self/"${subkey}"/ed25519.sec.cpt || return $?
-          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/"${subkey}"/ed25519.sec.cpt || return $?
-          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/ed25519.sec -n file.crypt.key.chain.ed25519.subkey.chain3 2>/dev/null
-          rm -f "${wdir}"/self/"${subkey}"/ed25519.sec
+          EPHEMERAL="${SRANDOM}"-"${RANDOM}"-"$$"-"$PPID"
+          cp -f -p "${wdir}"/self/"${subkey}"/ed25519.enc "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec -n file.crypt.key.chain.ed25519.subkey.chain3 2>/dev/null
+          rm -f "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec
         } | tee -a "${wdir}"/self/"${subkey}"/chain3.sig |
-        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/dilithium5.sec -n file.crypt.key.chain.dilithium5.subkey.chain4 2>/dev/null >> "${wdir}"/self/"${subkey}"/chain4.sig || rm -f "${wdir}"/self/"${subkey}"/chain4.sig) || {
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/dilithium5.sec -n file.crypt.key.chain.dilithium5.subkey.chain4 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/chain4.sig || rm -f "${wdir}"/self/"${subkey}"/chain4.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/falcon.sec -n file.crypt.key.chain.falcon.subkey.chain5 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/chain5.sig || rm -f "${wdir}"/self/"${subkey}"/chain5.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/xmss.sec -n file.crypt.key.chain.xmss.subkey.chain6 2>/dev/null >> "${wdir}"/self/"${subkey}"/chain6.sig || rm -f "${wdir}"/self/"${subkey}"/chain6.sig) || {
           RET="$?"
           sys debug exit "${RET}" "Key creation failure"
         }
 
-      (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/chain.sig "${wdir}"/self/"${subkey}"/chain.sig "${wdir}"/self/chain2.sig "${wdir}"/self/"${subkey}"/chain2.sig "${wdir}"/self/chain3.sig "${wdir}"/self/"${subkey}"/chain3.sig "${wdir}"/self/"${subkey}"/genesis.stamp && for pub in dilithium5 rsa mceqcmdpc256fo secp brainpoolp ed25519 agent; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha512sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; done) |
+      (cat "${wdir}"/self/genesis.stamp "${wdir}"/self/chain.sig "${wdir}"/self/"${subkey}"/chain.sig "${wdir}"/self/chain2.sig "${wdir}"/self/"${subkey}"/chain2.sig "${wdir}"/self/chain3.sig "${wdir}"/self/"${subkey}"/chain3.sig "${wdir}"/self/"${subkey}"/genesis.stamp && for i in "${wdir}"/self/chain4.sig "${wdir}"/self/"${subkey}"/chain4.sig "${wdir}"/self/chain5.sig "${wdir}"/self/"${subkey}"/chain5.sig "${wdir}"/self/chain6.sig "${wdir}"/self/"${subkey}"/chain6.sig; do if test -e "${i}"; then sha512sum < "$i" | awk '{print $1}'; fi; done && for pub in dilithium5 falcon xmss agent; do if test -e "${wdir}"/self/"${subkey}"/"${pub}".pub; then sha512sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; fi; if test -e "${wdir}"/self/"${pub}".pub; then sha512sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; fi; done && for pub in rsa fmtseq mceqcmdpc256fo secp brainpoolp ed25519; do sha512sum < "${wdir}"/self/"${subkey}"/"${pub}".pub | awk '{print $1}'; sha512sum < "${wdir}"/self/"${pub}".pub | awk '{print $1}'; done) |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c secp521r1 -F "${wdir}"/self/secp.sec |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/"${subkey}"/brainpoolp.sec |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-sign -b -a -c brainpoolp512r1 -F "${wdir}"/self/brainpoolp.sec |
@@ -1072,20 +1166,25 @@ sys_crypt_key() {
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/rsa.sec -n file.crypt.key.chain.rsa.subkey.master2 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master2.sig |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/rsa.sec -n file.crypt.key.chain.rsa.subkey.master3 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master3.sig |
         {
-          cp -f -p "${wdir}"/self/ed25519.enc "${wdir}"/self/ed25519.sec.cpt || return $?
-          cp -f -p "${wdir}"/self/"${subkey}"/ed25519.enc "${wdir}"/self/"${subkey}"/ed25519.sec.cpt || return $?
-          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/ed25519.sec.cpt || return $?
-          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/"${subkey}"/ed25519.sec.cpt || return $?
-          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/ed25519.sec -n file.crypt.key.chain.ed25519.subkey.master4 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master4.sig | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/ed25519.sec -n file.crypt.key.chain.ed25519.subkey.master5 2>/dev/null
-          rm -f "${wdir}"/self/ed25519.sec "${wdir}"/self/"${subkey}"/ed25519.sec
+          EPHEMERAL="${SRANDOM}"-"${RANDOM}"-"$$"-"$PPID"
+          cp -f -p "${wdir}"/self/ed25519.enc "${wdir}"/self/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          cp -f -p "${wdir}"/self/"${subkey}"/ed25519.enc "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/ed25519-"${EPHEMERAL}".sec -n file.crypt.key.chain.ed25519.subkey.master4 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master4.sig | /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec -n file.crypt.key.chain.ed25519.subkey.master5 2>/dev/null
+          rm -f "${wdir}"/self/ed25519-"${EPHEMERAL}".sec "${wdir}"/self/"${subkey}"/ed25519-"${EPHEMERAL}".sec
         } | tee -a "${wdir}"/self/"${subkey}"/master5.sig |
         (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/dilithium5.sec -n file.crypt.key.chain.dilithium5.subkey.master6 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master6.sig || rm -f "${wdir}"/self/"${subkey}"/master6.sig) |
-        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/dilithium5.sec -n file.crypt.key.chain.dilithium5.subkey.master7 2>/dev/null >> "${wdir}"/self/"${subkey}"/master7.sig || rm -f "${wdir}"/self/"${subkey}"/master7.sig) || {
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/dilithium5.sec -n file.crypt.key.chain.dilithium5.subkey.master7 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master7.sig || rm -f "${wdir}"/self/"${subkey}"/master7.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/falcon.sec -n file.crypt.key.chain.falcon.subkey.master8 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master8.sig || rm -f "${wdir}"/self/"${subkey}"/master8.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/falcon.sec -n file.crypt.key.chain.falcon.subkey.master9 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master9.sig || rm -f "${wdir}"/self/"${subkey}"/master9.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/xmss.sec -n file.crypt.key.chain.xmss.subkey.master10 2>/dev/null | tee -a "${wdir}"/self/"${subkey}"/master10.sig || rm -f "${wdir}"/self/"${subkey}"/master10.sig) |
+        (/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/"${subkey}"/xmss.sec -n file.crypt.key.chain.xmss.subkey.master11 2>/dev/null >> "${wdir}"/self/"${subkey}"/master11.sig || rm -f "${wdir}"/self/"${subkey}"/master11.sig) || {
           RET="$?"
           sys debug exit "${RET}" "Key creation failure"
         }
 
-      SUM=$(cd "${wdir}"/self/"${subkey}"/. && optional=$(for i in chain4.sig master6.sig master7.sig; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub dilithium5.pub mceqcmdpc256fo.pub rsa.pub secp.pub ed25519.pub master.sig master2.sig master3.sig master4.sig master5.sig ${optional} | sha512sum | awk '{print $1}' | head -c 128)
+      SUM=$(cd "${wdir}"/self/"${subkey}"/. && optional=$(for i in chain4.sig chain5.sig chain6.sig master6.sig master7.sig master8.sig master9.sig master10.sig master11.sig dilithium5.pub falcon.pub xmss.pub agent.pub; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub mceqcmdpc256fo.pub rsa.pub fmtseq.pub secp.pub ed25519.pub master.sig master2.sig master3.sig master4.sig master5.sig ${optional} | sha512sum | awk '{print $1}' | head -c 128)
 
       if test -e "${wdir}"/self/"${subkey}"/footprint.sig
       then
@@ -1156,7 +1255,7 @@ sys_crypt_send() {
         sys debug exit 2 "Only one delimiter possible"
       fi
 
-      if echo X"${pair}" | grep -q '^-' >/dev/null 2>/dev/null
+      if echo X"${pair}" | grep -q '^X-' >/dev/null 2>/dev/null
       then
         sys debug exit 2 "Invalid sender prefix"
       fi
@@ -1257,14 +1356,14 @@ sys_crypt_send() {
   fi
   unset recipient
 
-  if test -f "${wdir}"/"${rpreamble}"/secp.pub && test -f "${wdir}"/"${rpreamble}"/brainpoolp.pub && test -f "${wdir}"/"${rpreamble}"/rsa.pub && test -f "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.pub && test -f "${wdir}"/"${rpreamble}"/ed25519.pub
+  if test -e "${wdir}"/"${rpreamble}"/secp.pub && test -e "${wdir}"/"${rpreamble}"/brainpoolp.pub && test -e "${wdir}"/"${rpreamble}"/rsa.pub && test -e "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.pub && test -e "${wdir}"/"${rpreamble}"/ed25519.pub
   then
     true
   else
     sys debug exit 2 "Public keys are not known to be available. May need to import"
   fi
 
-  if test -f "${wdir}"/"${spreamble}"/secp.sec && test -f "${wdir}"/"${spreamble}"/brainpoolp.sec && test -f "${wdir}"/"${spreamble}"/rsa.sec && test -f "${wdir}"/"${spreamble}"/mceqcmdpc256fo.sec && test -f "${wdir}"/"${spreamble}"/ed25519.sec -o -f "${wdir}"/"${spreamble}"/ed25519.enc
+  if test -e "${wdir}"/"${spreamble}"/secp.sec && test -e "${wdir}"/"${spreamble}"/brainpoolp.sec && test -e "${wdir}"/"${spreamble}"/rsa.sec && test -e "${wdir}"/"${spreamble}"/mceqcmdpc256fo.sec && test -e "${wdir}"/"${spreamble}"/ed25519.sec -o -e "${wdir}"/"${spreamble}"/ed25519.enc
   then
     true
   else
@@ -1361,7 +1460,7 @@ sys_crypt_receive() {
         sys debug exit 2 "Only one delimiter possible"
       fi
 
-      if echo X"${pair}" | grep -q '^-' >/dev/null 2>/dev/null
+      if echo X"${pair}" | grep -q '^X-' >/dev/null 2>/dev/null
       then
         sys debug exit 2 "Invalid sender prefix"
       fi
@@ -1462,14 +1561,14 @@ sys_crypt_receive() {
   fi
   unset sender
 
-  if test -f "${wdir}"/"${rpreamble}"/secp.sec && test -f "${wdir}"/"${rpreamble}"/brainpoolp.sec && test -f "${wdir}"/"${rpreamble}"/rsa.sec && test -f "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.sec && test -f "${wdir}"/"${rpreamble}"/ed25519.sec -o -f "${wdir}"/"${rpreamble}"/ed25519.enc
+  if test -e "${wdir}"/"${rpreamble}"/secp.sec && test -e "${wdir}"/"${rpreamble}"/brainpoolp.sec && test -e "${wdir}"/"${rpreamble}"/rsa.sec && test -e "${wdir}"/"${rpreamble}"/mceqcmdpc256fo.sec && test -e "${wdir}"/"${rpreamble}"/ed25519.sec -o -e "${wdir}"/"${rpreamble}"/ed25519.enc
   then
     true
   else
     sys debug exit 2 "Secret keys are not known to be available"
   fi
 
-  if test -f "${wdir}"/"${spreamble}"/secp.pub && test -f "${wdir}"/"${spreamble}"/brainpoolp.pub && test -f "${wdir}"/"${spreamble}"/rsa.pub && test -f "${wdir}"/"${spreamble}"/mceqcmdpc256fo.pub && test -f "${wdir}"/"${spreamble}"/ed25519.pub
+  if test -e "${wdir}"/"${spreamble}"/secp.pub && test -e "${wdir}"/"${spreamble}"/brainpoolp.pub && test -e "${wdir}"/"${spreamble}"/rsa.pub && test -e "${wdir}"/"${spreamble}"/mceqcmdpc256fo.pub && test -e "${wdir}"/"${spreamble}"/ed25519.pub
   then
     true
   else
@@ -1503,10 +1602,11 @@ sys_crypt_receive() {
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-veridec -c secp521r1 -c brainpoolp512r1 -F "${wdir}"/"${rpreamble}"/secp.sec -- "$(cat "${wdir}"/"${spreamble}"/brainpoolp.pub)" 2>/dev/null |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${TDIR}" ccr -y -d -u self 2>/dev/null |
         {
-          cp -f -p "${wdir}"/"${rpreamble}"/ed25519.enc "${wdir}"/"${rpreamble}"/ed25519.sec.cpt || return $?
-          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/"${rpreamble}"/ed25519.sec.cpt || return $?
-          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" age -d -i "${wdir}"/"${rpreamble}"/ed25519.sec 2>/dev/null
-          rm -f "${wdir}"/"${rpreamble}"/ed25519.sec
+          EPHEMERAL="${SRANDOM}"-"${RANDOM}"-"$$"-"$PPID"
+          cp -f -p "${wdir}"/"${rpreamble}"/ed25519.enc "${wdir}"/"${rpreamble}"/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/ssh-keygen -Y sign -f "${wdir}"/self/agent.sec -n file.crypt.key.chain.agent 2>/dev/null <"${wdir}"/self/agent.seed | sha512sum | awk '{print $1}' | ccrypt --decrypt --brave --force --keyfile - --prompt "" --prompt2 "" -- "${wdir}"/"${rpreamble}"/ed25519-"${EPHEMERAL}".sec.cpt || return $?
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" age -d -i "${wdir}"/"${rpreamble}"/ed25519-"${EPHEMERAL}".sec 2>/dev/null
+          rm -f "${wdir}"/"${rpreamble}"/ed25519-"${EPHEMERAL}".sec
         } |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" seccure-veridec -c brainpoolp512r1 -c secp521r1 -F "${wdir}"/"${rpreamble}"/brainpoolp.sec -- "$(cat "${wdir}"/"${spreamble}"/secp.pub)" 2>/dev/null |
         /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" age -d -i "${wdir}"/"${rpreamble}"/rsa.sec 2>/dev/null |
@@ -1598,7 +1698,7 @@ sys_crypt_sign() {
   fi
   unset sender
 
-  if test -f "${wdir}"/"${spreamble}"/secp.sec && test -f "${wdir}"/"${spreamble}"/brainpoolp.sec && test -f "${wdir}"/"${spreamble}"/rsa.sec && test -f "${wdir}"/"${spreamble}"/mceqcmdpc256fo.sec && test -f "${wdir}"/"${spreamble}"/ed25519.sec -o -f "${wdir}"/"${spreamble}"/ed25519.enc
+  if test -e "${wdir}"/"${spreamble}"/secp.sec && test -e "${wdir}"/"${spreamble}"/brainpoolp.sec && test -e "${wdir}"/"${spreamble}"/rsa.sec && test -e "${wdir}"/"${spreamble}"/mceqcmdpc256fo.sec && test -e "${wdir}"/"${spreamble}"/ed25519.sec -o -e "${wdir}"/"${spreamble}"/ed25519.enc
   then
     true
   else
@@ -1651,8 +1751,19 @@ sys_crypt_sign() {
 
             rm -f "${wdir}"/"${spreamble}"/ed25519-"${EPHEMERAL}".sec
           ) \
-          >(/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/"${spreamble}"/dilithium5.sec -n file.crypt.key.chain.dilithium5.sign 2>/dev/null > "${TDIR}"/dilithium5.sig || : > "${TDIR}"/dilithium5.sig) >/dev/null \
+          >(/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/"${spreamble}"/dilithium5.sec -n file.crypt.key.chain.dilithium5.sign 2>/dev/null > "${TDIR}"/dilithium5.sig || : > "${TDIR}"/dilithium5.sig) \
+          >(/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/bin/ssh-keygen -Y sign -f "${wdir}"/"${spreamble}"/xmss.sec -n file.crypt.key.chain.xmss.sign 2>/dev/null > "${TDIR}"/xmss.sig || : > "${TDIR}"/xmss.sig) \
+          >(/usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -Y sign -f "${wdir}"/"${spreamble}"/falcon.sec -n file.crypt.key.chain.falcon.sign 2>/dev/null > "${TDIR}"/falcon.sig || : > "${TDIR}"/falcon.sig) >/dev/null \
       ) | cat
+
+      cat "${TDIR}"/sha2 "${TDIR}"/size "${TDIR}"/b2sum "${TDIR}"/b3sum "${TDIR}"/edonr "${TDIR}"/gost "${TDIR}"/sha3 "${TDIR}"/whirlpool "${TDIR}"/ed25519.sig "${TDIR}"/dilithium5.sig "${TDIR}"/rsa.sig "${TDIR}"/xmss.sig "${TDIR}"/falcon.sig | (
+        EPHEMERAL="${SRANDOM}"-"${RANDOM}"-"$$"-"$PPID"
+        mkdir -p "${wdir}"/"${spreamble}"/ccr-"${EPHEMERAL}".d/.ccr >/dev/null 2>/dev/null || true
+        echo -n "s11:CCR-PUBKEYSe" > "${wdir}"/"${spreamble}"/ccr-"${EPHEMERAL}".d/.ccr/pubkeys
+        mv -f "${wdir}"/"${spreamble}"/fmtseq.sec "${wdir}"/"${spreamble}"/ccr-"${EPHEMERAL}".d/.ccr/secrets &&
+          /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/"${spreamble}"/ccr-"${EPHEMERAL}".d ccr -s -y -u self -a -b - > "${TDIR}"/fmtseq.sig 2>/dev/null &&
+          mv -f "${wdir}"/"${spreamble}"/ccr-"${EPHEMERAL}".d/.ccr/secrets "${wdir}"/"${spreamble}"/fmtseq.sec &&
+          rm -r "${wdir}"/"${spreamble}"/ccr-"${EPHEMERAL}".d)
 
       RET="$?"
       if test "${RET}" -ne 0
@@ -1660,12 +1771,12 @@ sys_crypt_sign() {
         sys debug exit "${RET}" "Sign fails with exit status \"${RET}\""
       fi
 
-      if ! cat -- "${TDIR}"/ed25519.sig "${TDIR}"/rsa.sig "${TDIR}"/dilithium5.sig
+      if ! cat -- "${TDIR}"/ed25519.sig "${TDIR}"/rsa.sig "${TDIR}"/xmss.sig "${TDIR}"/falcon.sig "${TDIR}"/dilithium5.sig "${TDIR}"/fmtseq.sig
       then
         sys debug exit "${RET}" "Sign fails with exit status \"$?\""
       fi
 
-      echo Signature size: "$(wc -c <(echo "/Size: 000000000000/SHA2-512: Timestamp: ${timestamp}/Signer: /Cascade/Blake2: Cascade/Blake3-XOF: Cascade/Edon-R: Cascade/GOST: Cascade/SHA3-512: Cascade/Whirlpool: Signature size: 00000000") "${TDIR}"/sha2 "${wdir}"/"${spreamble}"/genesis.stamp "${wdir}"/"${spreamble}"/footprint.sig "${TDIR}"/b2sum "${TDIR}"/b3sum "${TDIR}"/edonr "${TDIR}"/gost "${TDIR}"/sha3 "${TDIR}"/whirlpool "${TDIR}"/ed25519.sig "${TDIR}"/rsa.sig "${TDIR}"/dilithium5.sig | tail -n 1 |awk '{print $1}' | tr -cd 0-9 | xargs -n 1 printf %08d)"
+      echo Signature size: "$(wc -c <(echo "/Size: 000000000000/SHA2-512: Timestamp: ${timestamp}/Signer: /Cascade/Blake2: Cascade/Blake3-XOF: Cascade/Edon-R: Cascade/GOST: Cascade/SHA3-512: Cascade/Whirlpool: Signature size: 00000000") "${TDIR}"/sha2 "${wdir}"/"${spreamble}"/genesis.stamp "${wdir}"/"${spreamble}"/footprint.sig "${TDIR}"/b2sum "${TDIR}"/b3sum "${TDIR}"/edonr "${TDIR}"/gost "${TDIR}"/sha3 "${TDIR}"/whirlpool "${TDIR}"/ed25519.sig "${TDIR}"/rsa.sig "${TDIR}"/xmss.sig "${TDIR}"/falcon.sig "${TDIR}"/dilithium5.sig "${TDIR}"/fmtseq.sig | tail -n 1 |awk '{print $1}' | tr -cd 0-9 | xargs -n 1 printf %08d)"
       rm -r "${TDIR}" || true
     ) |
     (
@@ -1817,7 +1928,14 @@ sys_crypt_import() {
       find . -type f -name genesis.stamp -exec grep . -- \{\} /dev/null \; | sed 's,^\./,,' | sed 's,/genesis.stamp:, ,' | sed 's,^self,_self,' | sort | sed 's,^_self,self,'| while read entry
       do
         set -- ${entry}
-        SUM=$(cd "${wdir}"/"$1" && optional=$(for i in master.sig master2.sig master3.sig master4.sig master5.sig master6.sig master7.sig chain4.sig; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub dilithium5.pub mceqcmdpc256fo.pub rsa.pub secp.pub ed25519.pub ${optional} | sha512sum | awk '{print $1}' | head -c 18)
+        post="$(echo "$1" | sed 's,^extern/,,' | sed 's,^upstream/,,')"
+        if echo "${post}" | grep -q /
+        then
+          SUM=$(cd "${wdir}"/"$1" && optional=$(for i in chain4.sig chain5.sig chain6.sig master6.sig master7.sig master8.sig master9.sig master10.sig master11.sig dilithium5.pub falcon.pub xmss.pub agent.pub; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub mceqcmdpc256fo.pub rsa.pub fmtseq.pub secp.pub ed25519.pub master.sig master2.sig master3.sig master4.sig master5.sig ${optional} | sha512sum | awk '{print $1}' | head -c 18)
+        else
+          SUM=$(cd "${wdir}"/"$1" && optional=$(for i in chain4.sig chain5.sig chain6.sig dilithium5.pub falcon.pub xmss.pub; do if test -e "${i}"; then echo "${i}"; fi; done) && sha512sum -- genesis.stamp chain.sig chain2.sig chain3.sig brainpoolp.pub mceqcmdpc256fo.pub rsa.pub fmtseq.pub secp.pub ed25519.pub agent.pub ${optional} | sha512sum | awk '{print $1}' | head -c 18)
+        fi
+
         if echo "${refs}" | fgrep -q "${SUM}"
         then
           ref="$(expr $(echo "${refs}" | tr ' ' '\n' |grep -n "${SUM}" | cut -f1 -d:) - 1)"
