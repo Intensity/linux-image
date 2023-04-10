@@ -516,7 +516,6 @@ RUN \
     mokutil \
     moreutils \
     musl \
-    musl-tools \
     net-tools \
     netbase \
     netcat-openbsd \
@@ -546,7 +545,9 @@ RUN \
     psmisc \
     psutils \
     pv \
+    qemu-user-static \
     qemu-utils \
+    qemu-system-x86 \
     quota \
     quotatool \
     randomsound \
@@ -794,6 +795,8 @@ RUN \
   for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm openntpd rsync sysstat uanytun uuidd lsh-server rsyslog; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get -y --verbose-versions install ${packages_devuan_xen} python3-dotenv python-is-python3 gdb xfsprogs xfsdump initramfs-tools initramfs-tools-core klibc-utils libklibc libvirt0 libvirt-clients libxml2-utils libvirt-daemon-system distro-info && \
   for i in xendomains xen cron virtlogd libvirtd libvirt-guests; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
+  cd /usr/bin && rm --verbose qemu-aarch64_be-static qemu-alpha-static qemu-arm-static qemu-armeb-static qemu-cris-static qemu-hppa-static qemu-i386-static qemu-m68k-static qemu-microblaze-static qemu-microblazeel-static qemu-mips-static qemu-mips64-static qemu-mips64el-static qemu-mipsel-static qemu-mipsn32-static qemu-mipsn32el-static qemu-nios2-static qemu-or1k-static qemu-ppc-static qemu-ppc64-static qemu-ppc64le-static qemu-riscv32-static qemu-riscv64-static qemu-s390x-static qemu-sh4-static qemu-sh4eb-static qemu-sparc-static qemu-sparc32plus-static qemu-sparc64-static qemu-xtensa-static qemu-xtensaeb-static && \
+  cd /root && \
   sed -i -e "/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand," -e "/^UMASK/s,022,077," -e "/^LOG_OK_LOGINS/s,no,yes," /etc/login.defs && \
   sed -i -e '/PATH="/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand",' /etc/profile && \
   sed -i -e '/export PATH=/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand",' /etc/zsh/zshenv && \
@@ -844,7 +847,7 @@ RUN \
   chmod --verbose 0755 /usr/local/sbin/init-naive-networking && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo 'for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}"; done') >> /usr/local/etc/boot.d/08sysctl && \
+  (echo '#!/bin/bash-static'; echo "set +e"; echo 'set +x; for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}" || true; done; true') >> /usr/local/etc/boot.d/08sysctl && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
@@ -2545,6 +2548,7 @@ RUN \
   sed -i -e "/T0:23:respawn:.sbin.getty -L ttyS0/s/^/#/" etc/inittab && \
   echo "T9:23:respawn:/sbin/getty --nohostname -L hvc0 115200 ansi" | tee -a etc/inittab && \
   sed -i -e "/^1:[2-5]*:respawn:.sbin.getty .* tty1$/s/ --noclear / --noclear --nohostname /" etc/inittab && \
+  sed -i -e "/sbin.sulogin/s,^,#," etc/inittab && \
   (echo tty1; echo ttyS0; echo ttyUSB0; echo hvc0; echo xvc0; echo console) >> etc/securetty && \
   mkdir -p -v dev proc sys run && \
   chmod --verbose go+rx sys proc dev run . && \

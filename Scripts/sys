@@ -975,13 +975,13 @@ sys_crypt_key() {
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -t falcon1024 -N "" -C user -f "${wdir}"/self/falcon >/dev/null 2>/dev/null || rm -f "${wdir}"/self/falcon "${wdir}"/self/falcon.pub >/dev/null 2>/dev/null
     mkdir -p "${wdir}"/self/ccr.d >/dev/null 2>/dev/null
     /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/ccr.d ccr -g FMTSEQ256C-SHA512-SHA256 -y --name self 2>/dev/null || return $?
-    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/ccr.d ccr -y -p -a -F self -N other > "${wdir}"/self/fmtseq.pub
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/ccr.d ccr -p -y -a -F self -N other > "${wdir}"/self/fmtseq.pub
     mv -f "${wdir}"/self/ccr.d/.ccr/secrets "${wdir}"/self/fmtseq.sec
     rm -r -f "${wdir}"/self/ccr.d/ || true
 
     mkdir -p "${wdir}"/self/.ccr >/dev/null 2>/dev/null || true
-    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 --name self 2>/dev/null || return $?
-    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self ccr -p -a -F self -N other |sed 's, publickeys [^-]*, publickeys canon,' > "${wdir}"/self/mceqcmdpc256fo.pub || return $?
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 -y --name self 2>/dev/null || return $?
+    /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self ccr -p -y -a -F self -N other |sed 's, publickeys [^-]*, publickeys canon,' > "${wdir}"/self/mceqcmdpc256fo.pub || return $?
     mv -f "${wdir}"/self/.ccr/secrets "${wdir}"/self/mceqcmdpc256fo.sec >/dev/null 2>/dev/null || return $?
     rm -f "${wdir}"/self/.ccr/secrets "${wdir}"/self/.ccr/pubkeys "${wdir}"/self/.ccr/secrets\~ "${wdir}"/self/.ccr/pubkeys\~ "${wdir}"/self/.ccr/lock >/dev/null 2>/dev/null || true
     rmdir "${wdir}"/self/.ccr || return $?
@@ -1117,13 +1117,13 @@ sys_crypt_key() {
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" /usr/local/bin/ssh-keygen -t falcon1024 -N "" -C user -f "${wdir}"/self/"${subkey}"/falcon >/dev/null 2>/dev/null || rm -f "${wdir}"/self/"${subkey}"/falcon "${wdir}"/self/"${subkey}"/falcon.pub >/dev/null 2>/dev/null
       mkdir -p "${wdir}"/self/"${subkey}"/ccr.d >/dev/null 2>/dev/null
       /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}"/ccr.d ccr -g FMTSEQ256C-SHA512-SHA256 -y --name self 2>/dev/null || return $?
-      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}"/ccr.d ccr -y -p -a -F self -N other > "${wdir}"/self/"${subkey}"/fmtseq.pub
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}"/ccr.d ccr -p -y -a -F self -N other > "${wdir}"/self/"${subkey}"/fmtseq.pub
       mv -f "${wdir}"/self/"${subkey}"/ccr.d/.ccr/secrets "${wdir}"/self/"${subkey}"/fmtseq.sec
       rm -r -f "${wdir}"/self/"${subkey}"/ccr.d/ || true
 
       mkdir -p "${wdir}"/self/"${subkey}"/.ccr >/dev/null 2>/dev/null || true
-      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}" ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 --name self 2>/dev/null || return $?
-      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}" ccr -p -a -F self -N other |sed 's, publickeys [^-]*, publickeys canon,' > "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub || return $?
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}" ccr -g MCEQCMDPC256FO-SHA512-CHACHA20 -y --name self 2>/dev/null || return $?
+      /usr/bin/env -i TMP="${TMP}" TMPDIR="${TMPDIR}" TEMP="${TEMP}" HOME="${wdir}"/self/"${subkey}" ccr -p -y -a -F self -N other |sed 's, publickeys [^-]*, publickeys canon,' > "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.pub || return $?
       mv -f "${wdir}"/self/"${subkey}"/.ccr/secrets "${wdir}"/self/"${subkey}"/mceqcmdpc256fo.sec >/dev/null 2>/dev/null || return $?
       rm -f "${wdir}"/self/"${subkey}"/.ccr/secrets "${wdir}"/self/"${subkey}"/.ccr/pubkeys  "${wdir}"/self/"${subkey}"/.ccr/secrets\~ "${wdir}"/self/"${subkey}"/.ccr/pubkeys\~ "${wdir}"/self/"${subkey}"/.ccr/lock >/dev/null 2>/dev/null || true
       rmdir "${wdir}"/self/"${subkey}"/.ccr || return $?
@@ -2118,7 +2118,7 @@ function sys_directive_complete() {
 }
 
 function sys_platform_bootstrap_packages() {
-  echo age amd64-microcode brotli bzip2 ca-certificates ccrypt codecrypt coreutils cpio curl dc dosfstools dpkg e2fsprogs efibootmgr eudev findutils gawk gdisk gnupg1 gostsum gzip hashdeep hostname initramfs-tools-core intel-microcode iproute2 jq kmod lsb-release lshw lsof lsscsi lz4 lzip lzop moreutils mount net-tools nettle-bin pciutils procinfo procps qemu-system-x86 qemu-user-static qemu-utils rhash rsync seccure sed sharutils sq syslinux syslinux-common syslinux-efi syslinux-utils sysstat sysvinit-core tar usbutils util-linux wget xxhash xz-utils zstd
+  echo age amd64-microcode brotli bzip2 ca-certificates ccrypt codecrypt coreutils cpio curl dc dosfstools dpkg e2fsprogs efibootmgr findutils gawk gdisk gnupg1 gostsum gzip hashdeep hostname initramfs-tools-core intel-microcode iproute2 jq kmod lsb-release lshw lsof lsscsi lz4 lzip lzop moreutils mount net-tools nettle-bin pciutils procinfo procps qemu-system-x86 qemu-user-static qemu-utils rhash rsync seccure sed sharutils sq syslinux syslinux-common syslinux-efi syslinux-utils sysstat tar usbutils util-linux wget xxhash xz-utils zstd
 }
 
 function sys_platform() {
