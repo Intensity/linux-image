@@ -1,4 +1,4 @@
-#!/usr/bin/env -vS podman --runtime crun --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --pull=missing -t intensity/linux-image:devuan-4-hardenedmalloc . -f
+#!/usr/bin/env -vS /usr/bin/podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --pull-never -t intensity/linux-image:devuan-4-hardenedmalloc . -f
 
 FROM docker://devuan/devuan:chimaera AS devuan-archive-pool
 RUN \
@@ -356,6 +356,7 @@ RUN \
     dnsmasq-utils \
     dnsproxy \
     dosfstools \
+    dpkg-dev \
     dropbear \
     dropbear-bin \
     dtach \
@@ -407,6 +408,7 @@ RUN \
     gdisk \
     genisoimage \
     gfsecret \
+    git-annex \
     git-crypt \
     git-lfs \
     git-secrets \
@@ -423,6 +425,7 @@ RUN \
     hashdeep \
     haveged \
     hdparm \
+    ibverbs-providers \
     ifenslave \
     ifupdown \
     ifupdown-extra \
@@ -439,6 +442,7 @@ RUN \
     iputils-arping \
     iputils-ping \
     iputils-tracepath \
+    ipxe-qemu \
     isc-dhcp-client \
     isc-dhcp-common \
     jfsutils \
@@ -448,39 +452,97 @@ RUN \
     kmod \
     kpartx \
     less \
+    libaio1 \
     libarchive-tools \
     libarchive13 \
     libasan6 \
     libatomic1 \
+    libbpf0 \
     libc-dev-bin \
+    libc6 \
     libc6-dev \
+    libcom-err2 \
     libcrypt-dev \
     libdevmapper1.02.1 \
     libefiboot1 \
     libefivar1 \
+    libelf1 \
+    libeudev1 \
+    libexecs0 \
+    libfdt1 \
+    libffi7 \
+    libfuse3-3 \
     libgcc-10-dev \
+    libgcc-s1 \
     libgccjit0 \
     libglib2.0-0 \
+    libglib2.0-data \
     libgmp10 \
+    libgnutls30 \
+    libgpm2 \
+    libgssapi-krb5-2 \
+    libhogweed6 \
+    libibverbs1 \
     libicu67 \
+    libidn2-0 \
+    libiscsi7 \
     libisl23 \
     libitm1 \
+    libk5crypto3 \
+    libkeyutils1 \
+    libkrb5-3 \
+    libkrb5support0 \
     liblsan0 \
+    liblzo2-2 \
     libmnl0 \
     libmpc3 \
     libmpfr6 \
     libmtp-runtime \
     libncursesw6 \
     libnetfilter-queue1 \
+    libnettle8 \
     libnfnetlink0 \
+    libnfs13 \
+    libnl-3-200 \
+    libnl-route-3-200 \
     libnsl-dev \
+    libnuma1 \
+    libp11-kit0 \
+    libpcre2-8-0 \
+    libpcre3 \
+    libpixman-1-0 \
     libquadmath0 \
+    librdmacm1 \
+    libseccomp2 \
+    libselinux1 \
+    libslirp0 \
+    libsnappy1v5 \
     libsodium23 \
+    libssh-4 \
+    libssl1.1 \
+    libstdc++6 \
+    libtasn1-6 \
     libtinfo6 \
     libtirpc-dev \
     libtsan0 \
     libubsan1 \
+    libunistring2 \
+    liburing1 \
+    libusb-1.0-0 \
+    libusbredirparser1 \
+    libvdeplug2: \
+    libxencall1 \
+    libxendevicemodel1 \
+    libxenevtchn1 \
+    libxenforeignmemory1 \
+    libxengnttab1 \
+    libxenhypfs1 \
+    libxenmisc4.14 \
+    libxenstore3.0 \
+    libxentoolcore1 \
+    libxentoollog1 \
     libxml2 \
+    libyajl2 \
     libzstd1 \
     liquidprompt \
     lockfile-progs \
@@ -526,7 +588,6 @@ RUN \
     ntpstat \
     nvme-cli \
     nwipe \
-    openntpd \
     openssl \
     ovmf \
     par2 \
@@ -545,13 +606,11 @@ RUN \
     psmisc \
     psutils \
     pv \
-    qemu-user-static \
-    qemu-utils \
-    qemu-system-x86 \
+    python3-pip \
+    qemu-system-data \
     quota \
     quotatool \
     randomsound \
-    rclone \
     rdate \
     rdiff \
     reiser4progs \
@@ -573,6 +632,7 @@ RUN \
     seccure \
     secure-delete \
     securefs \
+    shared-mime-info \
     sharutils \
     signify-openbsd \
     silversearcher-ag \
@@ -605,8 +665,8 @@ RUN \
     tinysshd \
     tldr \
     tmux \
-    tree \
     traceroute \
+    tree \
     tsocks \
     uanytun \
     ucspi-proxy \
@@ -628,15 +688,16 @@ RUN \
     wireguard-tools \
     xdelta \
     xdelta3 \
+    xdg-user-dirs \
     xen-hypervisor-4.14-amd64 \
     xorriso \
     xxhash \
     xz-utils \
     yash \
+    zgen \
     zip \
     zlib1g \
     zoxide \
-    zgen \
     zpaq \
     zplug \
     zsh-antigen \
@@ -792,11 +853,9 @@ RUN \
   rm -v /etc/lsh_host_key.pub /etc/lsh_host_key && \
   apt-get install -y --verbose-versions podman && \
   rm -v /etc/dropbear/dropbear_ecdsa_host_key /etc/dropbear/dropbear_ed25519_host_key /etc/dropbear/dropbear_rsa_host_key && \
-  for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm openntpd rsync sysstat uanytun uuidd lsh-server rsyslog binfmt-support; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
+  for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm rsync sysstat uanytun uuidd lsh-server rsyslog binfmt-support; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get -y --verbose-versions install ${packages_devuan_xen} python3-dotenv python-is-python3 gdb xfsprogs xfsdump initramfs-tools initramfs-tools-core klibc-utils libklibc libvirt0 libvirt-clients libxml2-utils libvirt-daemon-system distro-info && \
   for i in xendomains xen cron virtlogd libvirtd libvirt-guests; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
-  cd /usr/bin && rm --verbose qemu-aarch64_be-static qemu-alpha-static qemu-arm-static qemu-armeb-static qemu-cris-static qemu-hppa-static qemu-i386-static qemu-m68k-static qemu-microblaze-static qemu-microblazeel-static qemu-mips-static qemu-mips64-static qemu-mips64el-static qemu-mipsel-static qemu-mipsn32-static qemu-mipsn32el-static qemu-nios2-static qemu-or1k-static qemu-ppc-static qemu-ppc64-static qemu-ppc64le-static qemu-riscv32-static qemu-riscv64-static qemu-s390x-static qemu-sh4-static qemu-sh4eb-static qemu-sparc-static qemu-sparc32plus-static qemu-sparc64-static qemu-xtensa-static qemu-xtensaeb-static && \
-  rm --verbose /usr/libexec/qemu-binfmt/[^a]* /usr/libexec/qemu-binfmt/a[^a]* /usr/share/binfmts/qemu-[^a]* /usr/share/binfmts/qemu-a[^a]* && \
   cd /root && \
   sed -i -e "/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand," -e "/^UMASK/s,022,077," -e "/^LOG_OK_LOGINS/s,no,yes," /etc/login.defs && \
   sed -i -e '/PATH="/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand",' /etc/profile && \
@@ -848,14 +907,15 @@ RUN \
   chmod --verbose 0755 /usr/local/sbin/init-naive-networking && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "/etc/init.d/eudev stop") >> /usr/local/etc/boot.d/05stopeudev && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
-  (echo '#!/bin/bash-static'; echo "set +e"; echo 'set +x; for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}" || true; done; true') >> /usr/local/etc/boot.d/08sysctl && \
+  (echo '#!/bin/bash-static'; echo "set +e"; echo 'set +x; for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}" 2>/dev/null || true; done; true') >> /usr/local/etc/boot.d/08sysctl && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
-  find /usr/lib /usr/share -maxdepth 24 -name "*.pyc" -type f -ls -delete && \
-  (set +e; find /usr/lib /usr/share -maxdepth 24 -name __pycache__ -type d -print | xargs rmdir -v -- || true; true) && \
+  pip3 install podman-compose awscli && \
+  find /usr/lib /usr/share /usr/local/bin /usr/local/lib -maxdepth 24 -name "*.pyc" -type f -ls -delete && \
+  (set +e; find /usr/lib /usr/share /usr/local/bin /usr/local/lib -maxdepth 24 -name __pycache__ -type d -print | xargs rmdir -v -- || true; true) && \
   apt-get -y clean && \
   apt-get -y autoclean && \
   apt-get -y autoremove && \
@@ -893,6 +953,7 @@ RUN \
     echo 'alias eed="env -i -- TMP=/dev/shm TEMP=/dev/shm TMPDIR=/dev/shm TERM=vt220 SHELL=/bin/bash-static /bin/ed -E --"' && \
     echo 'alias eex="env -i -- TMP=/dev/shm TEMP=/dev/shm TMPDIR=/dev/shm TERM=vt220 SHELL=/bin/bash-static /usr/bin/vim.tiny -b -n -T vt220 -u /dev/null --noplugin -i /dev/null --clean -E -Z --not-a-term --"' && \
     echo 'alias evi="env -i -- TMP=/dev/shm TEMP=/dev/shm TMPDIR=/dev/shm TERM=vt220 SHELL=/bin/bash-static /usr/bin/vim.tiny -b -n -T vt220 -u /dev/null --noplugin -i /dev/null --clean --ttyfail --"') | tee -a /root/.bashrc /root/.profile && \
+  rm -r -f /root/.cache/ && \
   chmod --verbose -R go-rwx /root && \
   chmod --verbose a-s /bin/fusermount /bin/mount /bin/ping /bin/ping6 /bin/su /bin/umount /sbin/unix_chkpwd /usr/bin/chage /usr/bin/chfn /usr/bin/chsh /usr/bin/cryptmount /usr/bin/dotlockfile /usr/bin/expiry /usr/bin/firejail /usr/bin/gpasswd /usr/bin/inetutils-traceroute /usr/bin/mail-lock /usr/bin/mail-touchlock /usr/bin/mail-unlock /usr/bin/newgidmap /usr/bin/newgrp /usr/bin/newuidmap /usr/bin/passwd /usr/bin/schroot /usr/bin/tcptraceroute.mt /usr/bin/wall /usr/bin/write.ul /usr/lib/chromium/chrome-sandbox /usr/lib/x86_64-linux-gnu/utempter/utempter /usr/libexec/lxc/lxc-user-nic /usr/sbin/rush /usr/sbin/vlock-main /usr/bin/crontab 2>&1 | tee -a /usr/local/etc/permissions && \
   chmod --verbose a-s /usr/bin/ssh-agent /usr/lib/openssh/ssh-keysign 2>&1 | tee -a /usr/local/etc/permissions && \
@@ -1144,7 +1205,8 @@ RUN \
   cd /usr/local/src && \
   git clone --recursive https://github.com/skeeto/enchive && \
   cd enchive && \
-  make CFLAGS=" -DENCHIVE_AGENT_DEFAULT_ENABLED=0 ${CFLAGS} " install && \
+  sed -i -e "s,/dev/tty,/bin/false/skip," src/enchive.c && \
+  make CFLAGS=" -DENCHIVE_AGENT_DEFAULT_ENABLED=0 -DENCHIVE_OPTION_AGENT=0 ${CFLAGS} " install && \
   \
   cd /usr/local/src && \
   ARCH="$(uname -m)" && \
@@ -1280,6 +1342,7 @@ RUN \
   true
 
 FROM docker://devuan/devuan:chimaera AS devuan-4-builder2
+COPY --from=devuan-4 /usr/local/etc/permissions /usr/local/etc/permissions
 
 RUN \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand && \
@@ -1308,12 +1371,17 @@ RUN \
   apt-get update && \
   apt-get -y dist-upgrade && \
   \
-  apt-get install -y --verbose-versions asciidoc asciidoctor autoconf automake binutils-dev bison build-essential cargo ccache cdbs clang cmake devscripts dh-autoreconf dh-exec dh-make dh-python docbook-xml docbook-xsl doxygen dpkg-dev flex fuse3 g++ golang-go help2man libacl1-dev libaio-dev libarchive-dev libarchive13 libaudit-dev libboost-context-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-regex-dev libboost-system-dev libboost-thread-dev libbsd-dev libbz2-dev libcap-dev libcap-ng-dev libdevmapper-dev libdivsufsort-dev libdouble-conversion-dev libdrm-dev libdwarf-dev libelf-dev libevent-dev libfido2-dev libfmt-dev libfuse3-dev libgcrypt20-dev libglib2.0-dev libgnutls28-dev libgoogle-glog-dev libiberty-dev libjemalloc-dev liblz4-dev liblzma-dev liblzo2-dev libncurses-dev libncursesw5-dev libnet1-dev libnettle8 libnftables-dev libnl-3-dev libnl-route-3-dev libpam0g-dev libpkcs11-helper1-dev libprotobuf-c-dev libprotobuf-dev libprotoc-dev libsodium-dev libssl-dev libunwind-dev libwolfssl-dev libxxhash-dev libzstd-dev make musl-dev musl-tools nettle-dev ninja-build p7zip-full pandoc pkg-config protobuf-c-compiler protobuf-compiler python3-all python3-fuse python3-llfuse python3-pyfuse3 python3-setuptools ronn texinfo unrar xmlto yasm zlib1g-dev && \
+  apt-get install -y --verbose-versions asciidoc asciidoctor autoconf automake binutils-dev bison build-essential cargo ccache cdbs clang cmake devscripts dh-autoreconf dh-exec dh-make dh-python docbook-xml docbook-xsl doxygen dpkg-dev flex fuse3 g++ golang-1.19 golang-1.19-go help2man libacl1-dev libaio-dev libarchive-dev libarchive13 libaudit-dev libboost-context-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-regex-dev libboost-system-dev libboost-thread-dev libbsd-dev libbz2-dev libcap-dev libcap-ng-dev libdevmapper-dev libdivsufsort-dev libdouble-conversion-dev libdrm-dev libdwarf-dev libelf-dev libevent-dev libfido2-dev libfmt-dev libfuse3-dev libgcrypt20-dev libglib2.0-dev libgnutls28-dev libgoogle-glog-dev libiberty-dev libjemalloc-dev liblz4-dev liblzma-dev liblzo2-dev libncurses-dev libncursesw5-dev libnet1-dev libnettle8 libnftables-dev libnl-3-dev libnl-route-3-dev libpam0g-dev libpkcs11-helper1-dev libprotobuf-c-dev libprotobuf-dev libprotoc-dev libsodium-dev libssl-dev libunwind-dev libwolfssl-dev libxxhash-dev libzstd-dev make musl-dev musl-tools nettle-dev ninja-build p7zip-full pandoc pkg-config protobuf-c-compiler protobuf-compiler python3-all python3-fuse python3-llfuse python3-pyfuse3 python3-setuptools ronn texinfo unrar xmlto yasm zlib1g-dev && \
   apt-get install -y --verbose-versions adwaita-icon-theme autoconf automake autopoint autotools-dev binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 comerr-dev cpp cpp-10 dbus dbus-x11 dconf-gsettings-backend dconf-service debhelper dh-autoreconf dh-exec dh-runit dh-strip-nondeterminism dpkg-dev dwz file fontconfig fontconfig-config fonts-dejavu-core g++ g++-10 gcc gcc-10 gettext gettext-base gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-freedesktop gir1.2-gdkpixbuf-2.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-harfbuzz-0.0 gir1.2-pango-1.0 glib-networking glib-networking-common glib-networking-services groff-base gsettings-desktop-schemas gtk-update-icon-cache hicolor-icon-theme icu-devtools intltool-debian krb5-multidev libapparmor1 libarchive-zip-perl libasan6 libatk-bridge2.0-0 libatk-bridge2.0-dev libatk1.0-0 libatk1.0-data libatk1.0-dev libatomic1 libatspi2.0-0 libatspi2.0-dev libaudit-dev libavahi-client3 libavahi-common-data libavahi-common3 libbinutils libblkid-dev libbrotli-dev libbrotli1 libbsd-dev libbsd0 libc-dev-bin libc6-dev libcairo-gobject2 libcairo-script-interpreter2 libcairo2 libcairo2-dev libcap-ng-dev libcbor0 libcc1-0 libclone-perl libcolord2 libcrypt-dev libctf-nobfd0 libctf0 libcups2 libdatrie-dev libdatrie1 libdbus-1-3 libdbus-1-dev libdconf1 libdebhelper-perl libdeflate0 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit-dev libedit2 libegl-dev libegl-mesa0 libegl1 libegl1-mesa-dev libelf1 libepoxy-dev libepoxy0 libexpat1 libexpat1-dev libffi-dev libfido2-1 libfido2-dev libfile-copy-recursive-perl libfile-slurp-perl libfile-stripnondeterminism-perl libfontconfig-dev libfontconfig1 libfontconfig1-dev libfreetype-dev libfreetype6 libfreetype6-dev libfribidi-dev libfribidi0 libgbm1 libgcc-10-dev libgdbm-compat4 libgdbm6 libgdk-pixbuf-2.0-0 libgdk-pixbuf-2.0-dev libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgirepository-1.0-1 libgl-dev libgl1 libgl1-mesa-dri libglapi-mesa libgles-dev libgles1 libgles2 libglib2.0-0 libglib2.0-bin libglib2.0-data libglib2.0-dev libglib2.0-dev-bin libglvnd-dev libglvnd0 libglx-dev libglx-mesa0 libglx0 libgomp1 libgraphite2-3 libgraphite2-dev libgssrpc4 libgtk-3-0 libgtk-3-common libgtk-3-dev libharfbuzz-dev libharfbuzz-gobject0 libharfbuzz-icu0 libharfbuzz0b libice-dev libice6 libicu-dev libicu67 libisl23 libitm1 libjbig0 libjpeg62-turbo libjson-glib-1.0-0 libjson-glib-1.0-common libkadm5clnt-mit12 libkadm5srv-mit12 libkdb5-10 libkrb5-dev liblcms2-2 libllvm11 liblsan0 liblzo2-2 libmagic-mgc libmagic1 libmd-dev libmd0 libmount-dev libmpc3 libmpdec3 libmpfr6 libncurses-dev libncurses6 libncursesw6 libnsl-dev libopengl-dev libopengl0 libpam0g-dev libpango-1.0-0 libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 libpangoxft-1.0-0 libpciaccess0 libpcre16-3 libpcre2-16-0 libpcre2-32-0 libpcre2-dev libpcre2-posix2 libpcre3-dev libpcre32-3 libpcrecpp0v5 libperl5.32 libpipeline1 libpixman-1-0 libpixman-1-dev libpng-dev libpng16-16 libproxy1v5 libpsl5 libpthread-stubs0-dev libpython3-stdlib libpython3.9-minimal libpython3.9-stdlib libquadmath0 libreadline8 libref-util-perl librest-0.7-0 libselinux1-dev libsensors-config libsensors5 libsepol1-dev libsigsegv2 libsm-dev libsm6 libsoup-gnome2.4-1 libsoup2.4-1 libsqlite3-0 libssl-dev libstdc++-10-dev libsub-override-perl libsystemd-dev libsystemd0 libtext-hogan-perl libtext-trim-perl libthai-data libthai-dev libthai0 libtiff5 libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libvulkan1 libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-dev libwayland-egl1 libwayland-server0 libwebp6 libwrap0 libwrap0-dev libx11-6 libx11-data libx11-dev libx11-xcb1 libxau-dev libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-render0 libxcb-render0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync1 libxcb-xfixes0 libxcb1 libxcb1-dev libxcomposite-dev libxcomposite1 libxcursor-dev libxcursor1 libxdamage-dev libxdamage1 libxdmcp-dev libxdmcp6 libxext-dev libxext6 libxfixes-dev libxfixes3 libxft-dev libxft2 libxi-dev libxi6 libxinerama-dev libxinerama1 libxkbcommon-dev libxkbcommon0 libxml2 libxrandr-dev libxrandr2 libxrender-dev libxrender1 libxshmfence1 libxtst-dev libxtst6 libxxf86vm1 libz3-4 linux-libc-dev m4 make man-db media-types pango1.0-tools patch perl perl-modules-5.32 pkg-config po-debconf python3 python3-distutils python3-lib2to3 python3-minimal python3.9 python3.9-minimal readline-common sensible-utils shared-mime-info ucf uuid-dev wayland-protocols x11-common x11proto-dev x11proto-input-dev x11proto-randr-dev x11proto-record-dev x11proto-xext-dev x11proto-xinerama-dev xkb-data xorg-sgml-doctools xtrans-dev xz-utils zlib1g-dev libcap2 libprocps8 procps psmisc runit-helper && \
   apt-get install -y --verbose-versions bsd-mailx diffstat exim4-base exim4-config exim4-daemon-light gir1.2-rsvg-2.0 imagemagick imagemagick-6-common imagemagick-6.q16 libacl1-dev libaom0 libasound2-dev libattr1-dev libbz2-dev libdav1d4 libde265-0 libdeflate-dev libdjvulibre-dev libdjvulibre-text libdjvulibre21 libexif-dev libexif12 libfftw3-double3 libgd3 libgif-dev libgif7 libgmp-dev libgmpxx4ldbl libgnutls-dane0 libgnutls-openssl27 libgnutls28-dev libgnutlsxx28 libgpm-dev libheif1 libidn2-dev libilmbase-dev libilmbase25 libjansson-dev libjbig-dev libjpeg-dev libjpeg62-turbo-dev liblcms2-dev liblockfile-dev liblqr-1-0 liblqr-1-0-dev libltdl-dev libltdl7 liblzma-dev libm17n-0 libm17n-dev libmagick++-6-headers libmagick++-6.q16-8 libmagick++-6.q16-dev libmagickcore-6-arch-config libmagickcore-6-headers libmagickcore-6.q16-6 libmagickcore-6.q16-6-extra libmagickcore-6.q16-dev libmagickwand-6-headers libmagickwand-6.q16-6 libmagickwand-6.q16-dev libopenexr-dev libopenexr25 libopenjp2-7 libopenjp2-7-dev libotf-dev libotf0 libp11-kit-dev librsvg2-2 librsvg2-common librsvg2-dev libtasn1-6-dev libtext-unidecode-perl libtiff-dev libtiffxx5 libunbound8 libwebpdemux2 libwebpmux3 libwmf-dev libwmf0.2-7 libx265-192 libxaw7 libxaw7-dev libxml-libxml-perl libxml-namespacesupport-perl libxml-sax-base-perl libxml-sax-perl libxml2-dev libxmu-dev libxmu-headers libxmu6 libxpm-dev libxpm4 libxt-dev libxt6 m17n-db nettle-dev quilt tex-common texinfo xaw3dg xaw3dg-dev xutils-dev  gnupg-agent libgccjit-10-dev libgccjit0 libncurses5-dev   emacsen-common install-info  libtinfo6 zlib1g libgccjit0 libgmp10 libisl23 libmpc3 libmpfr6 libzstd1 && \
   apt-get -y install --verbose-versions autoconf automake autopoint autotools-dev bash-completion binutils binutils-common binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 cpp cpp-10 debhelper dh-autoreconf dh-strip-nondeterminism docbook-xml docbook-xsl dpkg-dev dwz eudev file flex g++ g++-10 gcc gcc-10 gettext gettext-base groff-base intltool-debian libarchive-zip-perl libasan6 libatomic1 libbinutils libc-dev-bin libc6-dev libcc1-0 libcrypt-dev libctf-nobfd0 libctf0 libdebhelper-perl libdpkg-perl libelf1 libfile-stripnondeterminism-perl libgcc-10-dev libgdbm-compat4 libgdbm6 libgomp1 libicu67 libisl23 libitm1 libkmod2 liblsan0 libmagic-mgc libmagic1 libmpc3 libmpfr6 libncurses6 libncursesw6 libnsl-dev libosp5 libperl5.32 libpipeline1 libpod-parser-perl libprocps8 libquadmath0 libsgmls-perl libsigsegv2 libstdc++-10-dev libsub-override-perl libtirpc-dev libtool libtsan0 libubsan1 libuchardet0 libxml2 libxslt1.1 libyaml-tiny-perl linux-libc-dev m4 make man-db opensp patch perl perl-modules-5.32 po-debconf po4a procps sensible-utils sgml-base sgml-data udev xml-core xsltproc xz-utils iproute2 python3-docutils cmake gcc libtool libssl-dev make ninja-build git bc libc6-dev wget && \
   \
   mkdir -p -v /opt/artifact/deb && \
+  \
+  cd /usr/local/src && \
+  git clone --recursive https://github.com/Intensity/xsplit && \
+  cd ./xsplit/ && \
+  ./Makefile install && \
   \
   cd /usr/local/src && \
   wget http://deb.debian.org/debian/pool/main/s/sks-ecc/sks-ecc_0.93-6.dsc && \
@@ -1357,12 +1425,68 @@ RUN \
   make && \
   make test && \
   make install prefix=/usr/local && \
+  cd /usr/local/src && \
+  PATH=/usr/lib/go-1.19/bin:"${PATH}" env go install github.com/jrick/ss@latest && \
+  cp -p /root/go/bin/ss /usr/local/bin/ss && \
   \
   cd /usr/ && \
   rm -r -f local/src && \
   rm -v -f /usr/local/lib/lib*.a /usr/local/lib/x86_64-linux-gnu/lib*.a && \
   mv local /opt/artifact/local/ && \
   true
+
+
+FROM docker://devuan/devuan:chimaera AS devuan-4-builder3
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand && \
+  set -x && \
+  set -e && \
+  umask 022 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export HOME=/root && \
+  export TMP=/tmp && \
+  export TEMP="${TMP}" && \
+  export TMPDIR="${TMP}" && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  exec </dev/null && \
+  \
+  export CFLAGS=" -O -ggdb3 -fverbose-asm -mtune=generic " && \
+  export CXXFLAGS=" ${CFLAGS} " && \
+  for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '"0";' | tee -a /etc/apt/apt.conf.d/42disable; done && \
+  chmod --verbose go+r /etc/apt/apt.conf.d/42disable && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get -y dist-upgrade && \
+  \
+  apt-get install -y --verbose-versions git ca-certificates && \
+  apt-get -y build-dep uanytun && \
+  \
+  mkdir -p -v /opt/artifact/deb && \
+  cd /usr/local/src && \
+  mkdir upstream && \
+  cd upstream && \
+  git clone --recursive https://git.spreadspace.org/anytun/uanytun.git && \
+  mkdir -v ../debian/ && \
+  cd ../debian/ && \
+  git clone --recursive https://salsa.debian.org/debian/uanytun.git && \
+  cd ../upstream/uanytun && \
+  tar -cf - AUTHORS ChangeLog LICENSE LICENSE.OpenSSL README doc etc src version | tar -C ../../debian/uanytun/ -xpf - && \
+  cd ../../debian/uanytun/ && \
+  sed -i -e '1s,),r),' debian/changelog && \
+  ./debian/rules binary && \
+  cd ../ && \
+  mv -v uanytun_0.?.?-?r_amd64.deb /opt/artifact/deb/ && \
+  cd /root/ && \
+  rm -r /usr/local/ && \
+  true
+
 
 FROM docker://devuan/devuan:ascii AS ascii-builder
 
@@ -1511,11 +1635,8 @@ RUN \
   mkdir -p local/src && \
   cd local/src && \
   \
-  git clone --recursive https://github.com/anthraxx/linux-hardened && \
+  git clone --depth 1 --single-branch -b 5.10 https://github.com/anthraxx/linux-hardened && \
   cd linux-hardened && \
-  git checkout 5.10 && \
-  git submodule init && \
-  git submodule update && \
   mv -vf /tmp/config.amd64 .config && \
   \
   (echo '#!/bin/sh'; echo exec echo localhost) >/bin/hostname && \
@@ -1583,7 +1704,7 @@ RUN \
   make install && \
   cd ../../.. && \
   \
-  git clone --recursive https://github.com/mkubecek/vmware-host-modules && \
+  (git clone --recursive https://github.com/mkubecek/vmware-host-modules || git clone --recursive https://github.com/mkubecek/vmware-host-modules || git clone --recursive https://github.com/mkubecek/vmware-host-modules) && \
   cd vmware-host-modules && \
   git checkout $(git branch -a|grep origin/workstation- | sort|tail -n 1 | sed 's,.*/,,') && \
   make && \
@@ -1605,11 +1726,8 @@ RUN \
   sync && \
   \
   cd /usr/local/src && \
-  git clone --recursive https://github.com/anthraxx/linux-hardened linux-hardened-uml && \
+  git clone --depth 1 --single-branch -b 5.10 https://github.com/anthraxx/linux-hardened linux-hardened-uml && \
   cd linux-hardened-uml && \
-  git checkout 5.10 && \
-  git submodule init && \
-  git submodule update && \
   mv -vf /tmp/config.uml .config && \
   patch -p1 -F0 < /tmp/uml-static-build.patch && \
   rm -vf /tmp/uml-static-build.patch && \
@@ -1859,10 +1977,47 @@ RUN \
   mv /root/artifact /opt/artifact && \
   true
 
+FROM docker://devuan/devuan:chimaera AS qemubuilder
+
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
+  set -x && \
+  set -e && \
+  umask 02 && \
+  ulimit -d unlimited && \
+  ulimit -v unlimited && \
+  cd /root && \
+  export LANG=C && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  export TERM=dumb && \
+  export TTY=/dev/null && \
+  export PYTHONDONTWRITEBYTECODE=1 && \
+  export V=1 && \
+  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
+  apt-get -y update && \
+  apt-get -y --verbose-versions dist-upgrade && \
+  apt-get install -y --verbose-versions adwaita-icon-theme attr autoconf automake autopoint autotools-dev binutils binutils-alpha-linux-gnu binutils-arm-none-eabi binutils-common binutils-hppa-linux-gnu binutils-powerpc64-linux-gnu binutils-riscv64-linux-gnu binutils-s390x-linux-gnu binutils-sparc64-linux-gnu binutils-x86-64-linux-gnu bsdextrautils build-essential bzip2 ca-certificates cpp cpp-10 cpp-10-alpha-linux-gnu cpp-10-hppa-linux-gnu cpp-10-powerpc64-linux-gnu cpp-10-riscv64-linux-gnu cpp-10-s390x-linux-gnu cpp-10-sparc64-linux-gnu cpp-alpha-linux-gnu cpp-hppa-linux-gnu cpp-powerpc64-linux-gnu cpp-riscv64-linux-gnu cpp-s390x-linux-gnu cpp-sparc64-linux-gnu dbus dbus-x11 dconf-gsettings-backend dconf-service debhelper device-tree-compiler dh-autoreconf dh-strip-nondeterminism dirmngr dmsetup docutils-common dpkg-dev dwz fakeroot fcode-utils file fontconfig fontconfig-config fonts-dejavu-core fonts-font-awesome fonts-lato g++ g++-10 gcc gcc-10 gcc-10-alpha-linux-gnu gcc-10-alpha-linux-gnu-base gcc-10-cross-base gcc-10-cross-base-ports gcc-10-hppa-linux-gnu gcc-10-hppa-linux-gnu-base gcc-10-powerpc64-linux-gnu gcc-10-powerpc64-linux-gnu-base gcc-10-riscv64-linux-gnu gcc-10-riscv64-linux-gnu-base gcc-10-s390x-linux-gnu gcc-10-s390x-linux-gnu-base gcc-10-sparc64-linux-gnu gcc-10-sparc64-linux-gnu-base gcc-alpha-linux-gnu gcc-arm-none-eabi gcc-hppa-linux-gnu gcc-powerpc64-linux-gnu gcc-riscv64-linux-gnu gcc-s390x-linux-gnu gcc-sparc64-linux-gnu gettext gettext-base gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-freedesktop gir1.2-gdkpixbuf-2.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-harfbuzz-0.0 gir1.2-ibus-1.0 gir1.2-pango-1.0 gir1.2-vte-2.91 glib-networking glib-networking-common glib-networking-services glusterfs-common gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client gpg-wks-server gpgconf gpgsm groff-base gsettings-desktop-schemas gtk-update-icon-cache hicolor-icon-theme ibverbs-providers icu-devtools intltool-debian iso-codes libacl1-dev libaio-dev libaio1 libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libapparmor1 libarchive-zip-perl libasan6 libasan6-ppc64-cross libasan6-s390x-cross libasan6-sparc64-cross libasound2 libasound2-data libasound2-dev libassuan0 libasyncns0 libatk-bridge2.0-0 libatk-bridge2.0-dev libatk1.0-0 libatk1.0-data libatk1.0-dev libatomic1 libatomic1-alpha-cross libatomic1-hppa-cross libatomic1-ppc64-cross libatomic1-riscv64-cross libatomic1-s390x-cross libatomic1-sparc64-cross libatspi2.0-0 libatspi2.0-dev libattr1-dev libavahi-client3 libavahi-common-data libavahi-common3 libbinutils libblkid-dev libboost-iostreams1.74.0 libboost-thread1.74.0 libbpf-dev libbpf0 libbrlapi-dev libbrlapi0.8 libbrotli-dev libbrotli1 libbsd0 libc-dev-bin libc-devtools libc6-dev libc6-hppa-cross libc6-ppc64-cross libc6-riscv64-cross libc6-s390x-cross libc6-sparc64-cross libc6.1-alpha-cross libcacard-dev libcacard0 libcairo-gobject2 libcairo-script-interpreter2 libcairo2 libcairo2-dev libcap-ng-dev libcap2 libcap2-bin libcapstone-dev libcapstone4 libcc1-0 libcolord2 libcrypt-dev libctf-nobfd0 libctf0 libcups2 libcurl3-gnutls libcurl4-gnutls-dev libdatrie-dev libdatrie1 libdaxctl1 libdbus-1-3 libdbus-1-dev libdconf1 libdebhelper-perl libdeflate0 libdevmapper1.02.1 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-dev libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdrm2 libdw1 libedit2 libegl-dev libegl-mesa0 libegl1 libegl1-mesa-dev libelf-dev libelf1 libepoxy-dev libepoxy0 libeudev-dev libevent-2.1-7 libexecs0 libexpat1 libexpat1-dev libfakeroot libfdt-dev libfdt1 libffi-dev libfile-fcntllock-perl libfile-stripnondeterminism-perl libflac8 libfontconfig-dev libfontconfig1 libfontconfig1-dev libfreetype-dev libfreetype6 libfreetype6-dev libfribidi-dev libfribidi0 libfuse3-3 libfuse3-dev libgbm-dev libgbm1 libgcc-10-dev libgcc-10-dev-alpha-cross libgcc-10-dev-hppa-cross libgcc-10-dev-ppc64-cross libgcc-10-dev-riscv64-cross libgcc-10-dev-s390x-cross libgcc-10-dev-sparc64-cross libgcc-s1-alpha-cross libgcc-s1-ppc64-cross libgcc-s1-riscv64-cross libgcc-s1-s390x-cross libgcc-s1-sparc64-cross libgcc-s4-hppa-cross libgd3 libgdbm-compat4 libgdbm6 libgdk-pixbuf-2.0-0 libgdk-pixbuf-2.0-dev libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgfapi0 libgfchangelog0 libgfrpc0 libgfxdr0 libgirepository-1.0-1 libgl-dev libgl1 libgl1-mesa-dev libgl1-mesa-dri libglapi-mesa libgles-dev libgles1 libgles2 libglib2.0-0 libglib2.0-bin libglib2.0-data libglib2.0-dev libglib2.0-dev-bin libglu1-mesa libglu1-mesa-dev libglusterd0 libglusterfs-dev libglusterfs0 libglvnd-dev libglvnd0 libglx-dev libglx-mesa0 libglx0 libgmp-dev libgmpxx4ldbl libgnutls-dane0 libgnutls-openssl27 libgnutls28-dev libgnutlsxx28 libgomp1 libgomp1-alpha-cross libgomp1-hppa-cross libgomp1-ppc64-cross libgomp1-riscv64-cross libgomp1-s390x-cross libgomp1-sparc64-cross libgpm2 libgraphite2-3 libgraphite2-dev libgstreamer-plugins-base1.0-0 libgstreamer1.0-0 libgtk-3-0 libgtk-3-common libgtk-3-dev libharfbuzz-dev libharfbuzz-gobject0 libharfbuzz-icu0 libharfbuzz0b libibumad-dev libibumad3 libibus-1.0-5 libibus-1.0-dev libibverbs-dev libibverbs1 libice-dev libice6 libicu-dev libicu67 libidn2-dev libinih1 libiscsi-dev libiscsi7 libisl23 libitm1 libitm1-alpha-cross libitm1-ppc64-cross libitm1-s390x-cross libitm1-sparc64-cross libjack-dev libjack0 libjbig0 libjpeg-dev libjpeg62-turbo libjpeg62-turbo-dev libjs-jquery libjs-sphinxdoc libjs-underscore libjson-glib-1.0-0 libjson-glib-1.0-common libkmod2 libksba8 liblcms2-2 libldap-2.4-2 libldap-common libllvm11 liblocale-gettext-perl liblsan0 liblsan0-ppc64-cross liblzo2-2 liblzo2-dev libmagic-mgc libmagic1 libmd0 libmount-dev libmpc3 libmpdec3 libmpfr6 libncurses-dev libncurses6 libncursesw6 libndctl6 libnfs-dev libnfs13 libnghttp2-14 libnl-3-200 libnl-3-dev libnl-route-3-200 libnl-route-3-dev libnpth0 libnsl-dev libnspr4 libnspr4-dev libnss3 libnss3-dev libnuma-dev libnuma1 libogg0 libopengl-dev libopengl0 libopus0 liborc-0.4-0 libp11-kit-dev libpango-1.0-0 libpango1.0-dev libpangocairo-1.0-0 libpangoft2-1.0-0 libpangoxft-1.0-0 libpciaccess0 libpcre16-3 libpcre2-16-0 libpcre2-32-0 libpcre2-dev libpcre2-posix2 libpcre3-dev libpcre32-3 libpcrecpp0v5 libpcsclite-dev libpcsclite1 libperl5.32 libpipeline1 libpixman-1-0 libpixman-1-dev libpkgconf3 libpmem-dev libpmem1 libpng-dev libpng16-16 libproxy1v5 libpsl5 libpthread-stubs0-dev libpulse-dev libpulse-mainloop-glib0 libpulse0 libpython3-stdlib libpython3.9-minimal libpython3.9-stdlib libquadmath0 librados-dev librados2 librbd-dev librbd1 librdmacm-dev librdmacm1 libreadline8 librest-0.7-0 librtmp1 libsasl2-2 libsasl2-dev libsasl2-modules libsasl2-modules-db libsdl2-2.0-0 libsdl2-dev libseccomp-dev libselinux1-dev libsensors-config libsensors5 libsepol1-dev libset-scalar-perl libsigsegv2 libslirp-dev libslirp0 libsm-dev libsm6 libsnappy-dev libsnappy1v5 libsndfile1 libsndio-dev libsndio7.0 libsoup-gnome2.4-1 libsoup2.4-1 libspice-protocol-dev libspice-server-dev libspice-server1 libsqlite3-0 libssh-4 libssh-dev libssh2-1 libssl-dev libstdc++-10-dev libstdc++6-ppc64-cross libstdc++6-s390x-cross libstdc++6-sparc64-cross libsub-override-perl libsystemd0 libtasn1-6-dev libtext-unidecode-perl libthai-data libthai-dev libthai0 libtiff5 libtirpc-dev libtool libtsan0 libtsan0-ppc64-cross libubsan1 libubsan1-ppc64-cross libubsan1-s390x-cross libubsan1-sparc64-cross libuchardet0 libudev-dev libunbound8 libunwind8 liburcu6 liburing-dev liburing1 libusb-1.0-0 libusb-1.0-0-dev libusbredirparser-dev libusbredirparser1 libva-dev libva-drm2 libva-glx2 libva-wayland2 libva-x11-2 libva2 libvdeplug-dev libvdeplug2 libvirglrenderer-dev libvirglrenderer1 libvorbis0a libvorbisenc2 libvte-2.91-0 libvte-2.91-common libvte-2.91-dev libvulkan1 libwayland-bin libwayland-client0 libwayland-cursor0 libwayland-dev libwayland-egl1 libwayland-server0 libwebp6 libwrap0 libx11-6 libx11-data libx11-dev libx11-xcb1 libxau-dev libxau6 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-render0 libxcb-render0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync1 libxcb-xfixes0 libxcb1 libxcb1-dev libxcomposite-dev libxcomposite1 libxcursor-dev libxcursor1 libxdamage-dev libxdamage1 libxdmcp-dev libxdmcp6 libxen-dev libxencall1 libxendevicemodel1 libxenevtchn1 libxenforeignmemory1 libxengnttab1 libxenhypfs1 libxenmisc4.14 libxenstore3.0 libxentoolcore1 libxentoollog1 libxext-dev libxext6 libxfixes-dev libxfixes3 libxft-dev libxft2 libxi-dev libxi6 libxinerama-dev libxinerama1 libxkbcommon-dev libxkbcommon0 libxml-libxml-perl libxml-namespacesupport-perl libxml-sax-base-perl libxml-sax-perl libxml2 libxpm4 libxrandr-dev libxrandr2 libxrender-dev libxrender1 libxshmfence1 libxslt1.1 libxss-dev libxss1 libxt-dev libxt6 libxtst-dev libxtst6 libxv-dev libxv1 libxxf86vm-dev libxxf86vm1 libyajl2 libyaml-0-2 libz3-4 libzstd-dev linux-libc-dev m4 make man-db manpages manpages-dev media-types netbase nettle-dev ninja-build openssl pango1.0-tools patch perl perl-modules-5.32 pinentry-curses pkg-config po-debconf psmisc python-babel-localedata python3 python3-alabaster python3-babel python3-certifi python3-cffi-backend python3-chardet python3-cryptography python3-distutils python3-docutils python3-idna python3-imagesize python3-jinja2 python3-jwt python3-lib2to3 python3-markupsafe python3-minimal python3-packaging python3-pkg-resources python3-prettytable python3-pygments python3-pyparsing python3-requests python3-roman python3-setuptools python3-six python3-snowballstemmer python3-sphinx python3-sphinx-rtd-theme python3-tz python3-urllib3 python3.9 python3.9-minimal readline-common sensible-utils sgml-base shared-mime-info sphinx-common sphinx-rtd-theme-common tex-common texinfo ucf uuid-dev wayland-protocols x11-common x11proto-dev x11proto-input-dev x11proto-randr-dev x11proto-record-dev x11proto-scrnsaver-dev x11proto-xext-dev x11proto-xf86vidmode-dev x11proto-xinerama-dev xfsprogs xkb-data xml-core xorg-sgml-doctools xsltproc xtrans-dev xz-utils zlib1g-dev && \
+  apt-get -t chimaera-backports -y --verbose-versions install meson && \
+  cd /usr/local/src && \
+  apt-get -t chimaera-backports source qemu-system-x86 && \
+  cd qemu-7.?+dfsg && \
+  ./configure --without-default-features --enable-debug --disable-plugins --disable-containers --disable-strip --enable-avx2 --enable-avx512f --enable-bpf --enable-cloop --enable-iconv --enable-curses --enable-fuse --enable-kvm --enable-libiscsi --enable-libnfs --enable-libssh --enable-libusb --enable-linux-aio --enable-linux-io-uring --enable-live-block-migration --enable-lzo --enable-replication --enable-seccomp --enable-selinux --enable-slirp --enable-snappy --enable-tcg --enable-tools --enable-tpm --enable-usb-redir --enable-vde --enable-pie --target-list="x86_64-linux-user x86_64-softmmu aarch64-linux-user aarch64-softmmu" --enable-virtfs --enable-virtiofsd --enable-xen --enable-xen-pci-passthrough --enable-zstd --enable-attr --enable-cap-ng --enable-vhost-user --enable-vduse-blk-export --enable-vhost-vdpa --enable-libvduse --enable-nettle --enable-gnutls --enable-crypto-afalg --enable-fuse-lseek --enable-l2tpv3 --enable-libudev --enable-malloc-trim --enable-membarrier --enable-numa --enable-rdma --enable-vhost-crypto --enable-vhost-kernel --enable-vhost-net && \
+  make && \
+  make install && \
+  strip /usr/local/bin/* /usr/local/libexec/* && \
+  mkdir -p -v /opt/artifact/ && \
+  cd /usr/local/ && \
+  rm -r src && \
+  cd /usr && \
+  mv -v local /opt/artifact/local/ && \
+  true
+
 
 FROM devuan-4 AS devuan-4-local
 COPY --from=devuan-4-builder /opt/artifact /root/artifact
 COPY --from=devuan-4-builder2 /opt/artifact /root/artifact2
+COPY --from=qemubuilder /opt/artifact /root/artifact3
+COPY --from=devuan-4-builder3 /opt/artifact /root/artifact4
 COPY --from=alpine-builder /usr/local /root/local
 COPY --from=kernelsign /opt/artifact /root/kernel
 COPY --from=ascii-builder /usr/local/bin/pcompress /root/artifact/local/bin/pcompress
@@ -1884,19 +2039,43 @@ RUN \
   export TTY=/dev/null && \
   export PYTHONDONTWRITEBYTECODE=1 && \
   exec </dev/null && \
-  cat /root/artifact/local/etc/permissions >> /usr/local/etc/permissions && \
-  rm -v /root/artifact/local/etc/permissions && \
+  cat /root/artifact2/local/etc/permissions /usr/local/etc/permissions |sort |uniq >> /usr/local/etc/permissions. && \
+  mv -f /usr/local/etc/permissions. /usr/local/etc/permissions && \
+  rm -f /root/artifact/local/etc/permissions /root/artifact2/local/etc/permissions && \
+  tar -C /root/artifact3/ -c -v -f - local/ |tar -C /usr/ -x -p -v --warning=no-timestamp -f - && \
+  rm -r /root/artifact3/ && \
   tar -C /root/artifact2 -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
   rm -r /root/artifact2/local && \
+  cd /root/artifact4/deb/ && \
+  dpkg -i uanytun*.deb && \
   cd /root/artifact2/deb/ && \
+  rm -r /root/artifact4/ && \
   dpkg -i sks-ecc_0.93-6_amd64.deb sks-ecc-doc_0.93-6_all.deb && \
   cd /root && \
   tar -C /root/artifact -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
   tar -C /root/ -c -v -f - local|tar -C /usr -x -p -v --warning=no-timestamp -f - && \
-  dpkg -i /root/artifact/deb/podman-compose*.deb /root/artifact/deb/vdmfec*.deb && \
+  dpkg -i /root/artifact/deb/vdmfec*.deb && \
   mv -v /root/artifact/stand/* /stand/ && \
   mkdir /root/ephemeral && \
   cd /root/ephemeral &&  \
+  wget https://github.com/rclone/rclone/releases/download/v1.62.2/rclone-v1.62.2-linux-amd64.deb && \
+  dpkg -i rclone-v1.62.2-linux-amd64.deb && \
+  rm -v rclone-v1.62.2-linux-amd64.deb && \
+  wget 'https://vault.bitwarden.com/download/?app=cli&platform=linux' && \
+  mv -i index.* foo.zip && \
+  unzip foo.zip && \
+  rm -v foo.zip && \
+  chmod 755 bw && \
+  chown root bw && \
+  mv -i bw /usr/local/bin/ && \
+  wget 'https://github.com/bitwarden/sdk/releases/download/bws-v0.2.1/bws-x86_64-unknown-linux-gnu-0.2.1.zip' && \
+  mv -i bws-* bws.zip && \
+  unzip bws.zip && \
+  rm -v bws.zip && \
+  strip bws && \
+  chmod 755 bws && \
+  chown root bws && \
+  mv -v bws /usr/local/bin/ && \
   wget https://github.com/evilsocket/opensnitch/releases/download/v1.6.0-rc.5/opensnitch_1.6.0-rc.5-1_amd64.deb && \
   dpkg -i opensnitch_1.6.0-rc.5-1_amd64.deb && \
   cd /root && \
@@ -1926,15 +2105,14 @@ RUN \
   cd /root && \
   rm -r /root/artifact/ /root/local/ && \
   curl -fsSL https://raw.githubusercontent.com/mviereck/x11docker/master/x11docker | bash -s -- --update && \
+  apt-get install -y --verbose-versions openntpd && \
+  for i in openntpd; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get install -y --verbose-versions linux-image-amd64 && \
   cp -p -v /root/kernel/uml/linux /usr/local/bin/linux && \
   strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- /usr/local/bin/linux && \
   mv /root/kernel/uml/5.10* /lib/modules/ && \
   mv /root/kernel/vmlinux-* /boot/ && \
   rm -r /root/kernel && \
-  adduser --disabled-password --gecos "" --shell /bin/bash-static user && \
-  adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Administrator && \
-  adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Gateway && \
   dpkg -l >> /root/dpkg-l && \
   find /usr/local -type f -exec file -- \{\} \; |grep "ELF 64-bit LSB" |cut -f1 -d: |xargs -- strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- && \
   strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- /stand/[^b]* /stand/b[^a]* /stand/base* && \
@@ -1945,16 +2123,27 @@ RUN \
   rm -f -v /etc/skel/.bash_logout && \
   : > /var/log/dpkg.log && \
   rm -v -f /root/.wget-hsts && \
+  rm -r -f /root/.cache && \
   rm -v -f /var/lib/dpkg/status-old && \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type l -ls -delete && \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   umask 077 && \
   (echo; echo /usr/bin/uptime; echo echo '$(/bin/date) $HOST $SHLVL $PPID $$ $DISPLAY $USER $TERM $TTY $COLUMNS $LINES') >> /root/.zlogin && \
   (echo; echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand') >> /root/.zshenv && \
-  (echo; echo 'export USERNAME="${USER}"') >> /root/.zshenv && \
-  (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'PROMPT="%(1j.<%j> .)%2m%(2L. %L.)%(#.. %n) %(1e.+%e .)%l %4~ [%h]"'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'HISTSIZE=16384'; echo 'NULLCMD=more'; echo 'READNULLCMD="${NULLCMD}"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
+  (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'if test x"${IDEN_PATH}" "==" x || test x"${IDEN_PATH}" "==" "x "; then if test -r /run/iden/path; then export IDEN_PATH="$(cat /run/iden/path 2>/dev/null | tr -cd 0-9A-Za-z@_.- | head -c 32 || true; true) "; fi; fi'; echo 'if test "${HOST}" "==" localhost; then HOSTUNIQ="${IDEN_PATH}"; else HOSTUNIQ="${IDEN_PATH}${HOST} "; fi; PROMPT="%(1j.<%j> .)${HOSTUNIQ}%(2L.%L .)%(#..${USER} )%(1e.+%e .)%l %4~ [%h]"; unset HOSTUNIQ'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'HISTSIZE=16384'; echo 'NULLCMD=more'; echo 'READNULLCMD="${NULLCMD}"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
   cd /root && \
-  rm -r .local/ .cache && \
+  cp -p -f /root/.zshrc /root/.zshenv /root/.zlogin /etc/skel/ && \
+  adduser --disabled-password --gecos "" --shell /bin/bash-static user && \
+  adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Administrator && \
+  adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Gateway && \
+  chsh -s /bin/zsh-static root && \
+  chsh -s /bin/zsh-static user && \
+  chsh -s /bin/zsh-static Administrator && \
+  chsh -s /bin/rksh Gateway && \
+  rm -v -f /etc/subuid- /etc/subgid- && \
+  : > /etc/subuid && \
+  : > /etc/subgid && \
+  rm -r -f .local/ && \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > /etc/hosts || true) && \
   (chmod a-x /etc/hosts || true) && \
   chown -R root:root /usr/local/etc/cni /usr/local/etc/containers /usr/local/share/man /usr/local/share/doc /usr/local/bin /usr/local/lib && \
@@ -2394,6 +2583,7 @@ RUN \
   echo "deb [signed-by=/usr/share/keyrings/derivative.asc] https://deb.kicksecure.com bullseye main contrib non-free" | tee -a /etc/apt/sources.list.d/derivative.list && \
   chmod --verbose go+r /etc/apt/sources.list.d/derivative.list && \
   apt-get -y update && \
+  rm -f /etc/skel/.zshrc /etc/skel/.zlogin /etc/skel/.zshenv && \
   apt-get -y --verbose-versions dist-upgrade && \
   apt-get -y --verbose-versions install apparmor-profiles-kicksecure debug-misc hardened-malloc kicksecure-base-files kicksecure-default-applications-cli kicksecure-dependencies-cli kicksecure-network-conf non-qubes-vm-enhancements-cli open-link-confirmation security-misc usability-misc && \
   mkdir -v ephemeral && \
@@ -2485,7 +2675,7 @@ COPY --from=devuan-4-kicksecure /opt/artifact/archives.gtar.gz /root/archives-ki
 COPY --from=devuan-4-kicksecure /opt/artifact/lists-key.gtar.xz /root/kicksecure-lists-key.gtar.xz
 
 RUN \
-  module_list=" 3c574_cs 3c589_cs 3c59x 3w-9xxx 3w-sas 3w-xxxx 8021q 8139cp 8139too 8390 88pg86x 88pm800 88pm800-regulator 88pm805 88pm80x BusLogic a100u2w aacraid ac ac97_bus acard-ahci acenic acpi_call acpi_pad acpi_tad acpi_thermal_rel act8865-regulator ad5398 adc-keys adf7242 adin adp5588-keys adp5589-keys advansys aec62xx aes_generic aesni_intel af_alg af_packet agpgart aha152x_cs ahci aic79xx aic7xxx aic94xx alcor alcor_pci algif_hash algif_skcipher alim15x3 altera_tse alx am53c974 amd amd-xgbe amd74xx amd8111e android-goldfish applespi aquantia ar9331 arcmsr arizona-i2c arizona-ldo1 arizona-micsupp arizona-spi asus-wmi async_memcpy async_pq async_raid6_recov async_tx async_xor at803x at86rf230 ata_generic ata_piix aten atiixp atl1 atl1c atl1e atl2 atlantic atp870u atusb aufs autofs4 ax88796b axnet_cs axp20x axp20x-i2c axp20x-regulator b44 b53_common b53_mdio b53_mmap b53_serdes b53_spi b53_srab bareudp battery bcm-phy-lib bcm-sf2 bcm54140 bcm590xx bcm590xx-regulator bcm7xxx bcm84881 bcm87xx bcma bcma-hcd bd9571mwv bd9571mwv-regulator be2iscsi be2net binfmt_misc blake2b_generic blktap bna bnx2 bnx2fc bnx2i bnx2x bnxt_en bochs bochs_drm bpck br_netfilter brd bridge broadcom bsd_comp btrfs button ca8210 cassini cb710 cb710-mmc cc2520 ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt ch chacha-x86_64 chacha_x86_64 ci_hdrc ci_hdrc_msm ci_hdrc_pci ci_hdrc_usb2 cicada cirrus clk-cdce706 clk-cs2000-cp clk-max9485 clk-pwm clk-s2mps11 clk-si5341 clk-si5351 clk-si544 cmd640 cmd64x cnic comm configfs cortina cpuid cqhci crc-ccitt crc-itu-t crc16 crc32-pclmul crc32_pclmul crc32c-intel crc32c_generic crc32c_intel crc7 crc8 crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cros_ec cros_ec_dev cros_ec_keyb cros_ec_lpcs cros_ec_spi cryptd crypto_simd cryptoloop ctr curve25519-x86_64 curve25519_x86_64 cxgb cxgb3 cxgb3i cxgb4 cxgb4i cxgb4vf da9062-core da9062-regulator da9063 da9150-core da9210-regulator da9211-regulator davicom dc395x dca de2104x defxx delkin_cb dl2k dlink-dir685-touchkeys dln2 dm_crypt dm_log dm_mirror dm_mod dm_multipath dm_region_hash dmfe dmx3191d dnet dns_resolver dp83822 dp83848 dp83867 dp83869 dp83tc811 dpt_i2o drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper dsa_core dsa_loop dsa_loop_bdinfo dstr dw_dmac dw_dmac_core dwc2 dwc3 dwc3-haps dwc3-pci e100 e1000 e1000e ec_bhf ecb ecryptfs eeprom_93cx6 efi_pstore efivarfs efivars ehci-hcd ehci-pci ehci-platform ehci_hcd ehci_pci ena enclosure encrypted_keys enic epat epia epic100 eql esas2r esp_scsi et1011c et131x evdev ext2 ext3 ext4 extcon-usb-gpio extcon-usbc-cros-ec failover fakelb fan fan53555 fat fb fb_sys_fops fbdev fcoe fealnx ff-memless firewire-core firewire-ohci firewire-sbp2 fit2 fit3 fixed fixed_phy fjes floppy fm10k fmvj18x_cs fnic forcedeth fotg210-hcd friq frpw fscache fuse garp gcm gdth geneve gf128mul ghash_clmulni_intel ghash_generic glue_helper goldfish_events gpio-adp5588 gpio-aggregator gpio-amd-fch gpio-amd8111 gpio-amdpt gpio-dwapb gpio-exar gpio-f7188x gpio-generic gpio-ich gpio-it87 gpio-kempld gpio-max3191x gpio-max7300 gpio-max7301 gpio-max730x gpio-max732x gpio-mb86s7x gpio-mc33880 gpio-ml-ioh gpio-mockup gpio-pca953x gpio-pca9570 gpio-pcf857x gpio-pci-idio-16 gpio-pcie-idio-24 gpio-pisosr gpio-rdc321x gpio-regulator gpio-sch gpio-sch311x gpio-tpic2810 gpio-viperboard gpio-vx855 gpio-winbond gpio-ws16c48 gpio-xilinx gpio-xra1403 gpio_keys gpio_keys_polled grace gre gtp gve hamachi hid hid-accutouch hid-alps hid-apple hid-appleir hid-asus hid-aureal hid-belkin hid-cherry hid-chicony hid-cmedia hid-corsair hid-cougar hid-cp2112 hid-creative-sb0540 hid-elan hid-elo hid-ezkey hid-gembird hid-generic hid-gfrm hid-glorious hid-gt683r hid-holtek-kbd hid-holtek-mouse hid-hyperv hid-ite hid-jabra hid-keytouch hid-led hid-lenovo hid-lg-g15 hid-logitech hid-logitech-dj hid-logitech-hidpp hid-macally hid-maltron hid-mcp2221 hid-mf hid-microsoft hid-monterey hid-nti hid-ortek hid-penmount hid-plantronics hid-primax hid-prodikeys hid-redragon hid-retrode hid-rmi hid-roccat hid-roccat-arvo hid-roccat-common hid-roccat-isku hid-roccat-lua hid-roccat-ryos hid-roccat-savu hid-samsung hid-sensor-custom hid-sensor-hub hid-sjoy hid-steam hid-steelseries hid-sunplus hid-topseed hid-u2fzero hid-udraw-ps3 hid-viewsonic hid-vivaldi hid-xinmo hid_generic hinic hpsa hpt366 hptiop htc-pasic3 hv_netvsc hv_storvsc hv_vmbus i2c-algo-bit i2c-algo-pca i2c-ali1535 i2c-ali1563 i2c-ali15x3 i2c-amd756 i2c-amd756-s4882 i2c-amd8111 i2c-cht-wc i2c-cros-ec-tunnel i2c-designware-pci i2c-diolan-u2c i2c-hid i2c-i801 i2c-isch i2c-ismt i2c-kempld i2c-nforce2 i2c-nforce2-s4985 i2c-ocores i2c-parport i2c-pca-platform i2c-piix4 i2c-robotfuzz-osif i2c-scmi i2c-simtec i2c-sis5595 i2c-sis630 i2c-sis96x i2c-smbus i2c-taos-evm i2c-tiny-usb i2c-via i2c-viapro i2c-viperboard i2c_algo_bit i2c_core i2c_hid i2c_hid_acpi i2c_i801 i2c_piix4 i2c_smbus i40e iTCO_vendor_support iTCO_wdt iavf ib_cm ib_core ib_uverbs ice icp icplus ide-cd_mod ide-core ide-cs ide-gd_mod ide-generic ide-pci-generic ide-pnp ide-tape ide_cd_mod ide_core ide_gd_mod ide_pci_generic ide_platform idma64 ieee802154 igb igbvf igc industrialio initio input_leds intel-ish-ipc intel-ishtp intel-ishtp-hid intel-ishtp-loader intel-lpss intel-lpss-acpi intel-lpss-pci intel-m10-bmc intel-xway intel_agp intel_gtt intel_pmc_bxt intel_quark_i2c_gpio intel_rapl_common intel_rapl_msr intel_soc_pmic_bxtwc intel_soc_pmic_chtdc_ti intel_soc_pmic_mrfld iosf_mbi ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip6table_nat ip_tables ipr ips ipt_REJECT iptable_filter iptable_mangle iptable_nat ipv6 ipvlan ipvtap iqs62x iqs62x-keys irqbypass isci isl6271a-regulator isl9305 isofs isp116x-hcd isp1760 it8172 it8213 it821x iw_cm ixgb ixgbe ixgbevf janz-cmodio jbd2 jfs jme jmicron joydev kbic kempld-core ks8842 ks8851_common ks8851_par ks8851_spi ksz8795 ksz8795_spi ksz884x ksz9477 ksz9477_i2c ksz9477_spi ksz_common ktti kvdo kvm kvm_amd kvm_intel lan743x lan9303-core lan9303_i2c lan9303_mdio lantiq_gswip ledtrig_audio libaes libahci libarc4 libata libceph libchacha libchacha20poly1305 libcrc32c libcurve25519-generic libcurve25519_generic libcxgb libcxgbi libfc libfcoe libphy linear liquidio liquidio_vf lkkbd llc lm3533-core lm3533-ctrlbank lm363x-regulator lm8323 lm8333 lockd loop lp3943 lp3971 lp3972 lp872x lp873x lp8755 lpc_ich lpc_sch lpfc ltc3589 ltc3676 lxt mac802154 mac802154_hwsim macsec madera madera-i2c madera-spi marvell marvell10g matrix-keymap matrix_keypad max14577 max14577-regulator max1586 max3421-hcd max7359_keypad max77693 max77693-regulator max77826-regulator max8649 max8660 max8907 max8907-regulator max8952 mbcache mc13783-regulator mc13892-regulator mc13xxx-core mc13xxx-i2c mc13xxx-regulator-core mc13xxx-spi mcr20a mcs_touchkey md_mod mdio mdio-bcm-unimac mdio-bitbang mdio-cavium mdio-gpio mdio-i2c mdio-mscc-miim mdio-mvusb mdio-thunder mdio_devres megaraid megaraid_mbox megaraid_mm megaraid_sas menf21bmc mhi micrel microchip microchip_t1 mii mlx4_core mlx4_en mlx4_ib mlx5_core mlx5_ib mlxfw mmc_block mmc_core mmc_hsq mmc_spi mousedev mp2629 mp8859 mpr121_touchkey mpt3sas mptbase mptfc mptsas mptscsih mptspi mrf24j40 mrp mscc mscc_ocelot_switch_lib mscc_seville msdos mt6311-regulator mt6323-regulator mt6358-regulator mt6360-core mt6360-regulator mt6397 mt6397-regulator mt7530 mtd mtip32xx mtk-pmic-keys mtk-sd multipath musb_hdrc mux-core mv88e6060 mv88e6xxx mvmdio mvsas mvumi myri10ge national natsemi ne2k-pci net_failover netconsole netxen_nic newtonkbd nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_netlink nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_reject_ipv4 nf_tables nfnetlink nfp nfs nfs_acl nfs_ssc nfsv2 nfsv3 nfsv4 nft_chain_nat nft_compat nft_counter nft_ct nft_masq niu nlmon nls_ascii nls_cp437 nls_iso8859_1 nls_utf8 nmclan_cs ns83820 ns87415 ntb ntb_netdev ntb_transport ntfs null_blk nvme nvme-loop nvme-rdma nvme_core nvmet nvmet-fc nvmet-rdma nvmet-tcp nxp-tja11xx ohci-hcd ohci-pci ohci-platform on20 on26 opencores-kbd opti621 overlay oxu210hp-hcd paride parport parport_pc pata_acpi pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_efar pata_hpt366 pata_hpt37x pata_hpt3x2n pata_hpt3x3 pata_it8213 pata_it821x pata_jmicron pata_marvell pata_mpiix pata_netcell pata_ninja32 pata_ns87410 pata_ns87415 pata_oldpiix pata_pcmcia pata_pdc2027x pata_pdc202xx_old pata_piccolo pata_platform pata_rdc pata_rz1000 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pca9450-regulator pcd pcf50633 pcf50633-regulator pci-hyperv pci-hyperv-intf pcmcia pcmcia_core pcnet32 pcnet_cs pcs-lynx pcs-xpcs pcspkr pd pdc202xx_new pdc202xx_old pdc_adma pf pfuze100-regulator pg phy-bcm-kona-usb2 phy-cpcap-usb phy-exynos-usb2 phy-generic phy-gpio-vbus-usb phy-intel-lgm-emmc phy-isp1301 phy-lgm-usb phy-pxa-28nm-hsic phy-pxa-28nm-usb2 phy-qcom-usb-hs phy-qcom-usb-hsic phy-tahvo phy-tusb1210 phylink piix pinctrl-emmitsburg pinctrl-jasperlake pinctrl-lynxpoint pinctrl-madera pinctrl-tigerlake pktcdvd plip pm80xx pmcraid poly1305-x86_64 poly1305_x86_64 ppdev ppp_async ppp_deflate ppp_generic ppp_mppe ppp_synctty pppoe pppox pptp psmouse pt pv88060-regulator pv88080-regulator pv88090-regulator pvpanic pwm-cros-ec pwm-regulator pwm_bl qca8k qcom-labibb-regulator qcom_spmi-regulator qcom_usb_vbus-regulator qed qede qedf qedi qemu_fw_cfg qla1280 qla2xxx qla3xxx qla4xxx qlcnic qlogic_cs qlogicfas408 qsemi qt1050 qt1070 qt2160 r6040 r8169 r8a66597-hcd raid0 raid1 raid10 raid456 raid6_pq ramoops rapidio rapl rave-sp rbd rdc321x-southbridge rdma_cm realtek realtek-smi reed_solomon regmap-spi regmap-spi-avmm reiserfs retu-mfd rfkill rionet rmi_core rnbd-client rnbd-server rng_core rockchip roles rpi-panel-attiny-regulator rsxx rt4801-regulator rt5033 rt5033-regulator rtc-88pm80x rtc-ab-b5ze-s3 rtc-ab-eoz9 rtc-abx80x rtc-bq32k rtc-bq4802 rtc-da9063 rtc-ds1286 rtc-ds1302 rtc-ds1305 rtc-ds1307 rtc-ds1343 rtc-ds1347 rtc-ds1374 rtc-ds1390 rtc-ds1511 rtc-ds1553 rtc-ds1672 rtc-ds1685 rtc-ds1742 rtc-ds2404 rtc-ds3232 rtc-em3027 rtc-fm3130 rtc-ftrtc010 rtc-isl12022 rtc-isl1208 rtc-m41t80 rtc-m41t93 rtc-m41t94 rtc-m48t35 rtc-m48t59 rtc-m48t86 rtc-max6900 rtc-max6902 rtc-max6916 rtc-max8907 rtc-mc13xxx rtc-mcp795 rtc-msm6242 rtc-mt6397 rtc-pcf2123 rtc-pcf2127 rtc-pcf50633 rtc-pcf85063 rtc-pcf8523 rtc-pcf85363 rtc-pcf8563 rtc-pcf8583 rtc-r9701 rtc-rp5c01 rtc-rs5c348 rtc-rs5c372 rtc-rv3028 rtc-rv3029c2 rtc-rv3032 rtc-rv8803 rtc-rx4581 rtc-rx6110 rtc-rx8010 rtc-rx8025 rtc-rx8581 rtc-s35390a rtc-s5m rtc-sd3078 rtc-stk17ta8 rtc-v3020 rtc-wilco-ec rtc-x1205 rtmv20-regulator rtrs-client rtrs-core rtrs-server rtsx_pci rtsx_pci_sdmmc rtsx_usb rtsx_usb_sdmmc rz1000 s2io s2mpa01 s2mps11 s5m8767 samsung-keypad sata_mv sata_nv sata_promise sata_qstor sata_sil sata_sil24 sata_sis sata_svw sata_sx4 sata_uli sata_via sata_vsc sc92031 sch_fq_codel scsi_debug scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh_rdac scsi_mod scsi_transport_spi sd_mod sdhci sdhci-acpi sdhci-pci sdhci-pltfm sdhci-xenon-driver sdhci_f_sdh30 sdio_uart sdricoh_cs sec-core sec-irq serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx2 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 serverworks ses sfc sfc-falcon sfp sg siimage simpledrm sis190 sis5513 sis900 sja1105 skd skfp skge sky2 sky81452 sky81452-regulator slc90e66 slg51000-regulator slhc slip sm501 smartpqi smc91c92_cs smsc smsc9420 snd snd-compress snd-intel-dspcfg snd-pcm snd-pcm-dmaengine snd-rawmidi snd-seq-device snd-soc-core snd-timer snd_compress snd_hda_codec snd_hda_codec_generic snd_hda_core snd_hda_intel snd_hwdep snd_intel_dspcfg snd_pcm snd_pcm_dmaengine snd_pcsp snd_soc_core snd_timer snic soundcore soundwire-intel soundwire_bus soundwire_cadence soundwire_generic_allocation soundwire_intel sparse-keymap spi-altera spi-amd spi-axi-spi-engine spi-bitbang spi-butterfly spi-cadence spi-dw spi-gpio spi-lantiq-ssc spi-lm70llp spi-loopback-test spi-mux spi-mxic spi-nxp-fspi spi-oc-tiny spi-pxa2xx-pci spi-pxa2xx-platform spi-rockchip spi-sc18is602 spi-sifive spi-tle62x0 spi-xcomm spi-xilinx spi-zynqmp-gqspi spi_ks8995 spl squashfs sr_mod ssb ssb-hcd st starfire ste10Xp stex stowaway stp sundance sungem sungem_phy sunhme sunkbd sunrpc sx8 sym53c500_cs sym53c8xx syscopyarea sysfillrect sysimgblt t10_pi tag_8021q tap target_core_mod tc86c001 tca6416-keypad tca8418_keypad tcm_qla2xxx tehuti teranetics tg3 thermal thunderbolt thunderbolt-net ti-lmu ti_am335x_tscadc tifm_core tifm_sd tlan tls tm2-touchkey toshsd tpm tpm_crb tpm_tis tpm_tis_core tps51632-regulator tps6105x tps6105x-regulator tps62360-regulator tps65010 tps65023-regulator tps6507x tps6507x-regulator tps65086 tps65086-regulator tps65132-regulator tps6524x-regulator tps65912-core tps65912-i2c tps65912-regulator tps65912-spi tqmx86 triflex trm290 trusted ttm tulip tun typhoon uPD60620 uas ucb1400_core udc-core udf udp_tunnel ufshcd-core ufshcd-pci uhci-hcd uhci_hcd uhid uio uli526x ulpi umem ums-alauda ums-cypress ums-datafab ums-eneub6250 ums-freecom ums-isd200 ums-jumpshot ums-karma ums-onetouch ums-realtek ums-sddr09 ums-sddr55 ums-usbat usb-common usb-storage usb_common usb_storage usbcore usbhid usbkbd usbmouse usdhi6rol0 userspace-consumer ushc veth vfat via-rhine via-sdmmc via-velocity via82cxxx video viperboard virtio virtio_balloon virtio_blk virtio_console virtio_dma_buf virtio_gpu virtio_mmio virtio_net virtio_pci virtio_pci_modern_dev virtio_ring virtio_rng virtual vitesse vitesse-vsc73xx-core vitesse-vsc73xx-platform vitesse-vsc73xx-spi vmd vmw_pvscsi vmw_vmci vmwgfx vmxnet3 vrf vub300 vx855 vxge vxlan wacom watchdog wbsd wd719x wilco_ec winbond-840 wireguard wl1273-core wm8994 wm8994-regulator wmi x_tables xen-acpi-processor xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_netfront xen_pciback xen_privcmd xenfs xfrm_algo xfs xhci-hcd xhci-pci xhci-plat-hcd xhci_hcd xhci_pci xilinx_gmii2rgmii xirc2ps_cs xircom_cb xor xt_CHECKSUM xt_LOG xt_MASQUERADE xt_addrtype xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_nat xt_physdev xt_tcpudp xtkbd xts yellowfin zavl zcommon zfs zlua znvpair zram zsmalloc zstd_compress zunicode zzstd " && \
+  module_list=" 3c574_cs 3c589_cs 3c59x 3w-9xxx 3w-sas 3w-xxxx 8021q 8139cp 8139too 8390 88pg86x 88pm800 88pm800-regulator 88pm805 88pm80x BusLogic a100u2w aacraid ac ac97_bus acard-ahci acenic acpi_call acpi_pad acpi_tad acpi_thermal_rel act8865-regulator ad5398 adc-keys adf7242 adin adp5588-keys adp5589-keys advansys aec62xx aes_generic aesni_intel af_alg af_packet agpgart aha152x_cs ahci aic79xx aic7xxx aic94xx alcor alcor_pci algif_hash algif_skcipher alim15x3 altera_tse alx am53c974 amd amd-xgbe amd74xx amd8111e android-goldfish applespi aquantia ar9331 arcmsr arizona-i2c arizona-ldo1 arizona-micsupp arizona-spi asus-wmi async_memcpy async_pq async_raid6_recov async_tx async_xor at803x at86rf230 ata_generic ata_piix aten atiixp atl1 atl1c atl1e atl2 atlantic atp870u atusb aufs autofs4 ax88796b axnet_cs axp20x axp20x-i2c axp20x-regulator b44 b53_common b53_mdio b53_mmap b53_serdes b53_spi b53_srab bareudp battery bcm-phy-lib bcm-sf2 bcm54140 bcm590xx bcm590xx-regulator bcm7xxx bcm84881 bcm87xx bcma bcma-hcd bd9571mwv bd9571mwv-regulator be2iscsi be2net binfmt_misc blake2b_generic blktap bna bnx2 bnx2fc bnx2i bnx2x bnxt_en bochs bochs_drm bpck br_netfilter brd bridge broadcom bsd_comp btrfs button ca8210 cassini cb710 cb710-mmc cc2520 ccp cdrom cec cfbcopyarea cfbfillrect cfbimgblt ch chacha-x86_64 chacha_x86_64 ci_hdrc ci_hdrc_msm ci_hdrc_pci ci_hdrc_usb2 cicada cirrus clk-cdce706 clk-cs2000-cp clk-max9485 clk-pwm clk-s2mps11 clk-si5341 clk-si5351 clk-si544 cmd640 cmd64x cnic comm configfs cortina cpuid cqhci crc-ccitt crc-itu-t crc16 crc32-pclmul crc32_pclmul crc32c-intel crc32c_generic crc32c_intel crc7 crc8 crc_ccitt crc_t10dif crct10dif_common crct10dif_generic crct10dif_pclmul cros_ec cros_ec_dev cros_ec_keyb cros_ec_lpcs cros_ec_spi cryptd crypto_simd cryptoloop ctr curve25519-x86_64 curve25519_x86_64 cxgb cxgb3 cxgb3i cxgb4 cxgb4i cxgb4vf da9062-core da9062-regulator da9063 da9150-core da9210-regulator da9211-regulator davicom dc395x dca de2104x defxx delkin_cb dl2k dlink-dir685-touchkeys dln2 dm_crypt dm_log dm_mirror dm_mod dm_multipath dm_region_hash dmfe dmx3191d dnet dns_resolver dp83822 dp83848 dp83867 dp83869 dp83tc811 dpt_i2o drm drm_kms_helper drm_panel_orientation_quirks drm_ttm_helper drm_vram_helper dsa_core dsa_loop dsa_loop_bdinfo dstr dw_dmac dw_dmac_core dwc2 dwc3 dwc3-haps dwc3-pci e100 e1000 e1000e ec_bhf ecb ecryptfs edac_mce_amd eeprom_93cx6 efi_pstore efivarfs efivars ehci-hcd ehci-pci ehci-platform ehci_hcd ehci_pci ena enclosure encrypted_keys enic epat epia epic100 eql esas2r esp_scsi et1011c et131x evdev ext2 ext3 ext4 extcon-usb-gpio extcon-usbc-cros-ec failover fakelb fan fan53555 fat fb fb_sys_fops fbdev fcoe fealnx ff-memless firewire-core firewire-ohci firewire-sbp2 fit2 fit3 fixed fixed_phy fjes floppy fm10k fmvj18x_cs fnic forcedeth fotg210-hcd friq frpw fscache fuse garp gcm gdth geneve gf128mul ghash_clmulni_intel ghash_generic glue_helper goldfish_events gpio-adp5588 gpio-aggregator gpio-amd-fch gpio-amd8111 gpio-amdpt gpio-dwapb gpio-exar gpio-f7188x gpio-generic gpio-ich gpio-it87 gpio-kempld gpio-max3191x gpio-max7300 gpio-max7301 gpio-max730x gpio-max732x gpio-mb86s7x gpio-mc33880 gpio-ml-ioh gpio-mockup gpio-pca953x gpio-pca9570 gpio-pcf857x gpio-pci-idio-16 gpio-pcie-idio-24 gpio-pisosr gpio-rdc321x gpio-regulator gpio-sch gpio-sch311x gpio-tpic2810 gpio-viperboard gpio-vx855 gpio-winbond gpio-ws16c48 gpio-xilinx gpio-xra1403 gpio_keys gpio_keys_polled grace gre gtp gve hamachi hid hid-accutouch hid-alps hid-apple hid-appleir hid-asus hid-aureal hid-belkin hid-cherry hid-chicony hid-cmedia hid-corsair hid-cougar hid-cp2112 hid-creative-sb0540 hid-elan hid-elo hid-ezkey hid-gembird hid-generic hid-gfrm hid-glorious hid-gt683r hid-holtek-kbd hid-holtek-mouse hid-hyperv hid-ite hid-jabra hid-keytouch hid-led hid-lenovo hid-lg-g15 hid-logitech hid-logitech-dj hid-logitech-hidpp hid-macally hid-maltron hid-mcp2221 hid-mf hid-microsoft hid-monterey hid-nti hid-ortek hid-penmount hid-plantronics hid-primax hid-prodikeys hid-redragon hid-retrode hid-rmi hid-roccat hid-roccat-arvo hid-roccat-common hid-roccat-isku hid-roccat-lua hid-roccat-ryos hid-roccat-savu hid-samsung hid-sensor-custom hid-sensor-hub hid-sjoy hid-steam hid-steelseries hid-sunplus hid-topseed hid-u2fzero hid-udraw-ps3 hid-viewsonic hid-vivaldi hid-xinmo hid_generic hinic hpsa hpt366 hptiop htc-pasic3 hv_netvsc hv_storvsc hv_vmbus i2c-algo-bit i2c-algo-pca i2c-ali1535 i2c-ali1563 i2c-ali15x3 i2c-amd756 i2c-amd756-s4882 i2c-amd8111 i2c-cht-wc i2c-cros-ec-tunnel i2c-designware-pci i2c-diolan-u2c i2c-hid i2c-i801 i2c-isch i2c-ismt i2c-kempld i2c-nforce2 i2c-nforce2-s4985 i2c-ocores i2c-parport i2c-pca-platform i2c-piix4 i2c-robotfuzz-osif i2c-scmi i2c-simtec i2c-sis5595 i2c-sis630 i2c-sis96x i2c-smbus i2c-taos-evm i2c-tiny-usb i2c-via i2c-viapro i2c-viperboard i2c_algo_bit i2c_core i2c_hid i2c_hid_acpi i2c_i801 i2c_piix4 i2c_smbus i40e iTCO_vendor_support iTCO_wdt iavf ib_cm ib_core ib_uverbs ice icp icplus ide-cd_mod ide-core ide-cs ide-gd_mod ide-generic ide-pci-generic ide-pnp ide-tape ide_cd_mod ide_core ide_gd_mod ide_pci_generic ide_platform idma64 ieee802154 igb igbvf igc industrialio initio input_leds intel-ish-ipc intel-ishtp intel-ishtp-hid intel-ishtp-loader intel-lpss intel-lpss-acpi intel-lpss-pci intel-m10-bmc intel-xway intel_agp intel_gtt intel_pmc_bxt intel_quark_i2c_gpio intel_rapl_common intel_rapl_msr intel_soc_pmic_bxtwc intel_soc_pmic_chtdc_ti intel_soc_pmic_mrfld iosf_mbi ip6_tables ip6_udp_tunnel ip6table_filter ip6table_mangle ip6table_nat ip_tables ipr ips ipt_REJECT iptable_filter iptable_mangle iptable_nat ipv6 ipvlan ipvtap iqs62x iqs62x-keys irqbypass isci isl6271a-regulator isl9305 isofs isp116x-hcd isp1760 it8172 it8213 it821x iw_cm ixgb ixgbe ixgbevf janz-cmodio jbd2 jfs jme jmicron joydev kbic kempld-core ks8842 ks8851_common ks8851_par ks8851_spi ksz8795 ksz8795_spi ksz884x ksz9477 ksz9477_i2c ksz9477_spi ksz_common ktti kvdo kvm kvm_amd kvm_intel lan743x lan9303-core lan9303_i2c lan9303_mdio lantiq_gswip ledtrig_audio libaes libahci libarc4 libata libceph libchacha libchacha20poly1305 libcrc32c libcurve25519-generic libcurve25519_generic libcxgb libcxgbi libfc libfcoe libphy linear liquidio liquidio_vf lkkbd llc lm3533-core lm3533-ctrlbank lm363x-regulator lm8323 lm8333 lockd loop lp3943 lp3971 lp3972 lp872x lp873x lp8755 lpc_ich lpc_sch lpfc ltc3589 ltc3676 lxt mac802154 mac802154_hwsim macsec madera madera-i2c madera-spi marvell marvell10g matrix-keymap matrix_keypad max14577 max14577-regulator max1586 max3421-hcd max7359_keypad max77693 max77693-regulator max77826-regulator max8649 max8660 max8907 max8907-regulator max8952 mbcache mc13783-regulator mc13892-regulator mc13xxx-core mc13xxx-i2c mc13xxx-regulator-core mc13xxx-spi mcr20a mcs_touchkey md_mod mdio mdio-bcm-unimac mdio-bitbang mdio-cavium mdio-gpio mdio-i2c mdio-mscc-miim mdio-mvusb mdio-thunder mdio_devres megaraid megaraid_mbox megaraid_mm megaraid_sas menf21bmc mhi micrel microchip microchip_t1 mii mlx4_core mlx4_en mlx4_ib mlx5_core mlx5_ib mlxfw mmc_block mmc_core mmc_hsq mmc_spi mousedev mp2629 mp8859 mpr121_touchkey mpt3sas mptbase mptfc mptsas mptscsih mptspi mrf24j40 mrp mscc mscc_ocelot_switch_lib mscc_seville msdos mt6311-regulator mt6323-regulator mt6358-regulator mt6360-core mt6360-regulator mt6397 mt6397-regulator mt7530 mtd mtip32xx mtk-pmic-keys mtk-sd multipath musb_hdrc mux-core mv88e6060 mv88e6xxx mvmdio mvsas mvumi myri10ge national natsemi ne2k-pci net_failover netconsole netxen_nic newtonkbd nf_conntrack nf_conntrack_ftp nf_conntrack_irc nf_conntrack_netlink nf_conntrack_pptp nf_conntrack_sip nf_defrag_ipv4 nf_defrag_ipv6 nf_log_common nf_log_ipv4 nf_log_ipv6 nf_nat nf_reject_ipv4 nf_tables nfnetlink nfp nfs nfs_acl nfs_ssc nfsv2 nfsv3 nfsv4 nft_chain_nat nft_compat nft_counter nft_ct nft_masq niu nlmon nls_ascii nls_cp437 nls_iso8859_1 nls_utf8 nmclan_cs ns83820 ns87415 ntb ntb_netdev ntb_transport ntfs null_blk nvme nvme-loop nvme-rdma nvme_core nvmet nvmet-fc nvmet-rdma nvmet-tcp nxp-tja11xx ohci-hcd ohci-pci ohci-platform on20 on26 opencores-kbd opti621 overlay oxu210hp-hcd paride parport parport_pc pata_acpi pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_efar pata_hpt366 pata_hpt37x pata_hpt3x2n pata_hpt3x3 pata_it8213 pata_it821x pata_jmicron pata_marvell pata_mpiix pata_netcell pata_ninja32 pata_ns87410 pata_ns87415 pata_oldpiix pata_pcmcia pata_pdc2027x pata_pdc202xx_old pata_piccolo pata_platform pata_rdc pata_rz1000 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pca9450-regulator pcd pcf50633 pcf50633-regulator pci-hyperv pci-hyperv-intf pcmcia pcmcia_core pcnet32 pcnet_cs pcs-lynx pcs-xpcs pcspkr pd pdc202xx_new pdc202xx_old pdc_adma pf pfuze100-regulator pg phy-bcm-kona-usb2 phy-cpcap-usb phy-exynos-usb2 phy-generic phy-gpio-vbus-usb phy-intel-lgm-emmc phy-isp1301 phy-lgm-usb phy-pxa-28nm-hsic phy-pxa-28nm-usb2 phy-qcom-usb-hs phy-qcom-usb-hsic phy-tahvo phy-tusb1210 phylink piix pinctrl-emmitsburg pinctrl-jasperlake pinctrl-lynxpoint pinctrl-madera pinctrl-tigerlake pktcdvd plip pm80xx pmcraid poly1305-x86_64 poly1305_x86_64 ppdev ppp_async ppp_deflate ppp_generic ppp_mppe ppp_synctty pppoe pppox pptp psmouse pt pv88060-regulator pv88080-regulator pv88090-regulator pvpanic pwm-cros-ec pwm-regulator pwm_bl qca8k qcom-labibb-regulator qcom_spmi-regulator qcom_usb_vbus-regulator qed qede qedf qedi qemu_fw_cfg qla1280 qla2xxx qla3xxx qla4xxx qlcnic qlogic_cs qlogicfas408 qsemi qt1050 qt1070 qt2160 r6040 r8169 r8a66597-hcd raid0 raid1 raid10 raid456 raid6_pq ramoops rapidio rapl rave-sp rbd rdc321x-southbridge rdma_cm realtek realtek-smi reed_solomon regmap-spi regmap-spi-avmm reiserfs retu-mfd rfkill rionet rmi_core rnbd-client rnbd-server rng_core rockchip roles rpi-panel-attiny-regulator rsxx rt4801-regulator rt5033 rt5033-regulator rtc-88pm80x rtc-ab-b5ze-s3 rtc-ab-eoz9 rtc-abx80x rtc-bq32k rtc-bq4802 rtc-da9063 rtc-ds1286 rtc-ds1302 rtc-ds1305 rtc-ds1307 rtc-ds1343 rtc-ds1347 rtc-ds1374 rtc-ds1390 rtc-ds1511 rtc-ds1553 rtc-ds1672 rtc-ds1685 rtc-ds1742 rtc-ds2404 rtc-ds3232 rtc-em3027 rtc-fm3130 rtc-ftrtc010 rtc-isl12022 rtc-isl1208 rtc-m41t80 rtc-m41t93 rtc-m41t94 rtc-m48t35 rtc-m48t59 rtc-m48t86 rtc-max6900 rtc-max6902 rtc-max6916 rtc-max8907 rtc-mc13xxx rtc-mcp795 rtc-msm6242 rtc-mt6397 rtc-pcf2123 rtc-pcf2127 rtc-pcf50633 rtc-pcf85063 rtc-pcf8523 rtc-pcf85363 rtc-pcf8563 rtc-pcf8583 rtc-r9701 rtc-rp5c01 rtc-rs5c348 rtc-rs5c372 rtc-rv3028 rtc-rv3029c2 rtc-rv3032 rtc-rv8803 rtc-rx4581 rtc-rx6110 rtc-rx8010 rtc-rx8025 rtc-rx8581 rtc-s35390a rtc-s5m rtc-sd3078 rtc-stk17ta8 rtc-v3020 rtc-wilco-ec rtc-x1205 rtmv20-regulator rtrs-client rtrs-core rtrs-server rtsx_pci rtsx_pci_sdmmc rtsx_usb rtsx_usb_sdmmc rz1000 s2io s2mpa01 s2mps11 s5m8767 samsung-keypad sata_mv sata_nv sata_promise sata_qstor sata_sil sata_sil24 sata_sis sata_svw sata_sx4 sata_uli sata_via sata_vsc sc92031 sch_fq_codel scsi_debug scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh_rdac scsi_mod scsi_transport_spi sd_mod sdhci sdhci-acpi sdhci-pci sdhci-pltfm sdhci-xenon-driver sdhci_f_sdh30 sdio_uart sdricoh_cs sec-core sec-irq serio_raw serpent-avx-x86_64 serpent-avx2 serpent-sse2-x86_64 serpent_avx2 serpent_avx_x86_64 serpent_generic serpent_sse2_x86_64 serverworks ses sfc sfc-falcon sfp sg siimage simpledrm sis190 sis5513 sis900 sja1105 skd skfp skge sky2 sky81452 sky81452-regulator slc90e66 slg51000-regulator slhc slip sm501 smartpqi smc91c92_cs smsc smsc9420 snd snd-compress snd-intel-dspcfg snd-pcm snd-pcm-dmaengine snd-rawmidi snd-seq-device snd-soc-core snd-timer snd_compress snd_hda_codec snd_hda_codec_generic snd_hda_core snd_hda_intel snd_hwdep snd_intel_dspcfg snd_pcm snd_pcm_dmaengine snd_pcsp snd_soc_core snd_timer snic soundcore soundwire-intel soundwire_bus soundwire_cadence soundwire_generic_allocation soundwire_intel sparse-keymap spi-altera spi-amd spi-axi-spi-engine spi-bitbang spi-butterfly spi-cadence spi-dw spi-gpio spi-lantiq-ssc spi-lm70llp spi-loopback-test spi-mux spi-mxic spi-nxp-fspi spi-oc-tiny spi-pxa2xx-pci spi-pxa2xx-platform spi-rockchip spi-sc18is602 spi-sifive spi-tle62x0 spi-xcomm spi-xilinx spi-zynqmp-gqspi spi_ks8995 spl squashfs sr_mod ssb ssb-hcd st starfire ste10Xp stex stowaway stp sundance sungem sungem_phy sunhme sunkbd sunrpc sx8 sym53c500_cs sym53c8xx syscopyarea sysfillrect sysimgblt t10_pi tag_8021q tap target_core_mod tc86c001 tca6416-keypad tca8418_keypad tcm_qla2xxx tehuti teranetics tg3 thermal thunderbolt thunderbolt-net ti-lmu ti_am335x_tscadc tifm_core tifm_sd tlan tls tm2-touchkey toshsd tpm tpm_crb tpm_tis tpm_tis_core tps51632-regulator tps6105x tps6105x-regulator tps62360-regulator tps65010 tps65023-regulator tps6507x tps6507x-regulator tps65086 tps65086-regulator tps65132-regulator tps6524x-regulator tps65912-core tps65912-i2c tps65912-regulator tps65912-spi tqmx86 triflex trm290 trusted ttm tulip tun typhoon uPD60620 uas ucb1400_core udc-core udf udp_tunnel ufshcd-core ufshcd-pci uhci-hcd uhci_hcd uhid uio uli526x ulpi umem ums-alauda ums-cypress ums-datafab ums-eneub6250 ums-freecom ums-isd200 ums-jumpshot ums-karma ums-onetouch ums-realtek ums-sddr09 ums-sddr55 ums-usbat usb-common usb-storage usb_common usb_storage usbcore usbhid usbkbd usbmouse usdhi6rol0 userspace-consumer ushc veth vfat via-rhine via-sdmmc via-velocity via82cxxx video viperboard virtio virtio_balloon virtio_blk virtio_console virtio_dma_buf virtio_gpu virtio_mmio virtio_net virtio_pci virtio_pci_modern_dev virtio_ring virtio_rng virtual vitesse vitesse-vsc73xx-core vitesse-vsc73xx-platform vitesse-vsc73xx-spi vmd vmw_pvscsi vmw_vmci vmwgfx vmxnet3 vrf vub300 vx855 vxge vxlan wacom watchdog wbsd wd719x wilco_ec winbond-840 wireguard wl1273-core wm8994 wm8994-regulator wmi x_tables xen-acpi-processor xen-blkback xen-evtchn xen-gntdev xen-netback xen-pciback xen_blkback xen_evtchn xen_gntdev xen_netback xen_netfront xen_pciback xen_privcmd xenfs xfrm_algo xfs xhci-hcd xhci-pci xhci-plat-hcd xhci_hcd xhci_pci xilinx_gmii2rgmii xirc2ps_cs xircom_cb xor xt_CHECKSUM xt_LOG xt_MASQUERADE xt_addrtype xt_comment xt_connmark xt_conntrack xt_helper xt_limit xt_nat xt_physdev xt_tcpudp xtkbd xts yellowfin zavl zcommon zfs zlua znvpair zram zsmalloc zstd_compress zunicode zzstd " && \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && \
   set -x && \
   set -e && \
@@ -2507,7 +2697,7 @@ RUN \
   (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
   apt-get update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr qemu-system-x86 tar cpio zstd findutils wget curl ca-certificates qemu-utils xz-utils jq initramfs-tools-core amd64-microcode intel-microcode && \
+  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr tar cpio zstd findutils wget curl ca-certificates qemu-utils qemu-system-x86 xz-utils jq initramfs-tools-core amd64-microcode intel-microcode file && \
   echo AMD64UCODE_INITRAMFS=early >> /etc/default/amd64-microcode && \
   echo IUCODE_TOOL_INITRAMFS=early >> /etc/default/intel-microcode && \
   echo IUCODE_TOOL_SCANCPUS=no >> /etc/default/intel-microcode && \
@@ -2521,6 +2711,9 @@ RUN \
   zstd --verbose --verbose --threads=1 --single-thread --memory=256M --long=30 --keep --ultra -22 nerdctl-full-"${nerdctl_version}"-linux-amd64.tar && \
   rm -v nerdctl-full-"${nerdctl_version}"-linux-amd64.tar && \
   mv -v nerdctl-full-"${nerdctl_version}"-linux-amd64.tar.zst /opt/artifact/nerdctl-full-"${nerdctl_version}"-linux-amd64.gtar.zst && \
+  wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-426.0.0-linux-x86_64.tar.gz && \
+  gunzip -v < google-cloud-cli-426.0.0-linux-x86_64.tar.gz | zstd -v -v -v --keep --threads=1 --single-thread --memory=256M --long=30 --ultra -22 > /opt/artifact/google-cloud-cli-426.0.0-linux-x86_64.tar.zst && \
+  rm -v google-cloud-cli-426.0.0-linux-x86_64.tar.gz && \
   kver_debian="$(ls -1rd /lib/modules/5.10.0-[0-9][0-9]-amd64 | tail -n 1 | sed 's,.*/,,')" && \
   rm -v -f /boot/initrd.img-"${kver_debian}" && \
   update-initramfs -v -c -k "${kver_debian}" && \
@@ -2547,7 +2740,7 @@ RUN \
   chmod --verbose go-w ./etc/hostname && \
   tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
   sed -i -e "/DO_CABLETEST/s/DO_CABLETEST.*/DO_CABLETEST=no/" -e "/DO_ARPING/s/DO_ARPING.*/DO_ARPING=no/" etc/default/network-test && \
-  sed -i -e "/T0:23:respawn:.sbin.getty -L ttyS0/s/^/#/" etc/inittab && \
+  echo SKIP sed -i -e "/T0:23:respawn:.sbin.getty -L ttyS0/s/^/#/" etc/inittab && \
   echo "T9:23:respawn:/sbin/getty --nohostname -L hvc0 115200 ansi" | tee -a etc/inittab && \
   sed -i -e "/^1:[2-5]*:respawn:.sbin.getty .* tty1$/s/ --noclear / --noclear --nohostname /" etc/inittab && \
   sed -i -e "/sbin.sulogin/s,^,#," etc/inittab && \
@@ -2562,6 +2755,7 @@ RUN \
   echo localhost > etc/hostname && \
   echo 0x00000000 > etc/hostid && \
   echo nameserver 1.1.1.1 > etc/resolv.conf && \
+  find stand usr/local/sbin usr/local/bin usr/local/libexec -type f -exec file -- \{\} \; |grep ELF |grep "not stripped" |cut -f1 -d: | xargs -r strip && \
   rm -r -v /root/initrd/run/[a-z]* && \
   rm -f -v /root/initrd/run/.containerenv && \
   rm -vf /root/initrd/etc/.pwd.lock && \
@@ -2723,6 +2917,7 @@ RUN \
     echo "echo set +h >>/new/init" && \
     echo "echo umask 077 >>/new/init" && \
     echo "echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin >>/new/init" && \
+    echo 'echo "if test -e /dev/hvc0; then sed -i -e \"/getty.* ttyS0 /s,^,#,\" /etc/inittab; else sed -i -e \"/getty.* hvc0 /s,^,#,\" /etc/inittab; fi" >>/new/init' && \
     echo 'echo exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static TERM=dumb TTY=/dev/console /sbin/init "$@" >>/new/init' && \
     echo "chmod --verbose go-rwx /sbin/init" && \
     echo "cd /" && \
@@ -2779,7 +2974,8 @@ RUN \
   mkdir -p -v /root/drive/mnt/CACHE/overlay /root/drive/mnt/CACHE/lists /root/drive/mnt/EFI/linux /root/drive/root/ && \
   mv -v /root/initramfs-microcode.cpio /root/drive/root/ && \
   (cd /root/drive/root/ && wget https://downloads.sourceforge.net/project/supergrub2/2.06s2-beta1/super_grub2_disk_2.06s2-beta1/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso) && \
-  (cd /root/drive/root/ && wget https://mfsbsd.vx.sk/files/images/13/amd64/mfsbsd-mini-13.1-RELEASE-amd64.img) && \
+  (cd /root/drive/root && wget https://github.com/Intensity/FreeBSD-12-bin/raw/main/mfsbsd-mini-12.3-STABLE-amd64.iso.gz && gunzip -N -v mfsbsd-mini-12.3-STABLE-amd64.iso.gz) && \
+  (cd /root/drive/root && wget https://github.com/Intensity/FreeBSD-12-bin/raw/main/mfsbsd-mini-12.3-STABLE-amd64.bsdtar.zst) && \
   tar -C /root/overlay -cf - usr var lib > /root/drive/mnt/CACHE/overlay/overlay.gtar && \
   mkdir -v -p /root/overlay/usr/local/etc/initramfs-stock.d && \
   cat /root/initramfs-extra.gtar |tar -C /root/overlay/usr/local/etc/initramfs-stock.d -x -p -v -v -f - && \
@@ -2917,7 +3113,8 @@ RUN \
   echo 'umount -v /mnt/dev' >> init && \
   echo 'find . -print0 | sort -z | cpio -0 -H newc --renumber-inodes -o | xz --compress --stdout --check=crc32 -9 --extreme --threads=1 --verbose --verbose > ../initrd.img-post' >> init && \
   echo 'mkdir -v -p /mnt/STAGING/mnt/EFI/FreeBSD/ /mnt/STAGING/mnt/EFI/syslinux/' >> init && \
-  echo 'mv -v /mnt/STAGING/root/mfsbsd-mini-13.1-RELEASE-amd64.img /mnt/STAGING/mnt/EFI/FreeBSD/' >> init && \
+  echo 'mv -v /mnt/STAGING/root/mfsbsd-mini-12.3-STABLE-amd64.iso /mnt/STAGING/mnt/EFI/FreeBSD/FreeBSD-12.3-STABLE-amd64-MFS.iso' >> init && \
+  echo 'mv -v /mnt/STAGING/root/mfsbsd-mini-12.3-STABLE-amd64.bsdtar.zst /mnt/STAGING/mnt/EFI/FreeBSD/FreeBSD-12.3-STABLE-amd64-MFS.bsdtar.zst' >> init && \
   echo 'mv -v /mnt/STAGING/root/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso /mnt/STAGING/mnt/EFI/syslinux/' >> init && \
   echo 'cat /mnt/STAGING/root/initramfs-microcode.cpio ../initrd.img-post > ../initrd.img' >> init && \
   echo 'rm -v /mnt/STAGING/root/initramfs-microcode.cpio ../initrd.img-post' >> init && \
@@ -2974,10 +3171,11 @@ RUN \
   echo 'echo "  INITRD /syslinux/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND iso" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL FreeBSD mfsbsd" >> syslinux.cfg' >> init && \
-  echo 'echo "  MENU LABEL FreeBSD mfsbsd" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL FreeBSD 12 mfsbsd" >> syslinux.cfg' >> init && \
+  echo 'echo "  MENU LABEL FreeBSD 12 mfsbsd" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /syslinux/memdisk" >> syslinux.cfg' >> init && \
-  echo 'echo "  INITRD /FreeBSD/mfsbsd-mini-13.1-RELEASE-amd64.img" >> syslinux.cfg' >> init && \
+  echo 'echo "  INITRD /FreeBSD/FreeBSD-12.3-STABLE-amd64-MFS.iso" >> syslinux.cfg' >> init && \
+  echo 'echo "  APPEND iso" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
   echo 'echo "LABEL Memtest86" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Memtest86" >> syslinux.cfg' >> init && \
