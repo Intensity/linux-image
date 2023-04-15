@@ -2697,7 +2697,7 @@ RUN \
   (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list && \
   apt-get update && \
   apt-get -y --verbose-versions dist-upgrade && \
-  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr tar cpio zstd findutils wget curl ca-certificates qemu-utils qemu-system-x86 xz-utils jq initramfs-tools-core amd64-microcode intel-microcode file && \
+  apt-get -y install --verbose-versions linux-image-amd64 efibootmgr tar cpio zstd findutils wget curl ca-certificates qemu-utils qemu-system-x86 xz-utils jq initramfs-tools-core amd64-microcode intel-microcode file binutils-x86-64-linux-gnu binutils && \
   echo AMD64UCODE_INITRAMFS=early >> /etc/default/amd64-microcode && \
   echo IUCODE_TOOL_INITRAMFS=early >> /etc/default/intel-microcode && \
   echo IUCODE_TOOL_SCANCPUS=no >> /etc/default/intel-microcode && \
@@ -2736,6 +2736,8 @@ RUN \
   mv -v -f /root/dpkg-l-kicksecure /opt/artifact/meta/dpkg-l-kicksecure && \
   cd /root/initrd && \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > ./etc/hosts || true) && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 512M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && zramctl --output-all') >> ./usr/local/etc/boot.d/22compshare && \
+  chmod --verbose 755 ./usr/local/etc/boot.d/22compshare && \
   (chmod 0644 ./etc/hosts || true) && \
   chmod --verbose go-w ./etc/hostname && \
   tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
