@@ -900,7 +900,7 @@ RUN \
   rm -v /etc/dropbear/dropbear_ecdsa_host_key /etc/dropbear/dropbear_ed25519_host_key /etc/dropbear/dropbear_rsa_host_key && \
   for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm rsync sysstat uanytun uuidd lsh-server rsyslog binfmt-support; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get -y --verbose-versions install ${packages_devuan_xen} python3-dotenv python-is-python3 gdb xfsprogs xfsdump initramfs-tools initramfs-tools-core klibc-utils libklibc libvirt0 libvirt-clients libxml2-utils distro-info && \
-  for i in xendomains xen cron virtlogd libvirtd libvirt-guests; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
+  for i in xendomains xen; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   cd /root && \
   sed -i -e "/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand," -e "/^UMASK/s,022,077," -e "/^LOG_OK_LOGINS/s,no,yes," /etc/login.defs && \
   sed -i -e '/PATH="/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand",' /etc/profile && \
@@ -3053,6 +3053,7 @@ RUN \
   (cd /root/drive/mnt/CACHE/overlay/ && zstd --verbose --verbose --threads=1 --single-thread --memory=256M --long=30 --keep --ultra -22 overlay.gtar && rm -v overlay.gtar) && \
   ls -ldsi --full-time /root/drive/mnt/CACHE/overlay/overlay.gtar.zst && \
   rm -r -v /root/overlay/usr/local/etc/boot.d/ && \
+  rmdir -v var/tmp && \
   rmdir -v usr var && \
   mv -v /root/overlay/usr /root/overlay/var . && \
   tar -C /root/overlay/lib/ -c -v -f - modules/ | tar -C /root/initrd/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
