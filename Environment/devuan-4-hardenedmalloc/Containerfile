@@ -2045,13 +2045,6 @@ RUN \
   apt-get -t chimaera-backports -y --verbose-versions install meson && \
   cd /usr/local/src && \
   apt-get -t chimaera-backports source qemu-system-x86 && \
-  cd qemu-7.?+dfsg && \
-  : ./configure --without-default-features --enable-debug --disable-plugins --disable-containers --disable-strip --enable-avx2 --enable-avx512f --enable-bpf --enable-cloop --enable-iconv --enable-curses --enable-fuse --enable-kvm --enable-libiscsi --enable-libnfs --enable-libssh --enable-libusb --enable-linux-aio --enable-linux-io-uring --enable-live-block-migration --enable-lzo --enable-replication --enable-seccomp --enable-selinux --enable-slirp --enable-snappy --enable-tcg --enable-tools --enable-tpm --enable-usb-redir --enable-vde --enable-pie --target-list="x86_64-linux-user x86_64-softmmu aarch64-linux-user aarch64-softmmu" --enable-virtfs --enable-virtiofsd --enable-xen --enable-xen-pci-passthrough --enable-zstd --enable-attr --enable-cap-ng --enable-vhost-user --enable-vduse-blk-export --enable-vhost-vdpa --enable-libvduse --enable-nettle --enable-gnutls --enable-crypto-afalg --enable-fuse-lseek --enable-l2tpv3 --enable-libudev --enable-malloc-trim --enable-membarrier --enable-numa --enable-rdma --enable-vhost-crypto --enable-vhost-kernel --enable-vhost-net && \
-  ./debian/rules binary && \
-  cd ../ && \
-  rm -v *dbgsym*.deb && \
-  mkdir -p /opt/artifact/deb/ && \
-  mv -v *.deb /opt/artifact/deb/ && \
   apt-get -y install --verbose-versions acpica-tools bcc bin86 bison comerr-dev dh-exec dh-python distro-info-data flex gcc-10-multilib gcc-multilib lib32asan6 lib32atomic1 lib32gcc-10-dev lib32gcc-s1 lib32gomp1 lib32itm1 lib32quadmath0 lib32stdc++6 lib32ubsan1 libc6-dev-i386 libc6-dev-x32 libc6-i386 libc6-x32 libcmark-gfm-extensions0 libcmark-gfm0 libext2fs-dev libfindlib-ocaml liblzma-dev libpython3-dev libpython3.9 libpython3.9-dev libx32asan6 libx32atomic1 libx32gcc-10-dev libx32gcc-s1 libx32gomp1 libx32itm1 libx32quadmath0 libx32stdc++6 libx32ubsan1 libyajl-dev lsb-release markdown ocaml-base-nox ocaml-compiler-libs ocaml-findlib ocaml-interp ocaml-nox pandoc pandoc-data python3-dev python3.9-dev rdfind seabios wget && \
   apt-get -y install --verbose-versions bcc bison debhelper debhelper-compat dh-exec dh-python dpkg-dev e2fslibs-dev file flex gcc-multilib iasl libaio-dev libext2fs-dev libfdt-dev libglib2.0-dev liblzma-dev libncurses-dev libpixman-1-dev libpython3-dev libyajl-dev libzstd-dev lsb-release markdown ocaml ocaml-findlib ocaml-native-compilers ocaml-nox pandoc pkg-config python3-dev python3-dev:any rdfind seabios uuid-dev zlib1g-dev && \
   wget http://deb.debian.org/debian/pool/main/x/xen/xen_4.17.0+74-g3eac216e6e-1.dsc && \
@@ -2061,8 +2054,22 @@ RUN \
   cd xen-4*/ && \
   ./debian/rules binary && \
   cd ../ && \
+  dpkg --purge libxen-dev libxenmisc4.14 libxenstore3.0 gcc-multilib && \
+  apt-get -y install --verbose-versions debhelper-compat device-tree-compiler fcode-utils gcc-alpha-linux-gnu gcc-arm-none-eabi gcc-hppa-linux-gnu gcc-powerpc64-linux-gnu gcc-riscv64-linux-gnu gcc-s390x-linux-gnu gcc-sparc64-linux-gnu glusterfs-common gnutls-dev libaio-dev libasound2-dev libbpf-dev libbrlapi-dev libcacard-dev libcap-ng-dev libcapstone-dev libcurl4-gnutls-dev libdrm-dev libepoxy-dev libfdt-dev libfuse3-dev libgbm-dev libglusterfs-dev libgtk-3-dev libibumad-dev libibverbs-dev libiscsi-dev libjack-dev libjpeg-dev libncurses-dev libnfs-dev libnuma-dev libpixman-1-dev libpmem-dev libpng-dev libpulse-dev librbd-dev librdmacm-dev libsasl2-dev libsdl2-dev libseccomp-dev libslirp-dev libspice-server-dev libssh-dev libudev-dev liburing-dev libusb-1.0-0-dev libusbredirparser-dev libva-dev libvdeplug-dev libvirglrenderer-dev libvte-2.91-dev libzstd-dev meson nettle-dev ninja-build python3-sphinx-rtd-theme python3-sphinx:native python3:any texinfo uuid-dev xsltproc zlib1g-dev && \
+  apt-get -y install --verbose-versions eudev libprocps8 procps udev  gcc-10-alpha-linux-gnu gcc-10-hppa-linux-gnu gcc-10-powerpc64-linux-gnu gcc-10-riscv64-linux-gnu gcc-10-s390x-linux-gnu gcc-10-sparc64-linux-gnu gcc-alpha-linux-gnu gcc-hppa-linux-gnu gcc-powerpc64-linux-gnu gcc-riscv64-linux-gnu gcc-s390x-linux-gnu gcc-sparc64-linux-gnu ipxe-qemu && \
+  xen_packages="$(for i in libxencall1 libxendevicemodel1 libxenevtchn1 libxenforeignmemory1 libxengnttab1 libxenhypfs1 libxenmisc4.17 libxenstore4 libxentoolcore1 libxentoollog1 xen-doc xen-hypervisor-4.17-amd64 xen-hypervisor-common xen-system-amd64 xen-utils-4.17 xen-utils-common xenstore-utils libxen-dev; do ls -1d ${i}_*.deb; done)" && \
+  dpkg -i ${xen_packages} && \
+  mkdir -p /opt/artifact/deb/ && \
+  mv -v ${xen_packages} /opt/artifact/deb/ && \
+  rm -v *.deb && \
+  unset xen_packages && \
+  cd qemu-7.?+dfsg && \
+  : ./configure --without-default-features --enable-debug --disable-plugins --disable-containers --disable-strip --enable-avx2 --enable-avx512f --enable-bpf --enable-cloop --enable-iconv --enable-curses --enable-fuse --enable-kvm --enable-libiscsi --enable-libnfs --enable-libssh --enable-libusb --enable-linux-aio --enable-linux-io-uring --enable-live-block-migration --enable-lzo --enable-replication --enable-seccomp --enable-selinux --enable-slirp --enable-snappy --enable-tcg --enable-tools --enable-tpm --enable-usb-redir --enable-vde --enable-pie --target-list="x86_64-linux-user x86_64-softmmu aarch64-linux-user aarch64-softmmu" --enable-virtfs --enable-virtiofsd --enable-xen --enable-xen-pci-passthrough --enable-zstd --enable-attr --enable-cap-ng --enable-vhost-user --enable-vduse-blk-export --enable-vhost-vdpa --enable-libvduse --enable-nettle --enable-gnutls --enable-crypto-afalg --enable-fuse-lseek --enable-l2tpv3 --enable-libudev --enable-malloc-trim --enable-membarrier --enable-numa --enable-rdma --enable-vhost-crypto --enable-vhost-kernel --enable-vhost-net && \
+  ./debian/rules binary && \
+  cd ../ && \
   rm -v *dbgsym*.deb && \
-  mv -v *.deb /opt/artifact/deb/ && \
+  mv -v qemu-block-extra_7.?+dfsg-*_amd64.deb qemu-system-common_7.?+dfsg-*_amd64.deb qemu-system-data_7.?+dfsg-*_all.deb qemu-system-x86_7.?+dfsg-*_amd64.deb qemu-system-xen_7.?+dfsg-*_amd64.deb qemu-utils_7.?+dfsg-*_amd64.deb qemu-user_7.?+dfsg-*_amd64.deb /opt/artifact/deb/ && \
+  rm -v *.deb && \
   cd /usr && \
   rm -r local && \
   cd /root && \
@@ -2099,11 +2106,13 @@ RUN \
   mv -f /usr/local/etc/permissions. /usr/local/etc/permissions && \
   rm -f /root/artifact/local/etc/permissions /root/artifact2/local/etc/permissions && \
   cd /root/artifact3/deb/ && \
-  dpkg -i qemu-block-extra_7.?+dfsg-*_amd64.deb qemu-system-common_7.?+dfsg-*_amd64.deb qemu-system-data_7.?+dfsg-*_all.deb qemu-system-x86_7.?+dfsg-*_amd64.deb qemu-system-xen_7.?+dfsg-*_amd64.deb qemu-utils_7.?+dfsg-*_amd64.deb && \
-  dpkg -i $(for i in libxencall1 libxendevicemodel1 libxenevtchn1 libxenforeignmemory1 libxengnttab1 libxenhypfs1 libxenmisc4.17 libxenstore4 libxentoolcore1 libxentoollog1 xen-doc xen-hypervisor-4.17-amd64 xen-hypervisor-common xen-system-amd64 xen-utils-4.17 xen-utils-common xenstore-utils; do ls -1d ${i}_*.deb; done) && \
+  dpkg -i qemu-block-extra_7.?+dfsg-*_amd64.deb qemu-system-common_7.?+dfsg-*_amd64.deb qemu-system-data_7.?+dfsg-*_all.deb qemu-system-x86_7.?+dfsg-*_amd64.deb qemu-system-xen_7.?+dfsg-*_amd64.deb qemu-utils_7.?+dfsg-*_amd64.deb qemu-user_7.?+dfsg-*_amd64.deb $(for i in libxencall1 libxendevicemodel1 libxenevtchn1 libxenforeignmemory1 libxengnttab1 libxenhypfs1 libxenmisc4.17 libxenstore4 libxentoolcore1 libxentoollog1 xen-doc xen-hypervisor-4.17-amd64 xen-hypervisor-common xen-system-amd64 xen-utils-4.17 xen-utils-common xenstore-utils; do ls -1d ${i}_*.deb; done) && \
+  dpkg --purge libxenmisc4.14 libxenstore3.0 xen-hypervisor-4.14-amd64 xen-utils-4.14 && \
+  rm -r -f /usr/lib/debug/xen-syms-4.14-shim && \
+  rm -v /usr/bin/qemu-aarch64_be /usr/bin/qemu-alpha /usr/bin/qemu-arm /usr/bin/qemu-armeb /usr/bin/qemu-cris /usr/bin/qemu-hexagon /usr/bin/qemu-hppa /usr/bin/qemu-loongarch64 /usr/bin/qemu-m68k /usr/bin/qemu-microblaze /usr/bin/qemu-microblazeel /usr/bin/qemu-mips /usr/bin/qemu-mips64 /usr/bin/qemu-mips64el /usr/bin/qemu-mipsel /usr/bin/qemu-mipsn32 /usr/bin/qemu-mipsn32el /usr/bin/qemu-nios2 /usr/bin/qemu-or1k /usr/bin/qemu-ppc /usr/bin/qemu-ppc64 /usr/bin/qemu-ppc64le /usr/bin/qemu-riscv32 /usr/bin/qemu-riscv64 /usr/bin/qemu-s390x /usr/bin/qemu-sh4 /usr/bin/qemu-sh4eb /usr/bin/qemu-sparc /usr/bin/qemu-sparc32plus /usr/bin/qemu-sparc64 /usr/bin/qemu-xtensa /usr/bin/qemu-xtensaeb && \
   cd /root && \
   rm -r /root/artifact3/ && \
-  tar -C /root/artifact2 -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
+  tar -C /root/artifact2 -c -f - local |tar -C /usr -x -p --warning=no-timestamp -f - && \
   rm -r /root/artifact2/local && \
   cd /root/artifact4/deb/ && \
   dpkg -i uanytun*.deb && \
@@ -2111,8 +2120,8 @@ RUN \
   rm -r /root/artifact4/ && \
   dpkg -i sks-ecc_0.93-6_amd64.deb sks-ecc-doc_0.93-6_all.deb && \
   cd /root && \
-  tar -C /root/artifact -c -v -f - local |tar -C /usr -x -p -v --warning=no-timestamp -f - && \
-  tar -C /root/ -c -v -f - local|tar -C /usr -x -p -v --warning=no-timestamp -f - && \
+  tar -C /root/artifact -c -f - local |tar -C /usr -x -p --warning=no-timestamp -f - && \
+  tar -C /root/ -c -f - local|tar -C /usr -x -p --warning=no-timestamp -f - && \
   dpkg -i /root/artifact/deb/vdmfec*.deb && \
   mv -v /root/artifact/stand/* /stand/ && \
   mkdir /root/ephemeral && \
@@ -2177,7 +2186,7 @@ RUN \
   ar x xen-hypervisor-4.17-amd64_4.17.*_amd64.deb && \
   xz -d -v -v < data.tar.xz |tar -x -p -f - && \
   cd boot/ && \
-  rm -v /boot/xen-4.14-amd64.config /boot/xen-4.14-amd64.efi /boot/xen-4.14-amd64.gz && \
+  rm -f /boot/xen-4.14-amd64.config /boot/xen-4.14-amd64.efi /boot/xen-4.14-amd64.gz >/dev/null 2>/dev/null && \
   for i in xen-4.17-amd64.config xen-4.17-amd64.efi xen-4.17-amd64.gz; do mv -i -v "${i}" "$(echo -n "$i" | sed 's,4\.17-,,')"; done && \
   mv -v xen* /boot/ && \
   cd /root/ && \
@@ -2813,7 +2822,7 @@ RUN \
   cd /root/initrd && \
   find usr/local/lib/python* -type f -name "*.gz" -exec gunzip -N -f -- \{\} \; && \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > ./etc/hosts || true) && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 512M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && zramctl --output-all') >> ./usr/local/etc/boot.d/22compshare && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 768M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && zramctl --output-all') >> ./usr/local/etc/boot.d/22compshare && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02; export LANG=C; modprobe efivarfs || true; modprobe efi_pstore || true; if test -e /sys/firmware/efi/systab; then mount -v -t efivarfs none /sys/firmware/efi/efivars || true; fi; true') >> ./usr/local/etc/boot.d/24efi && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'umask 002 && mkdir -p -v /run/iden.d/ /mnt/IDEN && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^IDEN"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/IDEN && tar -C /mnt/IDEN/IDEN -c -v -f - . | tar -C /run/iden.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/IDEN; fi; done && rmdir -v /mnt/IDEN && chmod -R --verbose go-rwx /run/iden.d/ && mkdir -p /run/iden && if test -e /run/iden.d/path; then mv -v /run/iden.d/path /run/iden/path; fi && rm -r -v /run/iden.d && chmod -R go+r /run/iden && touch /run/iden/path && true') >> ./usr/local/etc/boot.d/25iden && \
   chmod --verbose 700 ./usr/local/etc/boot.d/22compshare ./usr/local/etc/boot.d/24efi ./usr/local/etc/boot.d/25iden && \
@@ -3070,8 +3079,8 @@ RUN \
   rmdir -v var/tmp && \
   rmdir -v usr var && \
   mv -v /root/overlay/usr /root/overlay/var . && \
-  tar -C /root/overlay/lib/ -c -v -f - modules/ | tar -C /root/initrd/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
-  rm -v -r /root/overlay/lib && \
+  tar -C /root/overlay/lib/ -c -v -f - modules/ | tar -C /root/initrd/lib/ -x -p -k --warning=no-timestamp -f - && \
+  rm -r /root/overlay/lib && \
   rmdir -v /root/overlay && \
   tar -C /root/initrd/opt/bootstrap/ -c --remove-files -v -f - bin sbin lib | tar -C usr/ -x -p -v -v --warning=no-timestamp -f - && \
   rmdir -v /root/initrd/opt/bootstrap && \
