@@ -900,7 +900,6 @@ RUN \
   rm -v /etc/dropbear/dropbear_ecdsa_host_key /etc/dropbear/dropbear_ed25519_host_key /etc/dropbear/dropbear_rsa_host_key && \
   for i in auditd dnscrypt-proxy dnsmasq dnsproxy dropbear firehol fireqos lvm2 lvm2-lvmpolld lxc lxc-net lxcfs mdadm rsync sysstat uanytun uuidd lsh-server rsyslog binfmt-support; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get -y --verbose-versions install ${packages_devuan_xen} python3-dotenv python-is-python3 gdb xfsprogs xfsdump initramfs-tools initramfs-tools-core klibc-utils libklibc libvirt0 libvirt-clients libxml2-utils distro-info && \
-  for i in xendomains xen; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   cd /root && \
   sed -i -e "/^ENV_[SU]*PATH/s,PATH=.*,PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand," -e "/^UMASK/s,022,077," -e "/^LOG_OK_LOGINS/s,no,yes," /etc/login.defs && \
   sed -i -e '/PATH="/s,PATH="[^"]*",PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand",' /etc/profile && \
@@ -954,7 +953,7 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
   (echo '#!/bin/bash-static'; echo "set +e"; echo 'set +x; for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}" 2>/dev/null || true; done; true') >> /usr/local/etc/boot.d/08sysctl && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /run/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /run/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /run/conf.d/ && exec run-parts /run/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /usr/local/etc/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /usr/local/etc/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /usr/local/etc/conf.d/ && exec run-parts --verbose -- /usr/local/etc/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
@@ -2052,6 +2051,7 @@ RUN \
   wget http://deb.debian.org/debian/pool/main/x/xen/xen_4.17.0+74-g3eac216e6e-1.debian.tar.xz && \
   dpkg-source -x xen_4.17.0+74-g3eac216e6e-1.dsc && \
   cd xen-4*/ && \
+  sed -i -e '1s,),b),' debian/changelog && \
   ./debian/rules binary && \
   cd ../ && \
   dpkg --purge libxen-dev libxenmisc4.14 libxenstore3.0 gcc-multilib && \
@@ -2065,6 +2065,7 @@ RUN \
   unset xen_packages && \
   cd qemu-7.?+dfsg && \
   : ./configure --without-default-features --enable-debug --disable-plugins --disable-containers --disable-strip --enable-avx2 --enable-avx512f --enable-bpf --enable-cloop --enable-iconv --enable-curses --enable-fuse --enable-kvm --enable-libiscsi --enable-libnfs --enable-libssh --enable-libusb --enable-linux-aio --enable-linux-io-uring --enable-live-block-migration --enable-lzo --enable-replication --enable-seccomp --enable-selinux --enable-slirp --enable-snappy --enable-tcg --enable-tools --enable-tpm --enable-usb-redir --enable-vde --enable-pie --target-list="x86_64-linux-user x86_64-softmmu aarch64-linux-user aarch64-softmmu" --enable-virtfs --enable-virtiofsd --enable-xen --enable-xen-pci-passthrough --enable-zstd --enable-attr --enable-cap-ng --enable-vhost-user --enable-vduse-blk-export --enable-vhost-vdpa --enable-libvduse --enable-nettle --enable-gnutls --enable-crypto-afalg --enable-fuse-lseek --enable-l2tpv3 --enable-libudev --enable-malloc-trim --enable-membarrier --enable-numa --enable-rdma --enable-vhost-crypto --enable-vhost-kernel --enable-vhost-net && \
+  sed -i -e '1s,),b),' debian/changelog && \
   ./debian/rules binary && \
   cd ../ && \
   rm -v *dbgsym*.deb && \
@@ -2108,6 +2109,7 @@ RUN \
   cd /root/artifact3/deb/ && \
   dpkg -i qemu-block-extra_7.?+dfsg-*_amd64.deb qemu-system-common_7.?+dfsg-*_amd64.deb qemu-system-data_7.?+dfsg-*_all.deb qemu-system-x86_7.?+dfsg-*_amd64.deb qemu-system-xen_7.?+dfsg-*_amd64.deb qemu-utils_7.?+dfsg-*_amd64.deb qemu-user_7.?+dfsg-*_amd64.deb $(for i in libxencall1 libxendevicemodel1 libxenevtchn1 libxenforeignmemory1 libxengnttab1 libxenhypfs1 libxenmisc4.17 libxenstore4 libxentoolcore1 libxentoollog1 xen-doc xen-hypervisor-4.17-amd64 xen-hypervisor-common xen-system-amd64 xen-utils-4.17 xen-utils-common xenstore-utils; do ls -1d ${i}_*.deb; done) && \
   dpkg --purge libxenmisc4.14 libxenstore3.0 xen-hypervisor-4.14-amd64 xen-utils-4.14 && \
+  for i in xendomains xen; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   rm -r -f /usr/lib/debug/xen-syms-4.14-shim && \
   rm -v /usr/bin/qemu-aarch64_be /usr/bin/qemu-alpha /usr/bin/qemu-arm /usr/bin/qemu-armeb /usr/bin/qemu-cris /usr/bin/qemu-hexagon /usr/bin/qemu-hppa /usr/bin/qemu-loongarch64 /usr/bin/qemu-m68k /usr/bin/qemu-microblaze /usr/bin/qemu-microblazeel /usr/bin/qemu-mips /usr/bin/qemu-mips64 /usr/bin/qemu-mips64el /usr/bin/qemu-mipsel /usr/bin/qemu-mipsn32 /usr/bin/qemu-mipsn32el /usr/bin/qemu-nios2 /usr/bin/qemu-or1k /usr/bin/qemu-ppc /usr/bin/qemu-ppc64 /usr/bin/qemu-ppc64le /usr/bin/qemu-riscv32 /usr/bin/qemu-riscv64 /usr/bin/qemu-s390x /usr/bin/qemu-sh4 /usr/bin/qemu-sh4eb /usr/bin/qemu-sparc /usr/bin/qemu-sparc32plus /usr/bin/qemu-sparc64 /usr/bin/qemu-xtensa /usr/bin/qemu-xtensaeb && \
   cd /root && \
@@ -2173,24 +2175,14 @@ RUN \
   cd /root && \
   rm -r /root/artifact/ /root/local/ && \
   curl -fsSL https://raw.githubusercontent.com/mviereck/x11docker/master/x11docker | bash -s -- --update && \
-  apt-get install -y --verbose-versions openntpd grub-efi grub-efi-amd64 grub-efi-amd64-bin grub-efi-ia32-bin cpuid refind sbsigntool && \
+  apt-get install -y --verbose-versions openntpd grub-efi grub-efi-amd64 grub-efi-amd64-bin grub-efi-ia32-bin cpuid refind sbsigntool libc6-i386 && \
   for i in openntpd; do update-rc.d "${i}" disable && update-rc.d "${i}" remove; done && \
   apt-get install -y --verbose-versions linux-image-amd64 && \
-  mkdir -p ephemeral/ && \
-  cd ephemeral/ && \
-  echo deb http://deb.devuan.org/merged daedalus main contrib non-free >> /etc/apt/sources.list && \
-  apt-get update && \
-  apt-get download xen-hypervisor-4.17-amd64 && \
-  sed -i -e "/ daedalus main contrib non-free/d" /etc/apt/sources.list && \
-  apt-get update && \
-  ar x xen-hypervisor-4.17-amd64_4.17.*_amd64.deb && \
-  xz -d -v -v < data.tar.xz |tar -x -p -f - && \
-  cd boot/ && \
-  rm -f /boot/xen-4.14-amd64.config /boot/xen-4.14-amd64.efi /boot/xen-4.14-amd64.gz >/dev/null 2>/dev/null && \
-  for i in xen-4.17-amd64.config xen-4.17-amd64.efi xen-4.17-amd64.gz; do mv -i -v "${i}" "$(echo -n "$i" | sed 's,4\.17-,,')"; done && \
-  mv -v xen* /boot/ && \
+  apt-mark hold libgpgme11 && \
+  echo libgpgme11 hold | dpkg --set-selections && \
+  cd /boot/ && \
+  for i in xen-4.17-amd64.config xen-4.17-amd64.efi xen-4.17-amd64.gz; do if test -f "$i"; then mv -v "${i}" "$(echo -n "$i" | sed 's,4\.17-,,')" || true; true; fi; done && \
   cd /root/ && \
-  rm -r -v ephemeral/ && \
   cp -p -v /root/kernel/uml/linux /usr/local/bin/linux && \
   strip --preserve-dates --strip-debug --no-merge-notes --keep-file-symbols --verbose -- /usr/local/bin/linux && \
   mv /root/kernel/uml/5.10* /lib/modules/ && \
@@ -2830,7 +2822,6 @@ RUN \
   chmod --verbose go-w ./etc/hostname && \
   tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
   sed -i -e "/DO_CABLETEST/s/DO_CABLETEST.*/DO_CABLETEST=no/" -e "/DO_ARPING/s/DO_ARPING.*/DO_ARPING=no/" etc/default/network-test && \
-  echo SKIP sed -i -e "/T0:23:respawn:.sbin.getty -L ttyS0/s/^/#/" etc/inittab && \
   echo "T9:23:respawn:/sbin/getty --nohostname -L hvc0 115200 ansi" | tee -a etc/inittab && \
   sed -i -e "/^1:[2-5]*:respawn:.sbin.getty .* tty1$/s/ --noclear / --noclear --nohostname /" etc/inittab && \
   sed -i -e "/sbin.sulogin/s,^,#," etc/inittab && \
@@ -2853,7 +2844,7 @@ RUN \
   ls -lasi --full-time /root/initrd/dev/ && \
   mount && \
   chmod --verbose go-w /root/initrd/dev/. && \
-  (cd ./var/cache/apt/archives && apt-get download grub-xen grub-xen-bin grub-xen-host grub-pc grub-pc-bin) && \
+  (cd ./var/cache/apt/archives && apt-get download grub-xen grub-xen-bin grub-xen-host grub-pc grub-pc-bin pv-grub-menu grub-rescue-pc grub-legacy grub-coreboot grub-coreboot-bin grub-ieee1275 grub-ieee1275-bin) && \
   cp -a /root/initrd /opt/artifact/layer && \
   rm -f -r /opt/artifact/layer/usr/local/etc/boot.d /opt/artifact/layer/etc/boot.d /opt/artifact/layer/etc/rc.local /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
   mkdir -v -p /opt/artifact/layer/boot /opt/artifact/layer/lib/modules && \
@@ -3008,7 +2999,7 @@ RUN \
     echo "echo set +h >>/new/init" && \
     echo "echo umask 077 >>/new/init" && \
     echo "echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin >>/new/init" && \
-    echo 'echo "if test -e /dev/hvc0; then echo SKIP sed -i -e \"/getty.* ttyS0 /s,^,#,\" /etc/inittab; else echo SKIP sed -i -e \"/getty.* hvc0 /s,^,#,\" /etc/inittab; fi" >>/new/init' && \
+    echo 'echo "if test -e /dev/hvc0 && ! sh -c '\''echo >/dev/ttyS0'\'' 2>/dev/null; then sed -i -e \"/getty.* ttyS0 /s,^,#,\" /etc/inittab; else sed -i -e \"/getty.* hvc0 /s,^,#,\" /etc/inittab; fi" >>/new/init' && \
     echo 'echo exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static TERM=dumb TTY=/dev/console /sbin/init "$@" >>/new/init' && \
     echo "chmod --verbose go-rwx /sbin/init" && \
     echo "cd /" && \
@@ -3231,6 +3222,7 @@ RUN \
   echo "echo ${BUILD_IDENTIFIER} >> /mnt/EFI/metadata/origin" >> init && \
   echo 'umount -v /mnt/CACHE' >> init && \
   echo 'cp -p -v /boot/xen* /mnt/EFI/xen/' >> init && \
+  echo 'rm -f /boot/System.map-5.10.0-[0-9][0-9]-amd64' >> init && \
   echo 'cp -p -v /boot/System.map* /boot/config* /mnt/EFI/linux/' >> init && \
   echo 'cp -p -v /boot/vmlinuz-* /mnt/EFI/linux/vmlinuz' >> init && \
   echo 'mv -v /boot/memtest86.bin /boot/memtest86' >> init && \
@@ -3330,8 +3322,8 @@ RUN \
   echo 'mkdir -p -v /mnt/EFI/EFI/BOOT' >> init && \
   echo 'cp -p -v /mnt/EFI/syslinux/syslinux.cfg /mnt/EFI/EFI/BOOT/syslinux.cfg' >> init && \
   echo 'cp -p -v /usr/lib/syslinux/memdisk /mnt/EFI/syslinux/memdisk' >> init && \
-  echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi64/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTx64.EFI' >> init && \
-  echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi32/syslinux.efi /mnt/EFI/EFI/BOOT/BOOTia32.EFI' >> init && \
+  echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi64/syslinux.efi /mnt/EFI/EFI/BOOT/syslinux-x64.efi' >> init && \
+  echo 'cp -p -v /usr/lib/SYSLINUX.EFI/efi32/syslinux.efi /mnt/EFI/EFI/BOOT/syslinux-ia32.efi' >> init && \
   echo 'cp -p -v /usr/lib/syslinux/modules/efi64/* /mnt/EFI/EFI/BOOT/' >> init && \
   echo 'cat syslinux.cfg' >> init && \
   echo 'sync' >> init && \
@@ -3342,12 +3334,43 @@ RUN \
   echo 'unset ENTROPY' >> init && \
   echo 'EFI=$( (lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" | grep -q "^EFI"; then echo "${part}"; fi; done) |head -n 1)' >> init && \
   echo 'mount -v -t vfat "${EFI}" /boot' >> init && \
+  echo 'mkdir -v -p /boot/EFI/BOOT/x86_64/grub/x86_64-efi' >> init && \
+  echo 'grub-mkimage -O x86_64-efi -o /boot/EFI/BOOT/x86_64/grub/x86_64-efi/core.img -p /boot/EFI/BOOT/x86_64/grub $(ls /usr/lib/grub/x86_64-efi|grep mod\$ |sed '\''s,\.mod.*,,'\''|sort|uniq) || true' >> init && \
+  echo 'echo serial --unit=0 --speed=115200 >> /tmp/grub.cfg' >> init && \
+  echo 'for i in chain cpio crypto cryptodisk disk efi_gop efi_uga exfat ext2 fat file geli gfxterm gptsync gzio hdparm iso9660 jfs linux16 ls lsefi lspci luks luks2 lvm mdraid1x memdisk msdospart multiboot2 nilfs2 ntfs ntfscomp part_bsd part_gpt part_msdos parttool pcidump procfs random reboot reiserfs scsi serial syslinuxcfg tar terminal terminfo tpm udf ufs1 ufs2 usb usb_keyboard usbserial_common vbe vga video video_bochs video_cirrus videoinfo xfs zfs zfscrypt zfsinfo zstd; do echo insmod $i >> /tmp/grub.cfg; done' >>init && \
+  echo 'for i in gfxpayload=auto gfxmode=auto timeout=20 default=0 debug=video; do echo set ${i} >>/tmp/grub.cfg; done' >>init && \
+  echo 'echo terminal_input --append console serial at_keyboard usb_keyboard >> /tmp/grub.cfg' >>init && \
+  echo 'echo terminal_output --append console serial >> /tmp/grub.cfg' >>init && \
+  echo 'echo menuentry '\''Xen/Linux'\'' "{" >>/tmp/grub.cfg' >>init && \
+  echo 'echo multiboot2 /xen/xen-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=6G,max:7G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 >>/tmp/grub.cfg' >>init && \
+  echo 'echo module2 /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 nomodeset biosdevname=0 earlyprintk=xen,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality eagerfpu=on -- >>/tmp/grub.cfg' >>init && \
+  echo 'echo module2 /linux/initrd.img >>/tmp/grub.cfg' >>init && \
+  echo 'echo module2 /linux/microcode.cpio >>/tmp/grub.cfg' >>init && \
+  echo 'echo "}" >>/tmp/grub.cfg' >>init && \
+  echo 'echo menuentry '\''Xen/Linux label'\'' "{" >>/tmp/grub.cfg' >>init && \
+  echo 'echo search --no-floppy --set=root --label EFI >>/tmp/grub.cfg' >>init && \
+  echo 'echo multiboot2 /xen/xen-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=6G,max:7G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 >>/tmp/grub.cfg' >>init && \
+  echo 'echo module2 /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality eagerfpu=on -- >>/tmp/grub.cfg' >>init && \
+  echo 'echo module2 /linux/initrd.img >>/tmp/grub.cfg' >>init && \
+  echo 'echo module2 /linux/microcode.cpio >>/tmp/grub.cfg' >>init && \
+  echo 'echo "}" >>/tmp/grub.cfg' >>init && \
+  echo 'echo menuentry '\''Linux direct'\'' "{" >>/tmp/grub.cfg' >>init && \
+  echo 'echo linux /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality eagerfpu=on -- >>/tmp/grub.cfg' >>init && \
+  echo 'echo initrd /linux/initrd.img >>/tmp/grub.cfg' >>init && \
+  echo 'echo "}" >>/tmp/grub.cfg' >>init && \
+  echo 'echo menuentry '\''Linux direct label'\'' "{" >>/tmp/grub.cfg' >>init && \
+  echo 'echo search --no-floppy --set=root --label EFI >>/tmp/grub.cfg' >>init && \
+  echo 'echo linux /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality eagerfpu=on -- >>/tmp/grub.cfg' >>init && \
+  echo 'echo initrd /linux/initrd.img >>/tmp/grub.cfg' >>init && \
+  echo 'echo "}" >>/tmp/grub.cfg' >>init && \
   echo 'grub-install --target=i386-efi --skip-fs-probe --force --removable --boot-directory=/boot/EFI/BOOT/i386 --bootloader-id=Xen/Linux/i386 --efi-directory=/boot --recheck /dev/hda1 || true' >> init && \
   echo 'sync' >> init && \
   echo 'grub-install --target=x86_64-efi --skip-fs-probe --force --removable --boot-directory=/boot/EFI/BOOT/x86_64 --bootloader-id=Xen/Linux/x86_64 --efi-directory=/boot --recheck /dev/hda1 || true' >> init && \
   echo 'sync' >> init && \
   echo 'umount -v /boot' >> init && \
   echo 'sync' >> init && \
+  echo 'cat /tmp/grub.cfg |tee -a /boot/EFI/BOOT/x86_64/grub/grub.cfg' >> init && \
+  echo 'rm -v /tmp/grub.cfg' >> init && \
   echo 'udevadm settle' >> init && \
   echo 'udevadm trigger' >> init && \
   echo 'sync' >> init && \
