@@ -1194,7 +1194,7 @@ RUN \
   cd /usr/local/src && \
   git clone --recursive https://github.com/flanglet/kanzi-cpp && \
   cd kanzi-cpp/src && \
-  git checkout b78f3d843232f225c9f9b26403fc2482649cb012 && \
+  echo git checkout ... && \
   sed -i -e "s, -march=native , ${CFLAGS} ,g" Makefile && \
   make && \
   make install && \
@@ -1345,7 +1345,7 @@ RUN \
   dpkg -i podman-compose*all.deb && \
   \
   cd /usr/local/src && \
-  wget https://github.com/mgoltzsche/podman-static/releases/download/v4.4.2/podman-linux-amd64.tar.gz && \
+  wget https://github.com/mgoltzsche/podman-static/releases/download/v4.5.0/podman-linux-amd64.tar.gz && \
   tar -x -p -f podman-linux-amd64.tar.gz -k -v -z && \
   cd podman-linux-amd64/ && \
   tar -C usr/ -c -v -f - local/ | tar -C /usr/ -x -p -k -v -f - && \
@@ -1440,7 +1440,6 @@ RUN \
   cd /usr/local/src && \
   mkdir --verbose -p -m 0755 /var/empty && \
   groupadd sshd && \
- echo SKIP useradd -g sshd -c "sshd privsep" -d /var/empty -s /bin/false sshd && \
   git clone --recursive https://github.com/open-quantum-safe/openssh && \
   cd openssh && \
   ./oqs-scripts/clone_liboqs.sh && \
@@ -1609,10 +1608,10 @@ RUN \
   hash -r && \
   cd /usr/local/src/BLAKE3/b3sum && cargo install --path . && \
   cd /usr/local/src/phantun/phantun && git checkout 1f11d618e04837b1bba854a559610641da98851b && cargo install --path . && \
-  cd /usr/local/src/rage/rage && git checkout 7cfb7692afd4f93c52f690a40097e60bac573962 && rm ../rust-toolchain && cargo install --path . && \
+  cd /usr/local/src/rage/rage && git checkout f84af2c069514ed61392597349d945680c51b074 && rm ../rust-toolchain && cargo install --path . && \
   cd /usr/local/src/rdedup && mv /usr/lib/liblzma.so* /root/ && cargo install --path . && mv /root/liblzma* /usr/lib/ && \
   cd /usr/local/src/vpncloud && cargo install --path . && \
-  cd /usr/local/src/ZeroTierOne && git checkout 1.10.3 && \
+  cd /usr/local/src/ZeroTierOne && git checkout 1.10.6 && \
   (set +e; ZT_DEBUG=1 ZT_DEBUG_TRACE=1 ZT_TRACE=1 ZT_RULES_ENGINE_DEBUGGING=1 make zerotier-one || true; true) && \
   cd zeroidc/target/debug && \
   ln -s ../x86_64-unknown-linux-musl/debug/libzeroidc.a . && \
@@ -1750,7 +1749,7 @@ RUN \
   \
   (git clone --recursive https://github.com/mkubecek/vmware-host-modules || git clone --recursive https://github.com/mkubecek/vmware-host-modules || git clone --recursive https://github.com/mkubecek/vmware-host-modules) && \
   cd vmware-host-modules && \
-  git checkout $(git branch -a|grep origin/workstation- | sort|tail -n 1 | sed 's,.*/,,') && \
+  git checkout workstation-16.2.5 && \
   make && \
   make install && \
   \
@@ -2786,9 +2785,9 @@ RUN \
   zstd --verbose --verbose --threads=1 --single-thread --memory=256M --long=30 --keep --ultra -22 nerdctl-full-"${nerdctl_version}"-linux-amd64.tar && \
   rm -v nerdctl-full-"${nerdctl_version}"-linux-amd64.tar && \
   mv -v nerdctl-full-"${nerdctl_version}"-linux-amd64.tar.zst /opt/artifact/nerdctl-full-"${nerdctl_version}"-linux-amd64.gtar.zst && \
-  wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-426.0.0-linux-x86_64.tar.gz && \
-  gunzip -v < google-cloud-cli-426.0.0-linux-x86_64.tar.gz | zstd -v -v -v --keep --threads=1 --single-thread --memory=256M --long=30 --ultra -22 > /opt/artifact/google-cloud-cli-426.0.0-linux-x86_64.tar.zst && \
-  rm -v google-cloud-cli-426.0.0-linux-x86_64.tar.gz && \
+  wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-427.0.0-linux-x86_64.tar.gz && \
+  gunzip -v < google-cloud-cli-427.0.0-linux-x86_64.tar.gz | zstd -v -v -v --keep --threads=1 --single-thread --memory=256M --long=30 --ultra -22 > /opt/artifact/google-cloud-cli-427.0.0-linux-x86_64.tar.zst && \
+  rm -v google-cloud-cli-427.0.0-linux-x86_64.tar.gz && \
   kver_debian="$(ls -1rd /lib/modules/5.10.0-[0-9][0-9]-amd64 | tail -n 1 | sed 's,.*/,,')" && \
   rm -v -f /boot/initrd.img-"${kver_debian}" && \
   update-initramfs -v -c -k "${kver_debian}" && \
