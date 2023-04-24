@@ -953,7 +953,7 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo '#if cat /proc/cmdline |grep -q removemounts >/dev/null 2>/dev/null; then for dir in /sys/fs/pstore /sys/kernel/security /run/lock; do umount -v "${dir}"; done; /etc/init.d/cgroupfs-mount stop; umount -v /sys/fs/cgroup; umount -v /sys/kernel/debug/tracing; umount -v /sys/kernel/debug; else true; fi') >> /usr/local/etc/boot.d/07umountsomedirs && \
   (echo '#!/bin/bash-static'; echo "set +e"; echo 'set +x; for i in dev.tty.ldisc_autoload=0 fs.protected_fifos=2 fs.protected_hardlinks=1 fs.protected_regular=2 fs.protected_symlinks=1 fs.suid_dumpable=0 kernel.dmesg_restrict=1 kernel.kexec_load_disabled=1 kernel.kptr_restrict=2 kernel.perf_event_paranoid=3 kernel.randomize_va_space=2 kernel.unprivileged_bpf_disabled=1 net.core.bpf_jit_harden=2 net.ipv4.conf.all.accept_redirects=0 net.ipv4.conf.all.accept_source_route=0 net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.all.secure_redirects=0 net.ipv4.conf.all.send_redirects=0 net.ipv4.conf.default.accept_redirects=0 net.ipv4.conf.default.accept_source_route=0 net.ipv4.conf.default.rp_filter=1 net.ipv4.conf.default.secure_redirects=0 net.ipv4.conf.default.send_redirects=0 net.ipv4.icmp_ignore_bogus_error_responses=1 net.ipv4.tcp_rfc1337=1 net.ipv4.tcp_syncookies=1 net.ipv4.tcp_timestamps=0 net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.all.accept_redirects=0 net.ipv6.conf.all.accept_source_route=0 net.ipv6.conf.default.accept_ra=0 net.ipv6.conf.default.accept_redirects=0 net.ipv6.conf.default.accept_source_route=0 vm.mmap_rnd_bits=32 vm.mmap_rnd_compat_bits=16 vm.swappiness=1 vm.unprivileged_userfaultfd=0; do sysctl -w "${i}" 2>/dev/null || true; done; true') >> /usr/local/etc/boot.d/08sysctl && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "sdmem -l -l") >> /usr/local/etc/boot.d/09wipemem && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /usr/local/etc/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /usr/local/etc/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /usr/local/etc/conf.d/ && exec run-parts --verbose -- /usr/local/etc/conf.d/') >> /usr/local/etc/boot.d/19confrun && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'mkdir -p -v /usr/local/etc/conf.d/ /mnt/CONF && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CONF"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/CONF && tar -C /mnt/CONF/CONF -c -v -f - . | tar -C /usr/local/etc/conf.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/CONF; fi; done && rmdir -v /mnt/CONF && chmod -R --verbose go-rwx /usr/local/etc/conf.d/ && exec run-parts --verbose -- /usr/local/etc/conf.d/') >> /usr/local/etc/boot.d/29confrun && \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
@@ -2203,7 +2203,7 @@ RUN \
   find /usr/share /usr/lib/x86_64-linux-gnu /usr/local/share -name \*.gz -type f -exec gunzip -N -v -f -- \{\} \; && \
   umask 077 && \
   (echo; echo /usr/bin/uptime; echo echo '$(/bin/date) $HOST $SHLVL $PPID $$ $DISPLAY $USER $TERM $TTY $COLUMNS $LINES') >> /root/.zlogin && \
-  (echo; echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand') >> /root/.zshenv && \
+  (echo; echo 'export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/stand'; echo unset MOTD_SHOWN; echo unset MAIL; echo unset HUSHLOGIN) >> /root/.zshenv && \
   (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'if test x"${IDEN_PATH}" "==" x || test x"${IDEN_PATH}" "==" "x "; then if test -r /run/iden/path; then export IDEN_PATH="$( (cat /run/iden/path 2>/dev/null | tr -cd 0-9A-Za-z@_/." "- | head -c 32 || true; echo -n " "; true)|sed "s,^ *,,")"; fi; fi'; echo 'if test "${HOST}" "==" localhost; then HOSTUNIQ="${IDEN_PATH}"; else HOSTUNIQ="${IDEN_PATH}${HOST} "; fi; PROMPT="%(1j.<%j> .)${HOSTUNIQ}%(2L.%L .)%(#..${USER} )%(1e.+%e .)%l %4~ [%h]"; unset HOSTUNIQ'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'HISTSIZE=16384'; echo 'NULLCMD=more'; echo 'READNULLCMD="${NULLCMD}"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
   cd /root && \
   cp -p -f /root/.zshrc /root/.zshenv /root/.zlogin /etc/skel/ && \
@@ -2813,10 +2813,10 @@ RUN \
   cd /root/initrd && \
   find usr/local/lib/python* -type f -name "*.gz" -exec gunzip -N -f -- \{\} \; && \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > ./etc/hosts || true) && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 768M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && zramctl --output-all') >> ./usr/local/etc/boot.d/22compshare && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02; export LANG=C; modprobe efivarfs || true; modprobe efi_pstore || true; if test -e /sys/firmware/efi/systab; then mount -v -t efivarfs none /sys/firmware/efi/efivars || true; fi; true') >> ./usr/local/etc/boot.d/24efi && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'umask 002 && mkdir -p -v /run/iden.d/ /mnt/IDEN && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^IDEN"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/IDEN && tar -C /mnt/IDEN/IDEN -c -v -f - . | tar -C /run/iden.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/IDEN; fi; done && rmdir -v /mnt/IDEN && chmod -R --verbose go-rwx /run/iden.d/ && mkdir -p /run/iden && if test -e /run/iden.d/path; then mv -v /run/iden.d/path /run/iden/path; fi && rm -r -v /run/iden.d && chmod -R go+r /run/iden && touch /run/iden/path && true') >> ./usr/local/etc/boot.d/25iden && \
-  chmod --verbose 700 ./usr/local/etc/boot.d/22compshare ./usr/local/etc/boot.d/24efi ./usr/local/etc/boot.d/25iden && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 1024M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/ /mnt/ZRAM/lib/modules/ && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && mv /usr/local/lib/python3.9/dist-packages/botocore/data/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data/ && mkdir -p /usr/local/lib/python3.9/dist-packages/botocore/data/ && mount --bind /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data /usr/local/lib/python3.9/dist-packages/botocore/data && cd /lib/modules/ && KVER="$(ls -1d 5.10.???-hardened1-5.10/ |tail -n 1)" && tar -c -f - --remove-files "${KVER}"/kernel/ | tar -C /mnt/ZRAM/lib/modules/ -x -p -f - && cd "${KVER}"/ && mkdir -p kernel && cd /root/ && mount --bind /mnt/ZRAM/lib/modules/"${KVER}"/kernel /lib/modules/"${KVER}"/kernel && unset KVER && zramctl --output-all') >> ./usr/local/etc/boot.d/28compshare && \
+  chmod --verbose 700 ./usr/local/etc/boot.d/28compshare ./usr/local/etc/boot.d/24efi ./usr/local/etc/boot.d/25iden && \
   (chmod 0644 ./etc/hosts || true) && \
   chmod --verbose go-w ./etc/hostname && \
   tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
@@ -2879,6 +2879,7 @@ RUN \
     echo "/etc/init.d/kmod start" && \
     echo "sleep 1" && \
     echo "sync" && \
+    echo "udevadm hwdb --update --usr || true" && \
     echo "/etc/init.d/eudev start" && \
     echo "sleep 1" && \
     echo "sync" && \
@@ -3035,6 +3036,7 @@ RUN \
   mv -v ./kernel.overlay/ /root/overlay/lib/modules/"${kver}"/kernel/ && \
   unset kver && \
   cd /root/initrd && \
+  rm -v lib/udev/hwdb.bin && \
   mv -v usr /root/overlay/usr && \
   mv -v var /root/overlay/var && \
   mkdir -v -p /root/overlay/var/tmp && \
@@ -3069,7 +3071,7 @@ RUN \
   rmdir -v var/tmp && \
   rmdir -v usr var && \
   mv -v /root/overlay/usr /root/overlay/var . && \
-  tar -C /root/overlay/lib/ -c -v -f - modules/ | tar -C /root/initrd/lib/ -x -p -k --warning=no-timestamp -f - && \
+  tar -C /root/overlay/lib/ -c -f - modules/ | tar -C /root/initrd/lib/ -x -p -k --warning=no-timestamp -f - && \
   rm -r /root/overlay/lib && \
   rmdir -v /root/overlay && \
   tar -C /root/initrd/opt/bootstrap/ -c --remove-files -v -f - bin sbin lib | tar -C usr/ -x -p -v -v --warning=no-timestamp -f - && \
@@ -3229,90 +3231,90 @@ RUN \
   echo 'cp -p -v /boot/memtest* /mnt/EFI/syslinux/' >> init && \
   echo 'sync' >> init && \
   echo 'cd /tmp' >> init && \
-  echo 'for i in "SERIAL 0 115200" "NOHALT 1" "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-0"; do echo "$i" >> syslinux.cfg; done' >> init && \
+  echo 'for i in "SERIAL 0 115200" "NOHALT 1" "DEFAULT menu.c32" "PROMPT 0" "MENU TITLE Xen/Linux" "MENU AUTOBOOT Boot in #" "TIMEOUT 100" "LABEL xen-linux-serial"; do echo "$i" >> syslinux.cfg; done' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux serial - USB disabled" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND /xen/xen-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset serial console=ttyS0,115200 console=tty0 console=xvc0,115200 console=hvc0,115200 biosdevname=0 earlyprintk=xen,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nofb nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=efifb:off,vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt lockdown=confidentiality vsyscall=none kpti=on nopcid usbcore.nousb eagerfpu=on -- --- /linux/initrd.img --- /linux/microcode.cpio" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL xen-linux-1" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL xen-linux-display" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Xen/Linux display" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 mboot.c32" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND /xen/xen-amd64.gz ucode=scan bootscrub=1 com1=115200,8n1 console=com1,vga console_timestamps=datems dom0=verbose=1 dom0_max_vcpus=1 dom0_mem=5G,max:6G guest_loglvl=all loglvl=all noreboot scrub-domheap vga=current apic_verbosity=debug console_to_ring=true no-real-mode=1 conring_size=64k console_to_ring=1 --- /linux/vmlinuz init=/init root=tmpfs rootfstype=tmpfs nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=xen,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nofb nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality eagerfpu=on -- --- /linux/initrd.img --- /linux/microcode.cpio" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL linux-0" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL linux-serial" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux serial - USB disabled" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs early_microcode nomodeset serial console=tty0 console=xvc0,115200 console=hvc0,115200 console=ttyS0,115200 biosdevname=0 earlyprintk=serial,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nofb nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid usbcore.nousb lockdown=confidentiality eagerfpu=on --" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /linux/microcode.cpio,/linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL linux-1" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL linux-display" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux display" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs early_microcode nomodeset console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=vga,keep gpt net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy random.trust_cpu=off iommu=soft rng_core.default_quality=256 concurrency=none debug apic=verbose apm=off bochs_drm.fbdev=off consoleblank=0 cpuidle.off=1 elevator=noop no_timer_check nofb nohibernate noresume nosoftlockup nowatchdog numa=off rfkill.default_state=0 rfkill.master_switch_mode=0 video=vesafb:off efi=disable_early_pci_dma l1tf=full,force mce=0 mds=full,nosmt no_timer_check nosmt=force pti=on slab_nomerge slub_debug=FZP spec_store_bypass_disable=on spectre_v2=on tsx=off tsx_async_abort=full,nosmt vsyscall=none kpti=on nopcid lockdown=confidentiality eagerfpu=on simplefb --" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /linux/microcode.cpio,/linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL linux-2" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL linux-failsafe" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Linux display failsafe" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /linux/vmlinuz" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND init=/init root=tmpfs rootfstype=tmpfs console=ttyUSB0,115200 console=ttyS0,115200 console=xvc0,115200 console=hvc0,115200 console=tty0 biosdevname=0 earlyprintk=vga,keep gpt logo.nologo loop.max_loop=256 net.ifnames=0 panic=0 printk.time=1 cgroup_enable=cpuset,memory cgroup_memory=1 cgroup_cpuset=1 swapaccount=1 extra_latent_entropy concurrency=none debug apic=verbose consoleblank=0 nohibernate noresume nosoftlockup nosplash nowatchdog efi=no_disable_early_pci_dma no_timer_check splash=off waitusb=3 --" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /linux/initrd.img" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL SuperGrubDisk" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL super-grub-disk" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL SuperGrubDisk" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /syslinux/memdisk" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /syslinux/supergrub2-classic-2.06s2-beta1-multiarch-CD.iso" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND iso" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL FreeBSD 12 mfsbsd" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL freebsd-12" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL FreeBSD 12 mfsbsd" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /syslinux/memdisk" >> syslinux.cfg' >> init && \
   echo 'echo "  INITRD /FreeBSD/FreeBSD-12.3-STABLE-amd64-MFS.iso" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND iso" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Memtest86" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL memtest86" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Memtest86" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /syslinux/memtest86" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Memtest86+" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL memtest86+" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Memtest86+" >> syslinux.cfg' >> init && \
   echo 'echo "  LINUX /syslinux/memtest86+" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Hardware detection" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL hardware" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Hardware detection" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 hdt.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Memory information" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL memory-information" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Memory information" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 meminfo.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Read-only shell" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL read-only-shell" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Read-only shell" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 rosh.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Boot current drive" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL boot-current-drive" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Boot current drive" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 chain.c32" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND boot" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Boot current filesystem" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL boot-current-filesystem" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Boot current filesystem" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 chain.c32" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND fs" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Boot first drive" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL boot-first-drive" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Boot first drive" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 chain.c32" >> syslinux.cfg' >> init && \
   echo 'echo "  APPEND hd0" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Boot fail" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL boot-fail" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL fail" >> syslinux.cfg' >> init && \
   echo 'echo "  localboot -1" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Reboot" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL reboot" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Reboot" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 reboot.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
-  echo 'echo "LABEL Power off" >> syslinux.cfg' >> init && \
+  echo 'echo "LABEL power-off" >> syslinux.cfg' >> init && \
   echo 'echo "  MENU LABEL Power off" >> syslinux.cfg' >> init && \
   echo 'echo "  COM32 poweroff.c32" >> syslinux.cfg' >> init && \
   echo 'echo >> syslinux.cfg' >> init && \
