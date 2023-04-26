@@ -2815,8 +2815,9 @@ RUN \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > ./etc/hosts || true) && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02; export LANG=C; modprobe efivarfs || true; modprobe efi_pstore || true; if test -e /sys/firmware/efi/systab; then mount -v -t efivarfs none /sys/firmware/efi/efivars || true; fi; true') >> ./usr/local/etc/boot.d/24efi && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'umask 002 && mkdir -p -v /run/iden.d/ /mnt/IDEN && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^IDEN"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/IDEN && tar -C /mnt/IDEN/IDEN -c -v -f - . | tar -C /run/iden.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/IDEN; fi; done && rmdir -v /mnt/IDEN && chmod -R --verbose go-rwx /run/iden.d/ && mkdir -p /run/iden && if test -e /run/iden.d/path; then mv -v /run/iden.d/path /run/iden/path; fi && rm -r -v /run/iden.d && chmod -R go+r /run/iden && touch /run/iden/path && true') >> ./usr/local/etc/boot.d/25iden && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'rm -r -f /kernel/ || true') >> ./usr/local/etc/boot.d/26vestigial && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 1024M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/ /mnt/ZRAM/lib/modules/ && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && mv /usr/local/lib/python3.9/dist-packages/botocore/data/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data/ && mkdir -p /usr/local/lib/python3.9/dist-packages/botocore/data/ && mount --bind /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data /usr/local/lib/python3.9/dist-packages/botocore/data && cd /lib/modules/ && KVER="$(ls -1d 5.10.???-hardened1-5.10/ |tail -n 1)" && tar -c -f - --remove-files "${KVER}"/kernel/ | tar -C /mnt/ZRAM/lib/modules/ -x -p -f - && cd "${KVER}"/ && mkdir -p kernel && cd /root/ && mount --bind /mnt/ZRAM/lib/modules/"${KVER}"/kernel /lib/modules/"${KVER}"/kernel && unset KVER && zramctl --output-all') >> ./usr/local/etc/boot.d/28compshare && \
-  chmod --verbose 700 ./usr/local/etc/boot.d/28compshare ./usr/local/etc/boot.d/24efi ./usr/local/etc/boot.d/25iden && \
+  chmod --verbose 700 ./usr/local/etc/boot.d/28compshare ./usr/local/etc/boot.d/24efi ./usr/local/etc/boot.d/25iden ./usr/local/etc/boot.d/26vestigial && \
   (chmod 0644 ./etc/hosts || true) && \
   chmod --verbose go-w ./etc/hostname && \
   tar -C /usr/lib/ -c -v -f - libhardened_malloc.so/ | tar -C ./usr/lib/ -x -p -k -v -v --warning=no-timestamp -f - && \
@@ -2893,6 +2894,8 @@ RUN \
     echo "sleep 2" && \
     echo "mkdir /new" && \
     echo "mount -v -t tmpfs -o nosuid,nodev,sync,noatime,nodiratime,dirsync,loud,nouser,size=70% tmpfs /new" && \
+    echo "mount --make-private /new" && \
+    echo "mount --make-unbindable /new" && \
     echo "chmod --verbose go-w /new/." && \
     echo 'lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^CACHE"; then d=$(basename "${part}"); /stand/e2fsck -p -v "${part}" || true; R="${RANDOM}"; mkdir -v -p /mnt/CACHE-"${d}"-"${R}"; mount -v -t ext4 -o debug,ro "${part}" /mnt/CACHE-"${d}"-"${R}"; fi; done' && \
     echo "umask 077" && \
@@ -2999,6 +3002,9 @@ RUN \
     echo "echo set +h >>/new/init" && \
     echo "echo umask 077 >>/new/init" && \
     echo "echo export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin >>/new/init" && \
+    echo "echo cd / >>/new/init" && \
+    echo "echo mount --make-private / >>/new/init" && \
+    echo "echo mount --make-unbindable / >>/new/init" && \
     echo 'echo "if test -e /dev/hvc0 && ! sh -c '\''echo >/dev/ttyS0'\'' 2>/dev/null; then sed -i -e \"/getty.* ttyS0 /s,^,#,\" /etc/inittab; else sed -i -e \"/getty.* hvc0 /s,^,#,\" /etc/inittab; fi" >>/new/init' && \
     echo 'echo exec /usr/bin/env -i --debug PATH=/sbin:/bin:/usr/sbin:/usr/bin:/stand:/usr/local/sbin:/usr/local/bin SHELL=/bin/bash-static TERM=dumb TTY=/dev/console /sbin/init "$@" >>/new/init' && \
     echo "chmod --verbose go-rwx /sbin/init" && \
@@ -3036,6 +3042,8 @@ RUN \
   mv -v ./kernel.overlay/ /root/overlay/lib/modules/"${kver}"/kernel/ && \
   unset kver && \
   cd /root/initrd && \
+  rm -v stand/sh && \
+  ln stand/mksh stand/sh && \
   rm -v lib/udev/hwdb.bin && \
   mv -v usr /root/overlay/usr && \
   mv -v var /root/overlay/var && \
