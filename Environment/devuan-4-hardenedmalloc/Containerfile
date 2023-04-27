@@ -853,7 +853,7 @@ RUN \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin && \
   set -x && \
   set -e && \
-  umask 077 && \
+  umask 022 && \
   ulimit -d unlimited && \
   ulimit -v unlimited && \
   cd /root && \
@@ -957,7 +957,7 @@ RUN \
   chmod --verbose u+rx /usr/local/etc/boot.d/[0-9]* && \
   chmod --verbose go-rwx /usr/local/etc/boot.d/[0-9]* && \
   update-alternatives --set editor /usr/bin/vim.tiny && \
-  pip3 install podman-compose awscli && \
+  (umask 02 && pip3 install podman-compose awscli) && \
   find /usr/lib /usr/share /usr/local/bin /usr/local/lib -maxdepth 24 -name "*.pyc" -type f -ls -delete && \
   (set +e; find /usr/lib /usr/share /usr/local/bin /usr/local/lib -maxdepth 24 -name __pycache__ -type d -print | xargs rmdir -v -- || true; true) && \
   apt-get -y clean && \
@@ -2207,6 +2207,7 @@ RUN \
   (echo; echo 'setopt ALIASES ALWAYS_LAST_PROMPT APPEND_CREATE APPEND_HISTORY AUTO_LIST AUTO_PARAM_KEYS AUTO_PARAM_SLASH AUTO_PUSHD BAD_PATTERN BANG_HIST BARE_GLOB_QUAL BEEP BRACE_CCL BSD_ECHO CASE_GLOB CASE_MATCH CHASE_DOTS CHECK_JOBS CHECK_RUNNING_JOBS CLOBBER COMPLETE_ALIASES CONTINUE_ON_ERROR C_BASES C_PRECEDENCES DEBUG_BEFORE_CMD EQUALS EXTENDED_GLOB EXTENDED_HISTORY FUNCTION_ARGZERO GLOB GLOBAL_EXPORT GLOBAL_RCS GLOB_ASSIGN HASH_CMDS HASH_DIRS HASH_EXECUTABLES_ONLY HASH_LIST_ALL HIST_BEEP HIST_EXPIRE_DUPS_FIRST HIST_FIND_NO_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_DUPS HIST_LEX_WORDS HIST_SAVE_BY_COPY HIST_SAVE_NO_DUPS HIST_SUBST_PATTERN IGNORE_EOF INC_APPEND_HISTORY INTERACTIVE_COMMENTS KSH_ARRAYS KSH_AUTOLOAD KSH_OPTION_PRINT KSH_ZERO_SUBSCRIPT LIST_AMBIGUOUS LIST_PACKED LIST_TYPES LOCAL_LOOPS LOCAL_OPTIONS LOCAL_PATTERNS LOCAL_TRAPS LONG_LIST_JOBS MAGIC_EQUAL_SUBST MARK_DIRS MONITOR MULTIBYTE MULTIOS NOMATCH NOTIFY NO_ALIAS_FUNC_DEF NO_ALL_EXPORT NO_ALWAYS_TO_END NO_AUTO_CD NO_AUTO_CONTINUE NO_AUTO_MENU NO_AUTO_NAME_DIRS NO_AUTO_REMOVE_SLASH NO_AUTO_RESUME NO_BASH_AUTO_LIST NO_BASH_REMATCH NO_BG_NICE NO_CDABLE_VARS NO_CD_SILENT NO_CHASE_LINKS NO_COMPLETE_IN_WORD NO_CORRECT NO_CORRECT_ALL NO_CSH_JUNKIE_HISTORY NO_CSH_JUNKIE_LOOPS NO_CSH_JUNKIE_QUOTES NO_CSH_NULLCMD NO_CSH_NULL_GLOB NO_DVORAK NO_ERR_EXIT NO_ERR_RETURN NO_EVAL_LINENO NO_FLOW_CONTROL NO_FORCE_FLOAT NO_GLOB_COMPLETE NO_GLOB_DOTS NO_GLOB_STAR_SHORT NO_GLOB_SUBST NO_HIST_ALLOW_CLOBBER NO_HIST_FCNTL_LOCK NO_HIST_IGNORE_SPACE NO_HIST_NO_FUNCTIONS NO_HIST_NO_STORE NO_HIST_REDUCE_BLANKS NO_HIST_VERIFY NO_HUP NO_IGNORE_BRACES NO_IGNORE_CLOSE_BRACES NO_INC_APPEND_HISTORY_TIME NO_KSH_GLOB NO_KSH_TYPESET NO_LIST_BEEP NO_LIST_ROWS_FIRST NO_MAIL_WARNING NO_MENU_COMPLETE NO_MULTI_FUNC_DEF NO_NULL_GLOB NO_NUMERIC_GLOB_SORT NO_OCTAL_ZEROES NO_PATH_SCRIPT NO_PIPE_FAIL NO_POSIX_ARGZERO NO_POSIX_CD NO_POSIX_IDENTIFIERS NO_POSIX_JOBS NO_POSIX_STRINGS NO_POSIX_TRAPS NO_PROMPT_SP NO_PUSHD_MINUS NO_PUSHD_SILENT NO_RC_EXPAND_PARAM NO_RC_QUOTES NO_REC_EXACT NO_REMATCH_PCRE NO_RM_STAR_SILENT NO_SHARE_HISTORY NO_SH_FILE_EXPANSION NO_SH_GLOB NO_SH_NULLCMD NO_SH_OPTION_LETTERS NO_SH_WORD_SPLIT NO_SOURCE_TRACE NO_SUN_KEYBOARD_HACK NO_TYPESET_SILENT NO_VERBOSE NO_XTRACE PATH_DIRS POSIX_ALIASES POSIX_BUILTINS PRINT_EIGHT_BIT PRINT_EXIT_VALUE PROMPT_BANG PROMPT_CR PROMPT_PERCENT PROMPT_SUBST PUSHD_IGNORE_DUPS PUSHD_TO_HOME RCS RM_STAR_WAIT SHORT_LOOPS TRANSIENT_RPROMPT TRAPS_ASYNC UNSET WARN_CREATE_GLOBAL WARN_NESTED_VAR'; echo 'if test x"${IDEN_PATH}" "==" x || test x"${IDEN_PATH}" "==" "x "; then if test -r /run/iden/path; then export IDEN_PATH="$( (cat /run/iden/path 2>/dev/null | tr -cd 0-9A-Za-z@_/." "- | head -c 32 || true; echo -n " "; true)|sed "s,^ *,,")"; fi; fi'; echo 'if test "${HOST}" "==" localhost; then HOSTUNIQ="${IDEN_PATH}"; else HOSTUNIQ="${IDEN_PATH}${HOST} "; fi; PROMPT="%(1j.<%j> .)${HOSTUNIQ}%(2L.%L .)%(#..${USER} )%(1e.+%e .)%l %4~ [%h]"; unset HOSTUNIQ'; echo 'REPORTMEMORY=524288'; echo 'REPORTTIME=128'; echo 'WATCHFMT="%D %T %n %a %l %M"'; echo 'HISTSIZE=16384'; echo 'NULLCMD=more'; echo 'READNULLCMD="${NULLCMD}"'; echo 'watch=(all)'; echo 'alias dirs="dirs -v"'; echo 'alias jobs="jobs -pl"'; echo 'alias history="fc -l -t %Y.%m.%d-%H.%M.%S.%4."'; echo 'set -o emacs') >> /root/.zshrc && \
   cd /root && \
   cp -p -f /root/.zshrc /root/.zshenv /root/.zlogin /etc/skel/ && \
+  umask 022 && \
   adduser --disabled-password --gecos "" --shell /bin/bash-static user && \
   adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Administrator && \
   adduser --disabled-password --gecos "" --force-badname --shell /bin/bash-static Gateway && \
@@ -2220,6 +2221,8 @@ RUN \
   rm -r -f .local/ && \
   ((for i in "127.0.0.1 localhost" "::1 localhost ip6-localhost ip6-loopback" "ff02::1 ip6-allnodes" "ff02::2 ip6-allrouters"; do echo $i; done) > /etc/hosts || true) && \
   (chmod a-x /etc/hosts || true) && \
+  chmod -R go+r /usr/local/lib/python3.9/dist-packages && \
+  find /usr/local/lib/python3.9/dist-packages -xdev -type d -exec chmod ugo+rx -- \{\} \; && \
   chown -R root:root /usr/local/etc/cni /usr/local/etc/containers /usr/local/share/man /usr/local/share/doc /usr/local/bin /usr/local/lib && \
   rm -v -f /etc/group- /etc/gshadow- /etc/passwd- /etc/shadow- && \
   rm -v -f /var/cache/debconf/config.dat-old /var/cache/debconf/templates.dat-old /var/lib/dpkg/diversions-old /var/lib/dpkg/status-old /var/lib/dpkg/statoverride-old && \
@@ -2632,7 +2635,7 @@ RUN \
   export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand && \
   set -x && \
   set -e && \
-  umask 077 && \
+  umask 022 && \
   ulimit -d unlimited && \
   ulimit -v unlimited && \
   cd /root && \
@@ -2816,7 +2819,7 @@ RUN \
   (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02; export LANG=C; modprobe efivarfs || true; modprobe efi_pstore || true; if test -e /sys/firmware/efi/systab; then mount -v -t efivarfs none /sys/firmware/efi/efivars || true; fi; true') >> ./usr/local/etc/boot.d/24efi && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'umask 002 && mkdir -p -v /run/iden.d/ /mnt/IDEN && lsblk -l -p | grep part | cut -f1 -d" " | while read part; do if blkid -s LABEL -s PARTLABEL -o value "${part}" |grep -q "^IDEN"; then fsck.ext4 -v -p "${part}" || true; mount -v -t ext4 -o debug,ro "${part}" /mnt/IDEN && tar -C /mnt/IDEN/IDEN -c -v -f - . | tar -C /run/iden.d/ -x -p -v --warning=no-timestamp -f - && umount -v /mnt/IDEN; fi; done && rmdir -v /mnt/IDEN && chmod -R --verbose go-rwx /run/iden.d/ && mkdir -p /run/iden && if test -e /run/iden.d/path; then mv -v /run/iden.d/path /run/iden/path; fi && rm -r -v /run/iden.d && chmod -R go+r /run/iden && touch /run/iden/path && true') >> ./usr/local/etc/boot.d/25iden && \
   (echo '#!/bin/bash-static'; echo "set -x"; echo "set +e"; echo 'rm -r -f /kernel/ || true') >> ./usr/local/etc/boot.d/26vestigial && \
-  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 1024M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/ /mnt/ZRAM/lib/modules/ && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && mv /usr/local/lib/python3.9/dist-packages/botocore/data/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data/ && mkdir -p /usr/local/lib/python3.9/dist-packages/botocore/data/ && mount --bind /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data /usr/local/lib/python3.9/dist-packages/botocore/data && cd /lib/modules/ && KVER="$(ls -1d 5.10.???-hardened1-5.10/ |tail -n 1)" && tar -c -f - --remove-files "${KVER}"/kernel/ | tar -C /mnt/ZRAM/lib/modules/ -x -p -f - && cd "${KVER}"/ && mkdir -p kernel && cd /root/ && mount --bind /mnt/ZRAM/lib/modules/"${KVER}"/kernel /lib/modules/"${KVER}"/kernel && unset KVER && zramctl --output-all') >> ./usr/local/etc/boot.d/28compshare && \
+  (echo '#!/bin/bash-static'; echo "set -x"; echo 'umask 02 && export LANG=C && modprobe zzstd && modprobe zram && ZRDEV="$(zramctl --find --size 1024M -a zstd)" && mkfs.xfs -m rmapbt=1 -f -L ZRAM "${ZRDEV}" && mkdir -p /mnt/ZRAM && mount -v -t xfs -o nodev,noatime,noexec,nosuid,dirsync,loud "${ZRDEV}" /mnt/ZRAM && unset ZRDEV && mkdir -p /mnt/ZRAM/usr/share/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/ /mnt/ZRAM/lib/modules/ && for i in emacs doc man; do mv -f /usr/share/"${i}"/ /mnt/ZRAM/usr/share/"${i}" && mkdir -p /usr/share/"${i}"/ && sync && mount --bind /mnt/ZRAM/usr/share/"${i}" /usr/share/"${i}"; done && mv /usr/local/lib/python3.9/dist-packages/botocore/data/ /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data/ && mkdir -p /usr/local/lib/python3.9/dist-packages/botocore/data/ && mount --bind /mnt/ZRAM/usr/local/lib/python3.9/dist-packages/botocore/data /usr/local/lib/python3.9/dist-packages/botocore/data && cd /lib/modules/ && KVER="$(ls -1d 5.10.???-hardened1-5.10/ |tail -n 1 |tr -d /)" && tar -c -f - --remove-files "${KVER}"/kernel/ | tar -C /mnt/ZRAM/lib/modules/ -x -p -f - && cd "${KVER}"/ && mkdir -p kernel && cd /root/ && mount --bind /mnt/ZRAM/lib/modules/"${KVER}"/kernel /lib/modules/"${KVER}"/kernel && unset KVER && zramctl --output-all') >> ./usr/local/etc/boot.d/28compshare && \
   chmod --verbose 700 ./usr/local/etc/boot.d/28compshare ./usr/local/etc/boot.d/24efi ./usr/local/etc/boot.d/25iden ./usr/local/etc/boot.d/26vestigial && \
   (chmod 0644 ./etc/hosts || true) && \
   chmod --verbose go-w ./etc/hostname && \
