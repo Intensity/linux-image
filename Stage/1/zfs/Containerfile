@@ -1,0 +1,21 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-zfs${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates autoconf automake make gcc libtool zlib1g-dev uuid-dev libblkid-dev libssl-dev pkgconf dpkg-dev libaio-dev libeudev-dev && \
+  source $(which sys) build env && \
+  source $(which sys) build clone openzfs/zfs && \
+  mkdir -p /usr/local/lib/udev/rules.d && \
+  MAJMIN="$(git branch -a |grep staging|grep remotes/origin/zfs-2|sed 's,^ *remotes/origin/zfs-,,'|cut -d. -f1-2|sort -n | uniq  | tail -n 1 | sed 's,\.,\\.,')" && \
+  git checkout zfs-$(eval echo $MAJMIN).$(git branch -a |grep staging|grep remotes/origin/zfs-2|sed 's,^ *remotes/origin/zfs-,,'|grep '^'"${MAJMIN}"'\.' | sed s,"${MAJMIN}\.",, | sort -n |uniq | tail -n 1) && \
+  unset MAJMIN && \
+  ./autogen.sh  && \
+  ./configure --disable-nls --enable-sysvinit --disable-systemd --enable-debuginfo --with-config=user --with-mounthelperdir=/usr/local/sbin --with-udevdir=/usr/local/lib/udev && \
+  make && \
+  make check && \
+  make install && \
+  rm -r /usr/local/share/zfs/zfs-tests && \
+  exec sys build post

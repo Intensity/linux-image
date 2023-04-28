@@ -1,0 +1,14 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-aenker${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates golang-1.19 make git ca-certificates && \
+  source $(which sys) build env && \
+  source $(which sys) build clone ansemjo/aenker && \
+  export PATH=/usr/lib/go-1.19/bin:"${PATH}" && hash -r && \
+  make && \
+  make install PREFIX=/usr/local && \
+  exec sys build post

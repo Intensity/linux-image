@@ -1,0 +1,309 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/devuan-4-build-base${PARAMETER}:latest . -f
+
+ARG PARAMETER
+
+FROM docker://devuan/devuan:chimaera
+
+RUN ln -s -f -v bash /bin/sh
+
+RUN \
+  mkdir -p /usr/local/sbin/ && \
+  (echo '#!/bin/bash' && \
+   echo -e '\
+		\n\
+	declare -A CMD_HIERARCHY=( \n\
+	  ["sys"]="build" \n\
+	  ["sys_build"]="env pre post depend clone" \n\
+	) \n\
+		\n\
+	function sys() { \n\
+	  local cmd args \n\
+	  local longest_prefix="sys" \n\
+	  local current_prefix="sys" \n\
+		\n\
+	  for cmd in "${@}"; do \n\
+	    local func="${current_prefix}_${cmd}" \n\
+	    if declare -f "${func}" >/dev/null; then \n\
+	      current_prefix="${func}" \n\
+	      longest_prefix="${func}" \n\
+	      args=("${cmd}" "${args[@]}") \n\
+	    else \n\
+	      break \n\
+	    fi \n\
+	  done \n\
+		\n\
+	  if echo "${@:${#args[@]}+1}" | sed '\''s,.* ,,'\''|grep -q help \n\
+	  then \n\
+	    if test "${longest_prefix}" '\''=='\'' sys \n\
+	    then \n\
+	      true \n\
+	    else \n\
+	      "${longest_prefix}" "${@:${#args[@]}+1}" \n\
+	    fi \n\
+		\n\
+	    local subcommands="${CMD_HIERARCHY[${longest_prefix}]}" \n\
+	    local dynamically="$(declare -F |sed '\''s,^declare -f ,,'\'' | grep "^${longest_prefix}_" | sed "s,^${longest_prefix}_,,"|sed '\''s,_.*,,'\''|sort|uniq|tr '\''\\n'\'' '\'' '\'')" \n\
+	    local extra="" \n\
+	    if test "$( echo ${subcommands} | tr '\'' '\'' '\''\\n'\''|sort|uniq|tr '\''\\n'\'' '\'' '\'')" '\''=='\'' "$( echo ${dynamically} | tr '\'' '\'' '\''\\n'\''|sort|uniq|tr '\''\\n'\'' '\'' '\'')" \n\
+	    then \n\
+	      true \n\
+	    else \n\
+	      extra=" [$(comm -13 <(echo ${subcommands} |  tr '\'' '\'' '\''\\n'\''|sort|uniq) <(echo ${dynamically} |  tr '\'' '\'' '\''\\n'\''|sort|uniq) | tr -d '\''\\t'\'' | tr '\'' '\'' '\''\\n'\''|sort | uniq|tr '\''\\n'\'' '\'' '\'' | sed '\''s, *$,,'\'')]" \n\
+	    fi \n\
+		\n\
+	    echo "Available sub-commands for ${longest_prefix} are: ${subcommands}${extra}" 1>&2 \n\
+	  elif echo "${@:${#args[@]}+1}" | sed '\''s,.* ,,'\''|grep -q completion; then \n\
+	    local additional_completions \n\
+	    if test "${longest_prefix}" '\''=='\'' sys \n\
+	    then \n\
+	      additional_completions="" \n\
+	    else \n\
+	      additional_completions=$("${longest_prefix}" "${args[0]}" "${@:${#args[@]}+1}") \n\
+	    fi \n\
+		\n\
+	    compgen -W "${CMD_HIERARCHY[${longest_prefix}]} ${additional_completions}" -- "${args[1]}" \n\
+	  else \n\
+	    if test "${longest_prefix}" '\''=='\'' sys \n\
+	    then \n\
+	      true \n\
+	    else \n\
+	      if caller >/dev/null \n\
+	      then \n\
+	        "${longest_prefix}" "${@:${#args[@]}+1}" \n\
+	      else \n\
+	        "${longest_prefix}" "${@:${#args[@]}}" \n\
+	      fi \n\
+	    fi \n\
+	  fi \n\
+	} \n\
+		\n\
+	function sys_build() { \n\
+	  true \n\
+	} \n\
+		\n\
+	function sys_build_env() { \n\
+	  set -x \n\
+	  set -e \n\
+	  set -o errtrace \n\
+	  set -o pipefail \n\
+		\n\
+	  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/stand:/root/.cargo/bin \n\
+	  hash -r \n\
+	  umask 002 \n\
+	  ulimit -d unlimited \n\
+	  ulimit -v unlimited \n\
+		\n\
+	  unset DISPLAY \n\
+	  unset HUSHLOGIN \n\
+	  unset LD_PRELOAD \n\
+	  unset MAIL \n\
+	  unset MOTD_SHOWN \n\
+	  unset PARAMETER \n\
+	  unset SSH_CLIENT \n\
+	  unset SSH_CONNECTION \n\
+	  unset TMUX \n\
+	  unset TMUX_PANE \n\
+	  unset WINDOWID \n\
+	  unset XAUTHORITY \n\
+	  unset container \n\
+		\n\
+	  export HOME=/root \n\
+	  export HOST=localhost \n\
+	  export HOSTNAME=localhost \n\
+	  export LANG=C \n\
+	  export SHELL=/bin/bash \n\
+	  export TEMP="${TMP}" \n\
+	  export TERM=dumb \n\
+	  export TMP=/tmp \n\
+	  export TMPDIR="${TMP}" \n\
+	  export TTY=/dev/null \n\
+		\n\
+	  export DEBIAN_FRONTEND=noninteractive \n\
+	  export PYTHONDONTWRITEBYTECODE=1 \n\
+		\n\
+	  export CFLAGS=" -O -ggdb3 -fverbose-asm -mtune=generic " \n\
+	  export CXXFLAGS=" ${CFLAGS} " \n\
+	  export V=1 \n\
+	} \n\
+		\n\
+	function sys_build_pre() { \n\
+	  set -x \n\
+		\n\
+	  if test -e /run/container-score \n\
+	  then \n\
+	    true \n\
+	  else \n\
+	    touch /run/container-score \n\
+	    chmod 600 /run/container-score \n\
+		\n\
+	    for i in "${HOST}" "${HOSTNAME}" "$(hostname)" \n\
+	    do \n\
+	      if echo "${i}" |grep -q '\''^[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$'\'' >/dev/null 2>/dev/null \n\
+	      then \n\
+	        echo > /run/container-score \n\
+	      fi \n\
+	    done \n\
+		\n\
+	    if test -e /run/.containerenv -o -e /.dockerenv \n\
+	    then \n\
+	      echo >> /run/container-score \n\
+	    fi \n\
+		\n\
+	    if echo "${container}" |grep -q ... >/dev/null 2>/dev/null \n\
+	    then \n\
+	      echo >> /run/container-score \n\
+	    fi \n\
+		\n\
+	    if mount |grep -q "^devtmpfs on /dev/null" >/dev/null 2>/dev/null \n\
+	    then \n\
+	      echo >> /run/container-score \n\
+	    fi \n\
+		\n\
+	    if (cat /proc/2/cmdline 2>/dev/null || true) | grep -q '\''[k]threadd'\'' >/dev/null 2>/dev/null \n\
+	    then \n\
+	      true \n\
+	    else \n\
+	      echo >> /run/container-score \n\
+	    fi \n\
+		\n\
+	    if test "$(wc -l < /run/container-score)" -ge 4 \n\
+	    then \n\
+	      echo container > /run/is-container \n\
+	    else \n\
+	      touch /run/is-container \n\
+	    fi \n\
+		\n\
+	    echo "${PARAMETER}" >> /run/parameter \n\
+	  fi \n\
+		\n\
+	  sys build env \n\
+		\n\
+	  if test -e /tmp/pre-complete \n\
+	  then \n\
+	    return \n\
+	  fi \n\
+		\n\
+	  (echo '\''#!/bin/sh'\''; echo exec echo localhost) >/bin/hostname \n\
+	  echo localhost >/etc/hostname \n\
+	  chmod go-w /etc/hostname \n\
+		\n\
+	  sed -i -e "/^Acquire/s/true/false/" /etc/apt/apt.conf.d/docker-gzip-indexes \n\
+	  for insistence in Suggests Recommends; do echo APT::Install-"${insistence}" '\''"0";'\'' | tee -a /etc/apt/apt.conf.d/42disable; done \n\
+	  chmod --verbose go+r /etc/apt/apt.conf.d/42disable \n\
+	  (for src in "" "-src"; do for repo in "" "-updates" "-security" "-backports"; do echo deb"${src}" http://deb.devuan.org/merged chimaera"${repo}" main contrib non-free; done; done) > /etc/apt/sources.list \n\
+		\n\
+	  chmod --verbose go-w /etc /etc/apt /etc/apt/apt.conf.d /etc/dpkg /etc/dpkg/dpkg.cfg.d /usr /usr/sbin || true \n\
+	  chmod --verbose go-w /etc/apt/apt.conf.d/docker-autoremove-suggests /etc/apt/apt.conf.d/docker-clean /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages /etc/dpkg/dpkg.cfg.d/docker-apt-speedup /usr/sbin/policy-rc.d || true \n\
+		\n\
+	  apt-get -y update \n\
+	  apt-get -y --verbose-versions dist-upgrade \n\
+		\n\
+	  mkdir -p /opt/artifact/stand /opt/artifact/deb /opt/artifact/local /opt/artifact/etc /opt/artifact/certs /usr/local/src /usr/local/share/man/man1 /usr/local/share/man/man3 /usr/local/share/man/man4 /usr/local/share/man/man5 /usr/local/share/man/man7 /usr/local/share/man/man8 /root/.cargo/bin \n\
+	  touch /opt/artifact/etc/permissions \n\
+	  ln -s lib /usr/local/lib64 >/dev/null 2>/dev/null || true \n\
+	  ln -s share/man /usr/local/man >/dev/null 2>/dev/null || true \n\
+	  chmod --verbose a-s /bin/mount /bin/su /bin/umount /sbin/unix_chkpwd /usr/bin/chage /usr/bin/chfn /usr/bin/chsh /usr/bin/expiry /usr/bin/gpasswd /usr/bin/newgrp /usr/bin/passwd /usr/bin/wall | tee -a /opt/artifact/etc/permissions \n\
+		\n\
+	  touch /tmp/pre-complete \n\
+	} \n\
+		\n\
+	function sys_build_post() { \n\
+	  sys build env \n\
+		\n\
+	  unset PYTHONDONTWRITEBYTECODE \n\
+	  unset DEBIAN_FRONTEND \n\
+	  unset CFLAGS \n\
+	  unset CXXFLAGS \n\
+	  unset V \n\
+		\n\
+	  cd /usr/local/src \n\
+	  rm -v -f *dbgsym*.deb \n\
+	  rm -v -f *dbg*.deb \n\
+	  mv -f *.deb /opt/artifact/deb/ >/dev/null 2>/dev/null || true \n\
+		\n\
+	  cd /root \n\
+		\n\
+	  rm -r /usr/local/src \n\
+	  chmod -R ugo+r /usr/local \n\
+		\n\
+	  find /usr/local /usr/share -name \\*.gz -type l -delete \n\
+	  find /usr/local /usr/share /usr/lib/x86_64-linux-gnu -name \\*.gz -type f -exec gunzip -N -f -- \\{\\} \\; \n\
+		\n\
+	  rm -v -f /usr/local/lib/lib*.a /usr/local/lib/x86_64-linux-gnu/lib*.a || true \n\
+	  rm -r -f /usr/local/share/man/[^m]*/ \n\
+		\n\
+	  find /usr/local -xdev -type d -exec chmod ugo+rx -- \\{\\} \\; || true \n\
+	  find /usr/local /usr/share /usr/lib -maxdepth 12 -name "*.pyc" -type f -delete \n\
+	  (set +e; find /usr/local /usr/share /usr/lib -maxdepth 12 -name __pycache__ -type d -print0 | xargs -0 rmdir -- >/dev/null 2>/dev/null || true; true) \n\
+		\n\
+	  tar -C /usr --remove-files -c -f - local | tar -C /opt/artifact/ -x -p -f - \n\
+		\n\
+	  rm -f /tmp/pre-complete \n\
+	  rm -r -f /root/.cargo /root/.local /root/.config /root/.rustup /root/.cache /root/go \n\
+	  rm -r -f /usr/local /usr/src \n\
+	  rm -f /var/cache/apt/archives/*.deb || true \n\
+		\n\
+	  apt-get -y clean </dev/null \n\
+	  apt-get -y autoclean </dev/null \n\
+	  apt-get -y autoremove </dev/null \n\
+		\n\
+	  find / -xdev -name "*.pyc" -ls \n\
+	  find / -xdev -name "__pycache__" -ls \n\
+	  find / -xdev -type f -perm -2000 -ls \n\
+	  find / -xdev -type f -perm -4000 -ls \n\
+	  find / -xdev -type f -perm -0002 -ls \n\
+	  find / -xdev -type d -perm -0002 -ls \n\
+		\n\
+	  find /usr -type f -name \\*.gz -ls \n\
+	  cd / \n\
+		\n\
+	  if grep -iq "container" /run/is-container >/dev/null 2>/dev/null \n\
+	  then \n\
+	    exec /bin/bash -c "exec /bin/rm -r -f ./usr/ ./var/ ./lib/modules/" \n\
+	  fi \n\
+	} \n\
+		\n\
+	function sys_build_depend() { \n\
+	  sys build env \n\
+		\n\
+	  apt-get -y --verbose-versions install "$@" </dev/null || apt-get -y --verbose-versions install "$@" </dev/null || apt-get -y --verbose-versions install "$@" </dev/null \n\
+	  RET=$? \n\
+		\n\
+	  if test -e /usr/bin/x86_64-linux-gnu-strip \n\
+	  then \n\
+	    : > /usr/bin/x86_64-linux-gnu-strip \n\
+	  fi \n\
+		\n\
+	  return "${RET}" \n\
+	} \n\
+		\n\
+	function sys_build_clone() { \n\
+	  sys build env \n\
+		\n\
+	  cd /usr/local/src \n\
+	  if echo x"$@" | grep -q -- "://" >/dev/null 2>/dev/null \n\
+	  then \n\
+	    MY_REPOSITORY="$@" \n\
+	  else \n\
+	    MY_REPOSITORY=https://github.com/"$@" \n\
+	  fi \n\
+	   \n\
+	  git clone --recursive "${MY_REPOSITORY}" </dev/null || git clone --recursive "${MY_REPOSITORY}" </dev/null || git clone --recursive "${MY_REPOSITORY}" </dev/null || return $? \n\
+		\n\
+	  cd "$(basename "${MY_REPOSITORY}")"/ || return $? \n\
+	  unset MY_REPOSITORY \n\
+	  git submodule init \n\
+	  git submodule update || git submodule update || git submodule update || return $? \n\
+		\n\
+	  true \n\
+	} \n\
+		\n\
+	if test "${#@}" -eq 0 \n\
+	then \n\
+	  sys help \n\
+	else \n\
+	  sys "$@" \n\
+	fi \n\
+  ' | sed 's,^	*,,' | sed 's,[	 ]*$,,') > /usr/local/sbin/sys && \
+  chmod 755 /usr/local/sbin/sys && \
+  true

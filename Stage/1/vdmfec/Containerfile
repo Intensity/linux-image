@@ -1,0 +1,19 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-vdmfec${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates dpkg-dev cdbs debhelper wget && \
+  source $(which sys) build env && \
+  cd /usr/local/src/ && \
+  wget http://deb.debian.org/debian/pool/main/v/vdmfec/vdmfec_1.0-2.dsc && \
+  wget http://deb.debian.org/debian/pool/main/v/vdmfec/vdmfec_1.0.orig.tar.gz && \
+  wget http://deb.debian.org/debian/pool/main/v/vdmfec/vdmfec_1.0-2.diff.gz && \
+  dpkg-source -x vdmfec_1.0-2.dsc && \
+  cd vdmfec-1.0/ && \
+  ./debian/rules binary && \
+  cd ../ && \
+  dpkg -i vdmfec_1.0-2_amd64.deb && \
+  exec sys build post

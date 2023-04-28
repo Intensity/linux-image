@@ -1,0 +1,14 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-bsc-m03${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend cmake make g++ git ca-certificates && \
+  source $(which sys) build env && \
+  source $(which sys) build clone IlyaGrebnov/bsc-m03 && \
+  cmake . && \
+  make && \
+  cp -v -p bsc-m03 /usr/local/bin/ && \
+  exec sys build post

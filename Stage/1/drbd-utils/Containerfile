@@ -1,0 +1,16 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-drbd-utils${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend asciidoctor autoconf automake autopoint bash-completion bc bsdextrautils build-essential ca-certificates clitest cmake cmake-data debhelper dh-autoreconf dh-strip-nondeterminism docbook-xml docbook-xsl docutils-common dwz file flex g++ git groff-base intltool-debian libarchive-zip-perl libarchive13 libbsd-dev libcurl4 libdebhelper-perl libeudev-dev libfile-stripnondeterminism-perl libgmp-dev libgmpxx4ldbl libjsoncpp24 libldns-dev libldns3 libmagic-mgc libmagic1 libmd-dev libmpdec3 libpipeline1 libpython3-stdlib libpython3.9-minimal libpython3.9-stdlib librhash0 libsqlite3-0 libssl-dev libsub-override-perl libtool libuchardet0 libuv1 make man-db media-types ninja-build pkgconf po-debconf po4a python3 python3-docutils python3-minimal python3-roman python3.9 python3.9-minimal sgml-data udev xml-core xsltproc && \
+  chmod --verbose a-s /usr/bin/write.ul | tee -a /opt/artifact/etc/permissions && \
+  source $(which sys) build env && \
+  source $(which sys) build clone LINBIT/drbd-utils && \
+  ./autogen.sh && \
+  ./configure --with-xen --with-distro=debian --with-initscripttype=sysv --with-bashcompletion --with-udev && \
+  make && \
+  make install && \
+  exec sys build post

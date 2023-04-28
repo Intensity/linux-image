@@ -1,0 +1,16 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-kanzi-cpp${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates g++ make && \
+  source $(which sys) build env && \
+  source $(which sys) build clone flanglet/kanzi-cpp && \
+  cd src && \
+  sed -i -e "s, -march=native , ${CFLAGS} ,g" Makefile && \
+  make && \
+  make install && \
+  chmod --verbose 0755 /usr/local/bin/kanzi && \
+  exec sys build post

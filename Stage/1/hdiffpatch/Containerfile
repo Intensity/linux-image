@@ -1,0 +1,16 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-hdiffpatch${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates make g++ libc6-dev zlib1g-dev libbz2-dev && \
+  source $(which sys) build env && \
+  source $(which sys) build clone sisong/HDiffPatch && \
+  git clone https://github.com/sisong/libmd5.git ../libmd5 && \
+  git clone https://github.com/sisong/lzma.git ../lzma && \
+  git clone -b v1.5.2 https://github.com/facebook/zstd.git ../zstd && \
+  make && \
+  make install && \
+  exec sys build post

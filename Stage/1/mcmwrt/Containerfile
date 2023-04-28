@@ -1,0 +1,16 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-mcmwrt${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates g++ p7zip-full wget && \
+  source $(which sys) build env && \
+  cd /usr/local/src && \
+  wget https://nishi.dreamhosters.com/u/mcm_084_textprep_v1.7z && \
+  7z x mcm_084_textprep_v1.7z && \
+  cd mcm_084_textprep_v1/src && \
+  sh g && \
+  cp -p -v ./mcmwrt /usr/local/bin/ && \
+  exec sys build post

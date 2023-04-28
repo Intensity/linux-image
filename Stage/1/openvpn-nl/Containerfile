@@ -1,0 +1,20 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-openvpn-nl${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates cmake make gcc libc6-dev autoconf automake libtool pkgconf libssl-dev python3-docutils curl wget iproute2 && \
+  source $(which sys) build env && \
+  cd /usr/local/src/ && \
+  VER="$(curl -L https://openvpn.fox-it.com/repos/source |grep DIR|grep -v Parent |sed 's,.*A HREF="2.[^"]*">\(2\.[0-9]\.[0-9]nl[0-9]\)/</A> .*,\1,'|tr -cd 0-9nl.)" && \
+  wget https://openvpn.fox-it.com/repos/source/"${VER}"/openvpn-nl-src-"${VER}".tar.gz && \
+  tar xzpkf openvpn-nl-src-"${VER}".tar.gz && \
+  cd openvpn-nl/ && \
+  sed -i -e "/--enable-systemd/s/--enable-systemd/ --disable-systemd --disable-plugins /" configure-openvpn.sh && \
+  sed -i -e "/SYSTEMD_FILES='build-openvpn-nl/s,'[^']*',''," archive.sh && \
+  ./build-openvpn-nl.sh && \
+  cd build-openvpn-nl/ && \
+  make prefix=/usr/local install && \
+  exec sys build post

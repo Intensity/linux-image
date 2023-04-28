@@ -1,0 +1,18 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-util-linux${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend ca-certificates dpkg-dev bc bison debhelper-compat dh-exec gettext libaudit-dev libcap-ng-dev libncurses5-dev libncursesw5-dev libpam0g-dev libselinux1-dev libtool libudev-dev netbase pkgconf po-debconf socat zlib1g-dev && \
+  source $(which sys) build env && \
+  cd /usr/local/src/ && \
+  apt-get source util-linux && \
+  cd util-linux-*/ && \
+  ./debian/rules binary && \
+  for i in choom mkfs switch_root pivot_root blockdev unshare nsenter; do rm -v $i && V=1 make $i 2>&1 | grep '^libtool: link:' | tail -n 1 | sed 's,.*:,,' | sed 's,$, -static,' |sh && cp -p -v "$i" /opt/artifact/stand/ul_"$i"; done && \
+  rm -v losetup && \
+  make losetup 2>&1 |grep '^libtool: link:' |tail -n 1| sed 's,.*:,,' |sed 's,$, -static ,' | sed 's,\.so ,.a ,g' | sh && \
+  cp -p -v .libs/losetup /opt/artifact/stand/ul_losetup && \
+  exec sys build post

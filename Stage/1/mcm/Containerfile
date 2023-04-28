@@ -1,0 +1,15 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-mcm${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend make g++ git ca-certificates && \
+  source $(which sys) build env && \
+  source $(which sys) build clone Intensity/mcm && \
+  git checkout v0.84sk4 && \
+  sed -i -e "/^STATIC/s/^/#/" Makefile && \
+  ./Makefile install && \
+  mv -v /usr/local/bin/mcm /opt/artifact/stand/ && \
+  exec sys build post

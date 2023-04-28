@@ -1,0 +1,213 @@
+#!/usr/bin/env -vS -- /bin/sh -c 'exec podman-compose -f "$0" build "$@"'
+
+services:
+  0-devuan-4-build-base${PARAMETER}:
+    build:
+      context: ../Stage/0/Base/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/devuan-4-build-base${PARAMETER}:latest
+  1-build-aenker${PARAMETER}:
+    build:
+      context: ../Stage/1/aenker/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-aenker${PARAMETER}:latest
+  1-build-base91${PARAMETER}:
+    build:
+      context: ../Stage/1/base91/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-base91${PARAMETER}:latest
+  1-build-bc${PARAMETER}:
+    build:
+      context: ../Stage/1/bc/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-bc${PARAMETER}:latest
+  1-build-blockdiff${PARAMETER}:
+    build:
+      context: ../Stage/1/blockdiff/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-blockdiff${PARAMETER}:latest
+  1-build-bsc-m03${PARAMETER}:
+    build:
+      context: ../Stage/1/bsc-m03/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-bsc-m03${PARAMETER}:latest
+  1-build-criu${PARAMETER}:
+    build:
+      context: ../Stage/1/criu/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-criu${PARAMETER}:latest
+  1-build-ddelta${PARAMETER}:
+    build:
+      context: ../Stage/1/ddelta/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-ddelta${PARAMETER}:latest
+  1-build-drbd-utils${PARAMETER}:
+    build:
+      context: ../Stage/1/drbd-utils/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-drbd-utils${PARAMETER}:latest
+  1-build-dsvpn${PARAMETER}:
+    build:
+      context: ../Stage/1/dsvpn/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-dsvpn${PARAMETER}:latest
+  1-build-enchive${PARAMETER}:
+    build:
+      context: ../Stage/1/enchive/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-enchive${PARAMETER}:latest
+  1-build-encryptify${PARAMETER}:
+    build:
+      context: ../Stage/1/encryptify/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-encryptify${PARAMETER}:latest
+  1-build-glza${PARAMETER}:
+    build:
+      context: ../Stage/1/glza/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-glza${PARAMETER}:latest
+  1-build-gnubc${PARAMETER}:
+    build:
+      context: ../Stage/1/gnubc/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-gnubc${PARAMETER}:latest
+  1-build-hdiffpatch${PARAMETER}:
+    build:
+      context: ../Stage/1/hdiffpatch/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-hdiffpatch${PARAMETER}:latest
+  1-build-kanzi-cpp${PARAMETER}:
+    build:
+      context: ../Stage/1/kanzi-cpp/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-kanzi-cpp${PARAMETER}:latest
+  1-build-mcm${PARAMETER}:
+    build:
+      context: ../Stage/1/mcm/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-mcm${PARAMETER}:latest
+  1-build-mcmwrt${PARAMETER}:
+    build:
+      context: ../Stage/1/mcmwrt/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-mcmwrt${PARAMETER}:latest
+  1-build-mignis${PARAMETER}:
+    build:
+      context: ../Stage/1/mignis/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-mignis${PARAMETER}:latest
+  1-build-mtm${PARAMETER}:
+    build:
+      context: ../Stage/1/mtm/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-mtm${PARAMETER}:latest
+  1-build-nzcc${PARAMETER}:
+    build:
+      context: ../Stage/1/nzcc/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-nzcc${PARAMETER}:latest
+  1-build-openvpn-nl${PARAMETER}:
+    build:
+      context: ../Stage/1/openvpn-nl/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-openvpn-nl${PARAMETER}:latest
+  1-build-orz${PARAMETER}:
+    build:
+      context: ../Stage/1/orz/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-orz${PARAMETER}:latest
+  1-build-precomp-cpp${PARAMETER}:
+    build:
+      context: ../Stage/1/precomp-cpp/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-precomp-cpp${PARAMETER}:latest
+  1-build-rdup${PARAMETER}:
+    build:
+      context: ../Stage/1/rdup/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-rdup${PARAMETER}:latest
+  1-build-rsbep-backup${PARAMETER}:
+    build:
+      context: ../Stage/1/rsbep-backup/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-rsbep-backup${PARAMETER}:latest
+  1-build-srep${PARAMETER}:
+    build:
+      context: ../Stage/1/srep/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-srep${PARAMETER}:latest
+  1-build-tc-play${PARAMETER}:
+    build:
+      context: ../Stage/1/tc-play/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-tc-play${PARAMETER}:latest
+  1-build-tinyfecvpn${PARAMETER}:
+    build:
+      context: ../Stage/1/tinyfecvpn/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-tinyfecvpn${PARAMETER}:latest
+  1-build-udp2raw${PARAMETER}:
+    build:
+      context: ../Stage/1/udp2raw/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-udp2raw${PARAMETER}:latest
+  1-build-util-linux${PARAMETER}:
+    build:
+      context: ../Stage/1/util-linux/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-util-linux${PARAMETER}:latest
+  1-build-vdmfec${PARAMETER}:
+    build:
+      context: ../Stage/1/vdmfec/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-vdmfec${PARAMETER}:latest
+  1-build-vdo${PARAMETER}:
+    build:
+      context: ../Stage/1/vdo/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-vdo${PARAMETER}:latest
+  1-build-vpnd${PARAMETER}:
+    build:
+      context: ../Stage/1/vpnd/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-vpnd${PARAMETER}:latest
+  1-build-zfs${PARAMETER}:
+    build:
+      context: ../Stage/1/zfs/
+      args:
+        PARAMETER: ${PARAMETER}
+    image: local/build-zfs${PARAMETER}:latest

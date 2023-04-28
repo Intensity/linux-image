@@ -1,0 +1,15 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-gnubc${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend git ca-certificates autoconf automake gcc libc6-dev make bison flex ed texinfo && \
+  source $(which sys) build env && \
+  source $(which sys) build clone nlitsme/gnubc && \
+  bash ./autogen.sh && \
+  ./configure --program-prefix=g && \
+  make && \
+  make install && \
+  exec sys build post

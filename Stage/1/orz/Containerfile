@@ -1,0 +1,13 @@
+#!/usr/bin/env -vS podman --runtime runc --storage-driver vfs --cgroup-manager cgroupfs --events-backend file build --build-arg PARAMETER=${PARAMETER} -t local/build-orz${PARAMETER}:latest . -f
+ARG PARAMETER
+FROM local/devuan-4-build-base${PARAMETER}:latest
+RUN \
+  export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin && hash -r && set -x && \
+  \
+  sys build pre && \
+  sys build depend ca-certificates cargo git && \
+  source $(which sys) build env && \
+  cd /usr/local/src/ && \
+  cargo install orz --git https://github.com/richox/orz --tag v1.6.2 && \
+  mv -v ~/.cargo/bin/orz /usr/local/bin/ && \
+  exec sys build post
